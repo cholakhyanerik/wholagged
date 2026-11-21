@@ -5,6 +5,7 @@
 [![Python 3.15+](https://img.shields.io/badge/python-3.15%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows&logoColor=white)](#requirements)
 [![GUI: PySide6](https://img.shields.io/badge/GUI-PySide6-41CD52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-EA4AAA?logo=githubsponsors&logoColor=white)](#support-the-project)
 
 **Dota 2 is stuck on "Searching for Game Coordinator". Is the problem your internet, your provider, or Valve's servers?**
@@ -105,6 +106,10 @@ tests/
 If this tool saved you some frustration while waiting in the queue, you can support its development on GitHub Sponsors:
 
 [![Sponsor on GitHub](https://img.shields.io/badge/Sponsor-%E2%9D%A4-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white)](https://github.com/sponsors/cholakhyanerik)
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
 
 ## Disclaimer
 
