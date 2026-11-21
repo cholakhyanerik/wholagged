@@ -10,7 +10,7 @@
 
 **Dota 2 is stuck on "Searching for Game Coordinator". Is the problem your internet, your provider, or Valve's servers?**
 
-Dota 2 Network Check is a small Windows desktop tool that answers that one question in about 10–20 seconds.
+Dota 2 Network Check is a small desktop tool for Windows (macOS and Linux support is in progress) that answers that one question in about 10–20 seconds.
 It runs six network checks, from basic connectivity to ping and packet loss on Valve's game relays,
 and gives you a verdict on where the problem is, with steps to fix it.
 
@@ -27,7 +27,7 @@ and gives you a verdict on where the problem is, with steps to fix it.
 
 ## Requirements
 
-- Windows 10 or 11
+- Windows 10 or 11 (for macOS and Linux, see [Platform support](#platform-support))
 - [uv](https://docs.astral.sh/uv/) by Astral. **uv is required:** the project is managed only with uv
   (`pyproject.toml` + `uv.lock`). There is no `requirements.txt`, and `pip install` is not supported.
   uv also downloads Python 3.15 for you if you don't have it.
@@ -84,7 +84,40 @@ allowing `steam.exe` and `dota2.exe` through the firewall, testing over a phone 
   If that endpoint changes, the check is marked as skipped, and the tool does not blame Valve.
 - The data endpoint behind steamstat.us is not a public API, and its owners ask people not to use it, so the tool only opens the site in your browser.
 - If ICMP is blocked on your network, relay ping can't be measured, and that check is marked as skipped.
-- Only Windows is fully supported. On other systems, ping falls back to the system `ping` command, which is meant for development only.
+
+## Platform support
+
+The goal is for the tool to run on Windows, macOS and Linux. For now, only Windows is fully supported.
+
+| Platform | Status |
+|---|---|
+| Windows 10 / 11 | ✅ Fully supported |
+| Linux | ⚠️ Runs, with known issues |
+| macOS | ⚠️ Runs, but the relay ping check is broken |
+
+### Known issues (fixes planned)
+
+- **macOS: relay ping always fails.** Outside Windows, the tool runs the system `ping` command with `-W 1`.
+  On Linux, `-W` is in seconds, but on macOS it is in milliseconds, so every ping gives up after 1 ms.
+  The tool then reports ICMP as blocked and skips the ping, packet loss and jitter check.
+- **Linux: ping relies on parsing `ping` output.** It works with the usual `time=… ms` output, but that output
+  can depend on the system language. It should run in a neutral locale, or use a native implementation like on Windows.
+- **Advice is Windows-specific.** Some tips mention Windows Firewall, `ipconfig /flushdns`, network adapter settings
+  and `steam.exe` / `dota2.exe`. These don't apply on macOS or Linux.
+- **SSL certificate problems are blamed on the provider.** If Python can't find the system's CA certificates
+  (this happens with some macOS Python installs), Steam API requests fail with an SSL error. The tool then concludes
+  that your provider blocks part of Valve's servers, but the actual problem is on your computer.
+- **No CI on macOS and Linux yet.** The tests use a fake network and should pass everywhere, but they don't
+  cover the issues above.
+
+### Minimum system versions
+
+These come from the PySide6 wheels in `uv.lock`:
+
+- macOS 14 Sonoma or newer
+- Linux x86_64 with glibc 2.34+ (for example Ubuntu 22.04+, Debian 12+)
+- Linux ARM64 with glibc 2.39+ (for example Ubuntu 24.04+)
+- On Linux with X11, Qt also needs the `libxcb-cursor0` system package (`sudo apt install libxcb-cursor0` on Debian/Ubuntu)
 
 ## Project structure
 
@@ -102,6 +135,31 @@ tests/
   test_scenarios.py   end-to-end scenarios: break one thing, expect one verdict
   test_parsing.py     parsing of Valve's API responses
 ```
+
+## Roadmap
+
+The core checker is free and open source, and it will stay that way.
+
+Planned:
+
+- **Cross-platform:** fix the [known issues](#known-issues-fixes-planned) and run the tests on Windows, macOS and Linux in CI.
+- **Your network vs your provider:** also ping your own router, so the tool can tell a bad Wi-Fi connection apart
+  from a problem on your provider's side.
+- **More Valve games:** CS2 and Deadlock use the same Valve relay network, so the same checks can cover them.
+  The project will probably get a game-neutral name at that point.
+- **Background monitoring (paid Pro version):** record ping and packet loss for the whole day, show graphs,
+  and build a PDF report you can send to your provider as evidence.
+- **Microsoft Store** release.
+
+### Transparency
+
+In the future, the app may suggest a third-party service, such as a gaming route optimizer, and some of these
+suggestions may be affiliate links. If that happens, these suggestions will:
+
+- always be clearly marked as a recommendation and as an affiliate link;
+- appear only when the verdict points to your provider's route or an unstable connection, where such a service can actually help;
+- never appear when the problem is on Valve's side, on your Wi-Fi or on your PC;
+- never change the verdict itself. The verdict logic is open source in [`verdict.py`](src/dota_netcheck/verdict.py), so anyone can check this.
 
 ## Support the project
 
