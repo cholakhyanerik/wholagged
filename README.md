@@ -28,7 +28,9 @@ and gives you a verdict on where the problem is, with steps to fix it.
 ## Requirements
 
 - Windows 10 or 11
-- [uv](https://docs.astral.sh/uv/) (it downloads Python 3.15 for you if you don't have it)
+- [uv](https://docs.astral.sh/uv/) by Astral. **uv is required:** the project is managed only with uv
+  (`pyproject.toml` + `uv.lock`). There is no `requirements.txt`, and `pip install` is not supported.
+  uv also downloads Python 3.15 for you if you don't have it.
 
 ## Getting started
 
