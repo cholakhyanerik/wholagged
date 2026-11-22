@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 from .models import CheckResult, Side, Status, Verdict
 
 HOTSPOT = (
@@ -47,7 +49,25 @@ def decide(results: dict[str, CheckResult]) -> Verdict:
             ],
         )
 
-    # 3. Valve answered, but with an error, or the GC is down.
+    # 3. HTTPS to Valve fails the certificate check: a PC-side problem, not the route.
+    if flag("steam_api", "cert_error"):
+        advice = [
+            "Ստուգիր համակարգչի ժամը, ամսաթիվը և ժամային գոտին. սխալ ժամի դեպքում սերտիֆիկատները չեն ընդունվում",
+            "Ժամանակավորապես անջատիր antivirus-ի HTTPS / SSL ստուգումը (web shield) և նորից ստուգիր",
+            "Եթե հյուրանոցի կամ սրճարանի Wi-Fi ես, բաց արա browser-ը և մուտք գործիր ցանցի էջով",
+        ]
+        if sys.platform == "darwin":
+            advice.append("Եթե Python-ը python.org-ից է, գործարկիր «Install Certificates.command»-ը")
+        return Verdict(
+            Side.YOU,
+            "Խնդիրը HTTPS սերտիֆիկատների ստուգումն է",
+            "Internet-ն աշխատում է, բայց Steam-ի հետ անվտանգ (HTTPS) կապը չի հաստատվում, "
+            "որովհետև սերտիֆիկատի ստուգումը ձախողվում է։ Սովորաբար սա provider-ի խնդիր չէ. "
+            "պատճառը համակարգչում է կամ ցանցի մուտքի էջում։",
+            advice,
+        )
+
+    # 4. Valve answered, but with an error, or the GC is down.
     if (status("steam_api") == Status.WARN and flag("steam_api", "server_error")) or flag("dota_gc", "gc_down"):
         return Verdict(
             Side.VALVE,
@@ -61,7 +81,7 @@ def decide(results: dict[str, CheckResult]) -> Verdict:
             ],
         )
 
-    # 4. Internet works, but no Steam server is reachable at all.
+    # 5. Internet works, but no Steam server is reachable at all.
     if status("steam_api") == Status.FAIL and status("steam_cm") == Status.FAIL:
         return Verdict(
             Side.UNCLEAR,
@@ -75,7 +95,7 @@ def decide(results: dict[str, CheckResult]) -> Verdict:
             ],
         )
 
-    # 5. Part of Valve is reachable, part is blocked.
+    # 6. Part of Valve is reachable, part is blocked.
     if Status.FAIL in (status("steam_api"), status("steam_cm")) or status("steam_cm") == Status.WARN:
         return Verdict(
             Side.ISP,
@@ -90,7 +110,7 @@ def decide(results: dict[str, CheckResult]) -> Verdict:
             ],
         )
 
-    # 6. Steam is fine, but Valve's game relays don't answer.
+    # 7. Steam is fine, but Valve's game relays don't answer.
     if flag("relays", "routing"):
         return Verdict(
             Side.ISP,
@@ -100,7 +120,7 @@ def decide(results: dict[str, CheckResult]) -> Verdict:
             [HOTSPOT, REPORT_TO_ISP, "Gaming VPN-ը (route optimizer) երբեմն շրջանցում է վատ route-ը"],
         )
 
-    # 7. Connected, but the connection quality is bad.
+    # 8. Connected, but the connection quality is bad.
     if flag("relays", "lossy"):
         return Verdict(
             Side.YOU,
@@ -134,7 +154,7 @@ def decide(results: dict[str, CheckResult]) -> Verdict:
             ["Wi-Fi-ի փոխարեն միացիր cable-ով", "Փակիր download-ները և stream-ները", "Վերագործարկիր router-ը"],
         )
 
-    # 8. Everything answers.
+    # 9. Everything answers.
     advice = [
         "Steam-ից ամբողջությամբ դուրս արի (Steam → Exit) և նորից մտիր",
         "Dota 2 → Properties → Installed Files → Verify integrity of game files",

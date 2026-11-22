@@ -1,0 +1,3 @@
+# Documents and spreadsheets (pdf, docx, xlsx, csv, ...) that are public by design and may be committed.
+# One repo-relative path per line. Everything else of that kind is blocked by guard.py,
+# because such files often hold private data (invoices, statements, contracts).

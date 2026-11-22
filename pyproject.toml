@@ -1,6 +1,6 @@
 [project]
 name = "dota-netcheck"
-version = "0.1.0"
+version = "0.1.1"
 description = "Dota 2 network check: is it your internet, your provider or Valve's servers?"
 readme = "README.md"
 license = "PolyForm-Noncommercial-1.0.0"
@@ -17,10 +17,29 @@ dependencies = [
 dota-netcheck = "dota_netcheck:main"
 
 [build-system]
-requires = ["uv_build>=0.11.32,<0.12.0"]
+requires = ["uv_build>=0.13.9,<0.14.0"]
 build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
     "pytest>=9.2.0",
+    "ruff>=0.17.6",
 ]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+# Ruff's default rule set plus flake8-bandit security rules (CLAUDE.md: security).
+extend-select = ["S"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]  # plain assert is how pytest works
+".claude/hooks/*" = ["S603", "S607"]  # hooks run fixed tools (git, uv, gh) from PATH
+
+[tool.ruff.lint.isort]
+known-local-folder = ["fakes"]  # tests/fakes.py: the fake network
+
+[tool.pytest]
+testpaths = ["tests"]
+addopts = ["-p", "no:cacheprovider"]  # no .pytest_cache junk in the repo

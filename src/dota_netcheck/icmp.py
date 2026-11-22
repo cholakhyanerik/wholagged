@@ -8,6 +8,8 @@ on the Windows language. On other systems it falls back to the `ping` command
 
 from __future__ import annotations
 
+import ipaddress
+import os
 import re
 import socket
 import subprocess
@@ -21,8 +23,8 @@ _PAYLOAD = b"dota-netcheck-ping-0123456789abc"  # 32 bytes, like Windows ping
 def ping(ip: str, timeout_ms: int = DEFAULT_TIMEOUT_MS) -> float | None:
     """Send one echo request. Returns the round-trip time in ms, or None."""
     try:
-        socket.inet_aton(ip)
-    except OSError:
+        ip = str(ipaddress.IPv4Address(ip))  # strict: rejects "1", "127.1", "1.2.3.4 x", non-strings
+    except (ValueError, TypeError):
         return None
     if sys.platform == "win32":
         return _ping_windows(ip, timeout_ms)
@@ -140,16 +142,29 @@ def _ping_windows(ip: str, timeout_ms: int) -> float | None:
 # Other systems: the ping command (development only)
 # --------------------------------------------------------------------------- #
 _TIME_RE = re.compile(r"time[=<]\s*([\d.]+)")
+# A neutral locale keeps the output in English with "." as the decimal mark,
+# so _TIME_RE works whatever the system language is.
+_PING_ENV = {**os.environ, "LC_ALL": "C", "LANG": "C"}
+
+
+def ping_command(ip: str, timeout_ms: int, platform: str = sys.platform) -> list[str]:
+    """The `ping` arguments for one echo request on a non-Windows system."""
+    if platform == "darwin" or platform.startswith("freebsd"):
+        # BSD ping: -W is the wait time in milliseconds.
+        return ["ping", "-c", "1", "-W", str(max(1, timeout_ms)), ip]
+    # Linux (iputils / busybox): -W is the wait time in seconds.
+    return ["ping", "-c", "1", "-W", str(max(1, round(timeout_ms / 1000))), ip]
 
 
 def _ping_subprocess(ip: str, timeout_ms: int) -> float | None:
-    secs = max(1, round(timeout_ms / 1000))
     try:
-        proc = subprocess.run(
-            ["ping", "-c", "1", "-W", str(secs), ip],
+        proc = subprocess.run(  # noqa: S603 - fixed argv, ip is validated by ping()
+            ping_command(ip, timeout_ms),
             capture_output=True,
             text=True,
-            timeout=secs + 2,
+            timeout=max(1, timeout_ms / 1000) + 2,
+            env=_PING_ENV,
+            check=False,
         )
     except (OSError, subprocess.TimeoutExpired):
         return None

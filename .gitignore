@@ -8,3 +8,33 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Temp and backup files
+*.tmp
+*.bak
+*.orig
+*.rej
+*.log
+~$*
+
+# Secrets and signing material: never commit (see CLAUDE.md, Security)
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.p12
+.dev.vars
+.pypirc
+.npmrc
+.netrc
+
+# Personal Claude Code settings (shared settings are in .claude/settings.json)
+.claude/settings.local.json

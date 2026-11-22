@@ -44,6 +44,7 @@ uv run dota-netcheck          # բացում է պատուհանը
 ```powershell
 uv run dota-netcheck --cli    # terminal-ում, առանց պատուհանի
 uv run pytest                 # test-երը (առանց internet-ի, fake ցանցով)
+uv run ruff check             # կոդի ստուգում (lint)
 ```
 
 ## Ինչ է ստուգում
@@ -66,12 +67,13 @@ uv run pytest                 # test-երը (առանց internet-ի, fake ցան
 
 1. Internet չկա → **քո կողմից**
 2. DNS-ը չի լուծում Steam-ը → **քո կողմից (DNS)**
-3. Valve-ը պատասխանում է 5xx սխալով կամ դատարկ սերվերների ցուցակով, կամ GC-ն վերադարձնում է `success=false` → **Valve-ի կողմից**
-4. Internet կա, բայց Steam-ի ոչ մի սերվեր հասանելի չէ → **Valve կամ provider** (նայիր steamstat.us-ը և փորձիր հեռախոսի hotspot-ով)
-5. Steam-ի սերվերների միայն մի մասն է հասանելի → **provider, firewall կամ VPN**
-6. Steam-ը հասանելի է, 1.1.1.1-ը պատասխանում է ping-ին, իսկ Valve-ի relay-ները՝ ոչ → **provider-ի route-ը դեպի Valve**
-7. Packet loss > 5%, ping > 150 ms կամ jitter > 30 ms → **կապի որակը**
-8. Ամեն ինչ կարգին է → **ցանցը կարգին է, խնդիրը համակարգչում կամ Steam client-ում է**
+3. Steam-ի հետ HTTPS կապում սերտիֆիկատի ստուգումը ձախողվում է → **քո կողմից** (համակարգչի սխալ ժամ, antivirus-ի HTTPS ստուգում, Wi-Fi-ի մուտքի էջ կամ բացակայող CA սերտիֆիկատներ, ոչ թե provider-ը)
+4. Valve-ը պատասխանում է 5xx սխալով կամ դատարկ սերվերների ցուցակով, կամ GC-ն վերադարձնում է `success=false` → **Valve-ի կողմից**
+5. Internet կա, բայց Steam-ի ոչ մի սերվեր հասանելի չէ → **Valve կամ provider** (նայիր steamstat.us-ը և փորձիր հեռախոսի hotspot-ով)
+6. Steam-ի սերվերների միայն մի մասն է հասանելի → **provider, firewall կամ VPN**
+7. Steam-ը հասանելի է, 1.1.1.1-ը պատասխանում է ping-ին, իսկ Valve-ի relay-ները՝ ոչ → **provider-ի route-ը դեպի Valve**
+8. Packet loss > 5%, ping > 150 ms կամ jitter > 30 ms → **կապի որակը**
+9. Ամեն ինչ կարգին է → **ցանցը կարգին է, խնդիրը համակարգչում կամ Steam client-ում է**
 
 Ամեն եզրակացության հետ կան գործնական խորհուրդներ. օրինակ՝ վերագործարկել router-ը, DNS-ը փոխել 1.1.1.1 / 8.8.8.8,
 firewall-ում թույլատրել `steam.exe`-ն և `dota2.exe`-ն, ստուգել հեռախոսի hotspot-ով կամ ստուգել խաղի ֆայլերը։
@@ -91,20 +93,15 @@ firewall-ում թույլատրել `steam.exe`-ն և `dota2.exe`-ն, ստու�
 |---|---|
 | Windows 10 / 11 | ✅ Լիարժեք աջակցվում է |
 | Linux | ⚠️ Աշխատում է, բայց կան հայտնի խնդիրներ |
-| macOS | ⚠️ Աշխատում է, բայց relay-ների ping-ը կոտրված է |
+| macOS | ⚠️ Աշխատում է, բայց իրական Mac-ի վրա դեռ չի ստուգվել |
 
 ### Հայտնի խնդիրներ (կուղղվեն)
 
-- **macOS. relay-ների ping-ը միշտ ձախողվում է։** Windows-ից դուրս tool-ը կանչում է համակարգի `ping` հրամանը `-W 1`-ով։
-  Linux-ում `-W`-ն վայրկյան է, իսկ macOS-ում՝ միլիվայրկյան, այնպես որ ամեն ping 1 ms հետո դադարում է սպասել։
-  Արդյունքում tool-ը գրում է, որ ICMP-ն փակ է, և բաց է թողնում ping-ի, packet loss-ի և jitter-ի ստուգումը։
-- **Linux. ping-ի արդյունքը կարդացվում է `ping`-ի text-ից։** Սովորական `time=… ms` ձևաչափով աշխատում է, բայց այդ text-ը
-  կարող է կախված լինել համակարգի լեզվից։ Պետք է գործարկել չեզոք locale-ով կամ անել native implementation, ինչպես Windows-ում։
+- **macOS և Linux. ping-ն արվում է համակարգի `ping` հրամանով։** v0.1.1-ից timeout-ը փոխանցվում է ճիշտ միավորով
+  (macOS-ում՝ միլիվայրկյան, Linux-ում՝ վայրկյան), և հրամանը գործարկվում է չեզոք locale-ով, այնպես որ արդյունքը կախված չէ
+  համակարգի լեզվից։ Նախատեսված է native implementation առանց `ping` հրամանի, ինչպես Windows-ում։
 - **Խորհուրդները Windows-ի համար են։** Որոշ խորհուրդներում նշված են Windows Firewall, `ipconfig /flushdns`, network adapter-ի կարգավորումներ
   և `steam.exe` / `dota2.exe`։ macOS-ում և Linux-ում դրանք չեն գործում։
-- **SSL certificate-ի խնդիրները վերագրվում են provider-ին։** Եթե Python-ը չգտնի համակարգի CA certificate-ները
-  (դա լինում է macOS-ի որոշ Python տեղադրումներում), Steam API-ի հարցումները ձախողվում են SSL սխալով։ Tool-ը եզրակացնում է,
-  որ provider-ը փակում է Valve-ի սերվերների մի մասը, մինչդեռ իրական խնդիրը համակարգչում է։
 - **macOS-ում և Linux-ում CI դեռ չկա։** Test-երը օգտագործում են fake ցանց և պետք է ամենուր անցնեն, բայց վերևի խնդիրները չեն ծածկում։
 
 ### Համակարգի նվազագույն տարբերակներ
@@ -131,7 +128,12 @@ tests/
   fakes.py            fake ցանց՝ ամեն մասը կոտրելու switch-երով
   test_scenarios.py   end-to-end սցենարներ. կոտրիր մի բան, սպասիր մեկ եզրակացություն
   test_parsing.py     Valve-ի API պատասխանների parsing
+  test_net_helpers.py HTTP սխալների մշակում, ping հրամանը, version-ի համաժամեցում
+  test_claude_hooks.py Claude Code-ի guard hook-ը այս repo-ում
 ```
+
+Մշակման նշումներ. նախատեսված աշխատանքը [TASKS.md](TASKS.md)-ում է, փոփոխությունների պատմությունը՝ [CHANGELOG.md](CHANGELOG.md)-ում,
+իսկ մասնակիցների և AI agent-ների կանոնները՝ [CLAUDE.md](CLAUDE.md)-ում (անգլերեն)։
 
 ## Հետագա պլաններ
 

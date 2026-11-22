@@ -7,6 +7,7 @@ Only the standard library is used here, so the module also runs without Qt
 
 from __future__ import annotations
 
+import http.client
 import json
 import socket
 import ssl
@@ -17,14 +18,16 @@ import urllib.request
 from collections.abc import Callable, Iterable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
+from itertools import pairwise
 from typing import Any
 
-from . import icmp
+from . import __version__, icmp
 from .models import CheckResult, Status
 
 TCP_TIMEOUT_S = 3.0
 HTTP_TIMEOUT_S = 8.0
-USER_AGENT = "dota-netcheck/0.1"
+MAX_BODY_BYTES = 4_000_000  # Valve's largest answer (the SDR config) is far below this
+USER_AGENT = f"dota-netcheck/{__version__}"
 
 CM_LIST_URL = (
     "https://api.steampowered.com/ISteamDirectory/GetCMListForConnect/v1/"
@@ -107,26 +110,36 @@ def tcp_probe(host: str, port: int, timeout: float = TCP_TIMEOUT_S) -> tuple[flo
 
 
 class HttpFailure(Exception):
-    def __init__(self, message: str, status: int | None = None) -> None:
+    def __init__(self, message: str, status: int | None = None, cert_error: str | None = None) -> None:
         super().__init__(message)
         self.status = status
+        # Set (to the reason) only when the server's certificate was rejected: system clock, antivirus
+        # HTTPS scanning, captive portal or missing CA certificates. Other TLS errors, such as a handshake
+        # cut off by a middlebox, stay unflagged because they can be the provider's route.
+        self.cert_error = cert_error
 
 
 def http_get_json(url: str, timeout: float = HTTP_TIMEOUT_S) -> tuple[Any, float]:
-    req = urllib.request.Request(
+    req = urllib.request.Request(  # noqa: S310 - only the constant https URLs above
         url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"}
     )
     t0 = time.perf_counter()
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            body = resp.read()
+        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 - constant https URLs
+            body = resp.read(MAX_BODY_BYTES + 1)
     except urllib.error.HTTPError as exc:
         raise HttpFailure(f"HTTP {exc.code}", status=exc.code) from exc
     except urllib.error.URLError as exc:
-        raise HttpFailure(short_error(exc.reason)) from exc
-    except OSError as exc:
+        reason = exc.reason
+        cert = None
+        if isinstance(reason, ssl.SSLCertVerificationError):
+            cert = getattr(reason, "verify_message", None) or "certificate verify failed"
+        raise HttpFailure(short_error(reason), cert_error=cert) from exc
+    except (OSError, http.client.HTTPException) as exc:  # e.g. the link drops while reading the body
         raise HttpFailure(short_error(exc)) from exc
     ms = (time.perf_counter() - t0) * 1000
+    if len(body) > MAX_BODY_BYTES:
+        raise HttpFailure("պատասխանը չափազանց մեծ է", status=200)
     try:
         return json.loads(body), ms
     except ValueError as exc:
@@ -234,6 +247,16 @@ def check_steam_api(ctx: Context) -> CheckResult:
                 [CM_LIST_URL],
                 data={"reached": True, "server_error": True},
             )
+        if exc.cert_error:
+            # The certificate presented for Valve's name was rejected, so we can't tell whether Valve was
+            # reached at all. Usually the PC or a captive portal, not the provider's route.
+            return CheckResult(
+                "steam_api",
+                Status.FAIL,
+                f"Steam-ի հետ անվտանգ (HTTPS) կապը չհաստատվեց ({exc})",
+                [CM_LIST_URL, f"Սերտիֆիկատ՝ {exc.cert_error}"],
+                data={"reached": False, "cert_error": True},
+            )
         return CheckResult(
             "steam_api",
             Status.FAIL,
@@ -242,7 +265,9 @@ def check_steam_api(ctx: Context) -> CheckResult:
             data={"reached": False},
         )
 
-    servers = (data.get("response") or {}).get("serverlist") or []
+    response = data.get("response") if isinstance(data, dict) else None
+    servers = response.get("serverlist") if isinstance(response, dict) else None
+    servers = [s for s in servers if isinstance(s, dict)] if isinstance(servers, list) else []
     if not servers:
         return CheckResult(
             "steam_api",
@@ -255,7 +280,7 @@ def check_steam_api(ctx: Context) -> CheckResult:
     dcs: list[str] = []
     for s in servers:
         dc = s.get("dc")
-        if dc and dc not in dcs:
+        if isinstance(dc, str) and dc and dc not in dcs:
             dcs.append(dc)
     return CheckResult(
         "steam_api",
@@ -275,10 +300,12 @@ def pick_cm_targets(servers: list[dict[str, Any]], limit: int = CM_TARGETS) -> l
     pool = websockets or servers
     out: list[tuple[str, int, str]] = []
     for s in pool:
-        host, sep, port = (s.get("endpoint") or "").rpartition(":")
+        endpoint = s.get("endpoint")
+        host, sep, port = (endpoint if isinstance(endpoint, str) else "").rpartition(":")
         if not sep or not host or not port.isdigit():
             continue
-        out.append((host, int(port), s.get("dc") or "?"))
+        dc = s.get("dc")
+        out.append((host, int(port), dc if isinstance(dc, str) and dc else "?"))
         if len(out) >= limit:
             break
     return out
@@ -382,9 +409,7 @@ def measure_quality(pop: Pop, count: int = QUALITY_PINGS) -> Quality:
     rtts = icmp.ping_series(pop.ip, count)
     got = [r for r in rtts if r is not None]
     avg = statistics.fmean(got) if got else None
-    jitter = (
-        statistics.fmean(abs(a - b) for a, b in zip(got, got[1:])) if len(got) >= 2 else None
-    )
+    jitter = statistics.fmean(abs(a - b) for a, b in pairwise(got)) if len(got) >= 2 else None
     return Quality(pop, count, len(got), avg, jitter)
 
 
@@ -497,7 +522,7 @@ def run_checks(
         else:
             try:
                 res = spec.func(ctx)
-            except Exception as exc:  # a bug in a check must not kill the run
+            except Exception as exc:  # noqa: BLE001 - a bug in a check must not kill the run
                 res = CheckResult(spec.key, Status.SKIP, f"Ստուգման ներքին սխալ՝ {short_error(exc)}")
         res.title = spec.title
         results[spec.key] = res

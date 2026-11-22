@@ -44,13 +44,14 @@ class FakeNet:
             checks.GC_VERSION_URL: GC_OK,
         }
         self.tcp_ok = True
+        self.cert_ok = True  # False: HTTPS certificate check fails (clock, antivirus, captive portal)
         self.relays_ok = True
         self.control_ok = True
         self.loss_every: int | None = None  # drop every Nth relay ping
         self.relay_extra_ms = 0.0
         self._count = 0
 
-    def install(self, monkeypatch) -> "FakeNet":
+    def install(self, monkeypatch) -> FakeNet:
         monkeypatch.setattr(checks, "tcp_probe", self.tcp_probe)
         monkeypatch.setattr(checks, "_resolve", self.resolve)
         monkeypatch.setattr(checks, "http_get_json", self.http_get_json)
@@ -75,6 +76,8 @@ class FakeNet:
     def http_get_json(self, url, timeout=0):
         if not (self.internet and self.dns and self.tcp_ok):
             raise checks.HttpFailure("timeout")
+        if not self.cert_ok:
+            raise checks.HttpFailure("SSL սխալ", cert_error="certificate has expired")
         value = self.http[url]
         if isinstance(value, int):
             raise checks.HttpFailure(f"HTTP {value}", status=value)

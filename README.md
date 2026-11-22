@@ -46,6 +46,7 @@ Other commands:
 ```powershell
 uv run dota-netcheck --cli    # runs in the terminal, no window
 uv run pytest                 # runs the tests (offline, uses a fake network)
+uv run ruff check             # lints the code
 ```
 
 ## What it checks
@@ -68,12 +69,13 @@ The rules in [`verdict.py`](src/dota_netcheck/verdict.py) are checked from top t
 
 1. No internet → **your side**
 2. DNS can't resolve Steam → **your side (DNS)**
-3. Valve answers with a 5xx error or an empty server list, or the GC reports `success=false` → **Valve's side**
-4. The internet works, but no Steam server is reachable → **Valve or your provider** (check steamstat.us and try a phone hotspot)
-5. Only some Steam servers are reachable → **provider, firewall or VPN**
-6. Steam is reachable and 1.1.1.1 answers ping, but Valve's relays don't → **your provider's route to Valve**
-7. Packet loss > 5%, ping > 150 ms or jitter > 30 ms → **connection quality**
-8. Everything passes → **the network is fine; the problem is on your PC or in the Steam client**
+3. HTTPS to Steam fails the certificate check → **your side** (wrong system clock, antivirus HTTPS scanning, a Wi-Fi login page or missing CA certificates; not your provider)
+4. Valve answers with a 5xx error or an empty server list, or the GC reports `success=false` → **Valve's side**
+5. The internet works, but no Steam server is reachable → **Valve or your provider** (check steamstat.us and try a phone hotspot)
+6. Only some Steam servers are reachable → **provider, firewall or VPN**
+7. Steam is reachable and 1.1.1.1 answers ping, but Valve's relays don't → **your provider's route to Valve**
+8. Packet loss > 5%, ping > 150 ms or jitter > 30 ms → **connection quality**
+9. Everything passes → **the network is fine; the problem is on your PC or in the Steam client**
 
 Each verdict comes with practical advice, such as restarting the router, switching DNS to 1.1.1.1 / 8.8.8.8,
 allowing `steam.exe` and `dota2.exe` through the firewall, testing over a phone hotspot, or verifying the game files.
@@ -93,20 +95,15 @@ The goal is for the tool to run on Windows, macOS and Linux. For now, only Windo
 |---|---|
 | Windows 10 / 11 | ✅ Fully supported |
 | Linux | ⚠️ Runs, with known issues |
-| macOS | ⚠️ Runs, but the relay ping check is broken |
+| macOS | ⚠️ Runs, not yet tested on a real Mac |
 
 ### Known issues (fixes planned)
 
-- **macOS: relay ping always fails.** Outside Windows, the tool runs the system `ping` command with `-W 1`.
-  On Linux, `-W` is in seconds, but on macOS it is in milliseconds, so every ping gives up after 1 ms.
-  The tool then reports ICMP as blocked and skips the ping, packet loss and jitter check.
-- **Linux: ping relies on parsing `ping` output.** It works with the usual `time=… ms` output, but that output
-  can depend on the system language. It should run in a neutral locale, or use a native implementation like on Windows.
+- **macOS and Linux: ping uses the system `ping` command.** Since v0.1.1 it passes the timeout in the right unit
+  (milliseconds on macOS, seconds on Linux) and runs in a neutral locale, so the output doesn't depend on the system
+  language. A native implementation without the `ping` command, like the one on Windows, is planned.
 - **Advice is Windows-specific.** Some tips mention Windows Firewall, `ipconfig /flushdns`, network adapter settings
   and `steam.exe` / `dota2.exe`. These don't apply on macOS or Linux.
-- **SSL certificate problems are blamed on the provider.** If Python can't find the system's CA certificates
-  (this happens with some macOS Python installs), Steam API requests fail with an SSL error. The tool then concludes
-  that your provider blocks part of Valve's servers, but the actual problem is on your computer.
 - **No CI on macOS and Linux yet.** The tests use a fake network and should pass everywhere, but they don't
   cover the issues above.
 
@@ -134,7 +131,12 @@ tests/
   fakes.py            fake network with switches to break each part
   test_scenarios.py   end-to-end scenarios: break one thing, expect one verdict
   test_parsing.py     parsing of Valve's API responses
+  test_net_helpers.py HTTP error handling, the ping command, version sync
+  test_claude_hooks.py the guard hook used by Claude Code in this repo
 ```
+
+Development notes: planned work is in [TASKS.md](TASKS.md), the history of changes in [CHANGELOG.md](CHANGELOG.md),
+and the rules for contributors and AI agents in [CLAUDE.md](CLAUDE.md).
 
 ## Roadmap
 

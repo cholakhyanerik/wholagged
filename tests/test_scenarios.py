@@ -79,6 +79,17 @@ def test_valve_unreachable_but_internet_ok(net):
     assert verdict.side == Side.UNCLEAR
 
 
+def test_certificate_failure_is_blamed_on_the_pc_not_the_provider(net):
+    net.cert_ok = False
+    results, verdict = run(net)
+    assert results["steam_api"].status == Status.FAIL
+    assert results["steam_api"].data["cert_error"] is True
+    assert any("certificate has expired" in d for d in results["steam_api"].details)
+    assert results["steam_cm"].status == Status.OK  # plain TCP to Steam still works
+    assert verdict.side == Side.YOU
+    assert "HTTPS" in verdict.headline
+
+
 def test_relays_silent_while_internet_pings(net):
     net.relays_ok = False
     results, verdict = run(net)
@@ -116,6 +127,13 @@ def test_report_contains_everything(net):
     for spec in checks.CHECKS:
         assert spec.title in text
     assert verdict.headline in text
+
+
+def test_garbage_cm_list_is_not_a_crash(net):
+    net.http[checks.CM_LIST_URL] = {"response": {"serverlist": ["x", 5, {"endpoint": 7, "dc": ["fra"]}]}}
+    results, _ = run(net)
+    assert results["steam_api"].status == Status.OK  # one dict entry survives the type checks
+    assert results["steam_cm"].data["fallback"] is True  # but it has no usable endpoint
 
 
 def test_a_crashing_check_does_not_kill_the_run(net, monkeypatch):
