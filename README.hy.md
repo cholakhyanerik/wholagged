@@ -5,7 +5,7 @@
 [![Python 3.15+](https://img.shields.io/badge/python-3.15%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows&logoColor=white)](#պահանջներ)
 [![GUI: PySide6](https://img.shields.io/badge/GUI-PySide6-41CD52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue)](LICENSE)
 [![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-EA4AAA?logo=githubsponsors&logoColor=white)](#աջակցիր-նախագծին)
 
 **Dota 2-ը կախվել է «Searching for Game Coordinator»-ի վրա։ Խնդիրը քո internet-ի՞ց է, provider-ի՞ց, թե՞ Valve-ի սերվերներից։**
@@ -135,7 +135,7 @@ tests/
 
 ## Հետագա պլաններ
 
-Հիմնական tool-ը անվճար է և open source, և այդպես էլ կմնա։
+Tool-ը անձնական օգտագործման համար անվճար է, և նրա ամբողջ կոդը, ներառյալ ապագա Pro տարբերակը, կմնա public։
 
 Պլանավորված է.
 
@@ -158,7 +158,7 @@ tests/
 - միշտ հստակ նշված կլինեն որպես առաջարկ և որպես affiliate հղում.
 - կհայտնվեն միայն այն ժամանակ, երբ եզրակացությունը ցույց է տալիս provider-ի route-ը կամ անկայուն կապը, որտեղ նման ծառայությունն իսկապես կարող է օգնել.
 - երբեք չեն հայտնվի, երբ խնդիրը Valve-ի կողմից է, քո Wi-Fi-ում կամ համակարգչում.
-- երբեք չեն փոխի եզրակացությունը։ Եզրակացության տրամաբանությունը open source է [`verdict.py`](src/dota_netcheck/verdict.py)-ում, և ցանկացած մարդ կարող է դա ստուգել։
+- երբեք չեն փոխի եզրակացությունը։ Եզրակացության տրամաբանությունը public է [`verdict.py`](src/dota_netcheck/verdict.py)-ում, և ցանկացած մարդ կարող է դա ստուգել։
 
 ## Աջակցիր նախագծին
 
@@ -168,7 +168,17 @@ tests/
 
 ## Լիցենզիա
 
-Նախագիծը տարածվում է [MIT License](LICENSE)-ով։
+wholagged-ը **source-available** է և տարածվում է [PolyForm Noncommercial License 1.0.0](LICENSE)-ով։
+Կոդը public է, բայց OSI-ի իմաստով open source չէ։
+
+- ✅ **Ոչ commercial օգտագործումն անվճար է.** անձնական օգտագործում, խաղ, hobby նախագծեր և ուսում, ինչպես նաև
+  բարեգործական կազմակերպությունների, դպրոցների և այլ ոչ commercial կազմակերպությունների կողմից օգտագործում։
+  Կարող ես փոխել կոդը և տարածել այն, եթե այն մնում է ոչ commercial և տարածվում է license-ի հետ միասին։
+- ❌ **Commercial օգտագործման համար պետք է հեղինակից առանձին license։** Սա ներառում է software-ը կամ դրա
+  հիման վրա ստեղծված ցանկացած բան վաճառելը, այն որպես վճարովի ծառայություն առաջարկելը և business-ի ներսում
+  օգտագործելը (օրինակ՝ computer club-ում կամ գրասենյակում)։
+
+Commercial license-ի համար [բաց արա issue](https://github.com/cholakhyanerik/wholagged/issues) կամ կապվիր հեղինակի հետ GitHub-ում։
 
 ## Իրավական նշում
 

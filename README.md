@@ -5,7 +5,7 @@
 [![Python 3.15+](https://img.shields.io/badge/python-3.15%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows&logoColor=white)](#requirements)
 [![GUI: PySide6](https://img.shields.io/badge/GUI-PySide6-41CD52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue)](LICENSE)
 [![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-EA4AAA?logo=githubsponsors&logoColor=white)](#support-the-project)
 
 **Dota 2 is stuck on "Searching for Game Coordinator". Is the problem your internet, your provider, or Valve's servers?**
@@ -138,7 +138,7 @@ tests/
 
 ## Roadmap
 
-The core checker is free and open source, and it will stay that way.
+The checker is free for personal use, and all of its source code, including the future Pro version, will stay public.
 
 Planned:
 
@@ -161,7 +161,7 @@ suggestions may be affiliate links. If that happens, these suggestions will:
 - always be clearly marked as a recommendation and as an affiliate link;
 - appear only when the verdict points to your provider's route or an unstable connection, where such a service can actually help;
 - never appear when the problem is on Valve's side, on your Wi-Fi or on your PC;
-- never change the verdict itself. The verdict logic is open source in [`verdict.py`](src/dota_netcheck/verdict.py), so anyone can check this.
+- never change the verdict itself. The verdict logic is public in [`verdict.py`](src/dota_netcheck/verdict.py), so anyone can check this.
 
 ## Support the project
 
@@ -171,7 +171,16 @@ If this tool saved you some frustration while waiting in the queue, you can supp
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+wholagged is **source-available** under the [PolyForm Noncommercial License 1.0.0](LICENSE).
+The code is public, but it is not open source in the OSI sense.
+
+- ✅ **Free for noncommercial use:** personal use, gaming, hobby projects and study, and use by charities,
+  schools and other noncommercial organizations. You may change the code and share it, as long as it stays
+  noncommercial and comes with the license.
+- ❌ **Commercial use requires a separate license from the author.** This includes selling the software or
+  anything based on it, offering it as a paid service, and using it inside a business (for example, a computer club or an office).
+
+For a commercial license, [open an issue](https://github.com/cholakhyanerik/wholagged/issues) or contact the author on GitHub.
 
 ## Disclaimer
 
