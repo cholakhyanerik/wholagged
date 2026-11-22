@@ -5,6 +5,15 @@ Each entry: the decision, then why. Revisit an entry by adding a new one; don't 
 
 ## 2026-11-22
 
+- **The product name lives in one constant, `APP_NAME` in the package `__init__`**, next to `__version__`.
+  The window, the CLI banner and the report use it, so the name isn't scattered again.
+- **The report header and the CLI banner carry the version and the game (`wholagged 0.2.0 · Dota 2`).** The card only asked for the
+  name. A pasted report is most useful when you can tell which version wrote it, and the layout stays the
+  same: the header is still a single line.
+- **The subtitle, the CLI banner and the report header name the game ("Dota 2")**, so when CS2 and Deadlock arrive the game becomes
+  a `{game}` placeholder (the translator suggested hy `Ստուգում է {game}-ի կապը՝ …`). The window title and
+  the big title label in the window are just "wholagged".
+- **WL-10 bumps the minor version (0.2.0)**: its card type is `feature` and the name is visible to users.
 - **CI keeps no uv cache (`enable-cache: false`), against WL-1's "uv cache" criterion.** The first run
   measured on Linux a cold `uv sync --locked` (Python 3.15 and PySide6 included) at 2 s and the cache save at 4 s, and
   the cache key changes with every version bump. The `ci-workflow` skill now says so; turn the cache back on

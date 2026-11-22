@@ -101,3 +101,7 @@ def test_version_is_the_same_everywhere():
     pyproject = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text(encoding="utf-8"))
     assert pyproject["project"]["version"] == dota_netcheck.__version__
     assert checks.USER_AGENT.endswith("/" + dota_netcheck.__version__)
+
+
+def test_product_name_is_wholagged():
+    assert dota_netcheck.APP_NAME == "wholagged"

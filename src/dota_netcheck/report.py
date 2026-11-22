@@ -5,6 +5,7 @@ from __future__ import annotations
 import platform
 from datetime import datetime
 
+from . import APP_NAME, __version__
 from .models import CheckResult, Status, Verdict
 
 MARKS = {Status.OK: "[OK]", Status.WARN: "[ ! ]", Status.FAIL: "[XX]", Status.SKIP: "[ - ]"}
@@ -20,7 +21,7 @@ SIDE_LABELS = {
 
 def build_report(results: dict[str, CheckResult], verdict: Verdict | None) -> str:
     lines = [
-        "Dota 2 Network Check",
+        f"{APP_NAME} {__version__} · Dota 2",
         f"Ժամանակ: {datetime.now().astimezone():%Y-%m-%d %H:%M:%S %Z}",
         f"Համակարգ: {platform.system()} {platform.release()}",
         "",

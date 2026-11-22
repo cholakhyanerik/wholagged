@@ -4,6 +4,15 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.2.0] - 2026-11-22
+
+### Changed
+- The app is now called **wholagged** everywhere you see it: the window title, the header, the terminal
+  output and the copied report (it was "Dota 2 Network Check"). The subtitle says the app checks your
+  Dota 2 connection. (WL-10)
+- The report and the terminal output now start with the app version and the game (`wholagged 0.2.0 · Dota 2`), so a pasted
+  report shows which version produced it. (WL-10)
+
 ## [0.1.3] - 2026-11-22
 
 ### Added
@@ -80,6 +89,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.2.0]: https://github.com/cholakhyanerik/wholagged/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/cholakhyanerik/wholagged/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/cholakhyanerik/wholagged/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/cholakhyanerik/wholagged/compare/v0.1.0...v0.1.1

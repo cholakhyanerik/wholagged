@@ -35,13 +35,6 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-10 · Show "wholagged" as the app name everywhere in the UI
-`feature` · `P1` · `XS` · BRAND · depends on: —
-The name is decided; the window still says "Dota 2 Network Check".
-- [ ] window title, header, `QApplication` name, CLI banner and report header say **wholagged**
-- [ ] the subtitle says which games it checks (Dota 2 for now)
-- [ ] tests and README updated
-
 ### WL-11 · Rename the package `dota_netcheck` → `wholagged`
 `chore` · `P1` · `S` · BRAND · depends on: WL-1
 - [ ] `src/wholagged/`, all imports, tests, `README*` structure sections and `CLAUDE.md` updated
@@ -52,6 +45,7 @@ The name is decided; the window still says "Dota 2 Network Check".
 Old commands must keep working.
 - [ ] `[project] name = "wholagged"`, scripts `wholagged` and `dota-netcheck` (deprecated alias)
 - [ ] both `uv run wholagged` and `uv run dota-netcheck` work; CHANGELOG notes the deprecation
+- [ ] `[project] description` starts with wholagged (it still says "Dota 2 network check")
 
 ### WL-13 · Use the new name in the User-Agent and the ICMP payload
 `chore` · `P2` · `XS` · BRAND · depends on: WL-11
@@ -271,6 +265,7 @@ Needed to separate Wi-Fi/router problems from provider problems.
 ### WL-92 · Headless GUI smoke test in pytest
 `test` · `P2` · `XS` · QUALITY · depends on: —
 - [ ] `QT_QPA_PLATFORM=offscreen`, builds `MainWindow`, runs a check against `FakeNet`, sees the verdict card
+- [ ] asserts `windowTitle()` and the `title` label equal `APP_NAME` (WL-10 checked this only by hand)
 - [ ] passes in CI: on `ubuntu-latest` Qt needs `libegl1` and `libxkbcommon0` (install them in `ci.yml`, or
       skip the test cleanly when Qt can't load)
 

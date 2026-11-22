@@ -1,4 +1,4 @@
-"""PySide6 window for Dota 2 Network Check."""
+"""PySide6 window for wholagged."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from . import __version__
+from . import APP_NAME, __version__
 from .checks import CHECKS, CheckSpec, run_checks
 from .models import CheckResult, Side, Status, Verdict
 from .report import build_report
@@ -244,7 +244,7 @@ class CheckWorker(QThread):
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("Dota 2 Network Check")
+        self.setWindowTitle(APP_NAME)
         self.resize(760, 860)
         self.worker: CheckWorker | None = None
         self.results: dict[str, CheckResult] = {}
@@ -255,9 +255,9 @@ class MainWindow(QMainWindow):
         lay.setContentsMargins(28, 24, 28, 24)
         lay.setSpacing(12)
 
-        title = QLabel("Dota 2 Network Check")
+        title = QLabel(APP_NAME)
         title.setObjectName("title")
-        subtitle = QLabel("Ստուգում է՝ խնդիրը քո internet-ի՞ց է, provider-ի՞ց, թե՞ Valve-ի սերվերներից")
+        subtitle = QLabel("Ստուգում է Dota 2-ի կապը՝ խնդիրը քո internet-ի՞ց է, provider-ի՞ց, թե՞ Valve-ի սերվերներից")
         subtitle.setObjectName("subtitle")
         subtitle.setWordWrap(True)
         lay.addWidget(title)
@@ -369,7 +369,7 @@ class MainWindow(QMainWindow):
 
 def run_gui() -> int:
     app = QApplication.instance() or QApplication(sys.argv)
-    app.setApplicationName("Dota 2 Network Check")
+    app.setApplicationName(APP_NAME)
     if sys.platform == "win32":
         app.setFont(QFont("Segoe UI", 10))
     app.setStyleSheet(STYLE)

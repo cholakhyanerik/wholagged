@@ -13,14 +13,15 @@ advice and builds a plain-text report the user can send to their provider.
 - **Stack:** Python 3.15 · PySide6 (`pyside6-essentials`) for the window · standard library for all
   networking · uv · pytest · ruff.
 - **Platforms:** Windows 10/11 fully supported; macOS and Linux run but are still in progress.
-- **Names:** the product and repo are `wholagged`. The package is still `dota_netcheck` and the command
-  `dota-netcheck` until WL-11 / WL-12 rename them; keep `dota-netcheck` working as an alias after that.
+- **Names:** the product and repo are `wholagged`; the UI shows `APP_NAME` from `__init__.py` (never
+  hard-code the name). The package is still `dota_netcheck` and the command `dota-netcheck` until
+  WL-11 / WL-12 rename them; keep `dota-netcheck` working as an alias after that.
 - **License:** PolyForm Noncommercial 1.0.0. The repo is **public**. External contributions will need a CLA.
-- **Status:** v0.1.x. The road to 1.0 is in [TASKS.md](TASKS.md).
+- **Status:** v0.2.x. The road to 1.0 is in [TASKS.md](TASKS.md).
 
 ```
 src/dota_netcheck/
-  __init__.py  entry point: GUI by default, --cli for the terminal; __version__
+  __init__.py  entry point: GUI by default, --cli for the terminal; __version__, APP_NAME
   checks.py    the six checks + run_checks(); standard library only
   icmp.py      ping: IcmpSendEcho via ctypes on Windows, the `ping` command elsewhere
   verdict.py   decide(): ordered rules → Verdict (side, headline, explanation, advice)

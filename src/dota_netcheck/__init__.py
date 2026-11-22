@@ -1,10 +1,11 @@
-"""Dota 2 Network Check: is it your internet or Valve's servers?"""
+"""wholagged: is it your internet, your provider or Valve's servers? (Dota 2 for now.)"""
 
 from __future__ import annotations
 
 import sys
 
-__version__ = "0.1.3"
+__version__ = "0.2.0"
+APP_NAME = "wholagged"  # the product name shown in the window, the CLI and the report
 
 
 def run_cli() -> int:
@@ -12,7 +13,7 @@ def run_cli() -> int:
     from .report import MARKS, SIDE_LABELS
     from .verdict import decide
 
-    print("Dota 2 Network Check — ստուգում եմ...\n", flush=True)
+    print(f"{APP_NAME} {__version__} · Dota 2 — ստուգում եմ...\n", flush=True)
 
     def on_result(res):
         print(f"{MARKS[res.status]} {res.title}: {res.summary}", flush=True)

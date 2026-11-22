@@ -21,7 +21,7 @@ and gives you a verdict on where the problem is, with steps to fix it.
 
 - **One-click diagnosis.** Six checks run one after another, and the window updates as each one finishes.
 - **A clear verdict.** The tool tells you whose side the problem is on (yours, your provider's, Valve's, or your PC / Steam client) and lists what to do next.
-- **A report you can copy.** The *Copy report* button copies all results to the clipboard as plain text, so you can send them to your ISP's support team as evidence.
+- **A report you can copy.** The *Copy report* button copies all results to the clipboard as plain text, headed by the app name and version, so you can send them to your ISP's support team as evidence.
 - **No admin rights needed.** Ping uses the Windows `IcmpSendEcho` API directly, so there is no UAC prompt, no console window flashes up, and the results don't depend on the Windows language.
 - **GUI or terminal.** The tool opens a PySide6 window by default, and `--cli` prints the same checks as text in the terminal.
 - **Quick links** to [steamstat.us](https://steamstat.us/) and [isdown.app](https://isdown.app/status/dota-2), so you can compare with what other players are seeing.
@@ -151,8 +151,8 @@ Planned:
   from a problem on your provider's side.
 - **More Valve games:** CS2 and Deadlock use the same Valve relay network, so the same checks can cover them.
   The name wholagged isn't tied to any game, so it stays the same.
-- **One name everywhere:** the window title, the package and the command are still called
-  *Dota 2 Network Check* / `dota-netcheck`. They will be renamed to wholagged.
+- **One name everywhere:** the window, the terminal output and the report already say wholagged (since v0.2.0).
+  The package and the command are still called `dota_netcheck` / `dota-netcheck`; they will be renamed too.
 - **Background monitoring (paid Pro version):** record ping and packet loss for the whole day, show graphs,
   and build a PDF report you can send to your provider as evidence.
 - **Microsoft Store** release.
