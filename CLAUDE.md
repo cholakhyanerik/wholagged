@@ -171,13 +171,15 @@ The look is defined in `gui.py`; reuse it, don't invent new styles.
 
 ## GitHub Actions budget
 
-`.github/workflows/ci.yml` runs `uv sync --locked`, ruff and pytest on `ubuntu-latest` for code pushes to
-`main` and PRs (the `paths` list: `src`, `tests`, `.claude/hooks`, `pyproject.toml`, `uv.lock`,
-`.python-version`, workflows). Docs-only and tag pushes don't run it. Every change under `.github/` follows the
-`ci-workflow` skill: narrow `paths`, `concurrency` cancel-in-progress, `timeout-minutes: 10`, uv cache,
-SHA-pinned actions, Windows only for tests, macOS only on PRs or manual runs, release builds only on
-`release: published` / `workflow_dispatch`, no cron jobs. Run lint and tests locally before every push, then
-check the run once (`gh run list --workflow ci.yml --limit 1`).
+`.github/workflows/ci.yml` runs `uv sync --locked` and pytest on `ubuntu-latest` + `windows-latest` (ruff
+on Linux only) for code pushes to `main` and PRs (the `paths` list: `src`, `tests`, `.claude/hooks`,
+`pyproject.toml`, `uv.lock`, `.python-version`, workflows). Docs-only commits and tag pushes don't run it,
+but a task's version bump does. The Windows job runs the same tests as Linux: FakeNet replaces `icmp.ping`,
+so the ctypes ping isn't covered yet (WL-95). Every change under `.github/` follows the `ci-workflow`
+skill: narrow `paths`, `concurrency` cancel-in-progress, `timeout-minutes: 10`, no uv cache (measured
+slower), SHA-pinned actions, a checksum-verified uv, Windows only for tests, macOS only on PRs or manual
+runs, release builds only on `release: published` / `workflow_dispatch`, no cron jobs. Run lint and tests
+locally before every push, then check the run once (`gh run list --workflow ci.yml --limit 1`).
 Local `actionlint` via `uvx` is refused by the auto-mode classifier; the first CI run validates a workflow.
 
 ## Claude Code tooling in `.claude/`

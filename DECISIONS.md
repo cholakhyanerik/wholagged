@@ -5,6 +5,12 @@ Each entry: the decision, then why. Revisit an entry by adding a new one; don't 
 
 ## 2026-11-22
 
+- **CI keeps no uv cache (`enable-cache: false`), against WL-1's "uv cache" criterion.** The first run
+  measured on Linux a cold `uv sync --locked` (Python 3.15 and PySide6 included) at 2 s and the cache save at 4 s, and
+  the cache key changes with every version bump. The `ci-workflow` skill now says so; turn the cache back on
+  only if timings show it pays off.
+- **ruff runs only in the Linux job of the matrix:** lint results don't depend on the OS, so the Windows job
+  only syncs and tests.
 - **CI also triggers on `.claude/hooks/**` and `.python-version`**, beyond the skill's original list:
   `tests/test_claude_hooks.py` loads the guard hook, and `.python-version` picks the Python that uv installs
   in CI. The `paths` list is written once as a YAML anchor (supported by GitHub Actions) and reused for

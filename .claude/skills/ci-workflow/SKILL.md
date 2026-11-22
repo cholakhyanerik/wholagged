@@ -21,9 +21,12 @@ Windows minutes count 2× and macOS minutes 10×; write every workflow as if it 
 5. **Cheapest runner by default:** `ubuntu-latest` for lint and tests. Add `windows-latest` (the main platform)
    only to the test job. Add `macos-latest` only where macOS behaviour is under test, ideally on
    `pull_request` or `workflow_dispatch` only.
-6. **Cache:** `astral-sh/setup-uv`'s default `enable-cache: auto` caches on GitHub-hosted runners (and skips
-   release and tag events); install with `uv sync --locked`. Release or signing jobs set `enable-cache: false`.
-7. `fail-fast: true` in matrices; one job for lint and tests when possible.
+6. **No uv cache** (`enable-cache: false`); install with `uv sync --locked`. Measured in WL-1 on Linux: a cold
+   `uv sync` took 2 s and saving the cache 4 s, and setup-uv keys the cache on `pyproject.toml` + `uv.lock`,
+   which every task's version bump changes. Turn it on only when timings show it saves time (e.g. packages
+   built from source), and never in release or signing jobs.
+7. `fail-fast: true` in matrices; one job for lint and tests when possible, with lint only on Linux
+   (`if: runner.os == 'Linux'`), because its result doesn't depend on the OS.
 8. Artifacts only when needed, with `retention-days: 3`. Release builds only on `release: published` or
    `workflow_dispatch`, never on `push: tags` (every finished task creates a tag).
 9. Dependabot (if used): `github-actions` ecosystem, monthly, grouped into one PR.
@@ -77,8 +80,10 @@ jobs:
         with:
           version: latest-known
           require-checksums: true
+          enable-cache: false
       - run: uv sync --locked
       - run: uv run ruff check
+        if: runner.os == 'Linux'
       - run: uv run pytest -q
 ```
 On Linux the PySide6 import may need `QT_QPA_PLATFORM=offscreen` and the `libegl1` / `libxkbcommon0` system

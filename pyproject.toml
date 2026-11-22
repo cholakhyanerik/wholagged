@@ -1,6 +1,6 @@
 [project]
 name = "dota-netcheck"
-version = "0.1.2"
+version = "0.1.3"
 description = "Dota 2 network check: is it your internet, your provider or Valve's servers?"
 readme = "README.md"
 license = "PolyForm-Noncommercial-1.0.0"

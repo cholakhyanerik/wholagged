@@ -35,11 +35,6 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-2 · Run the tests on windows-latest too
-`ci` · `P1` · `XS` · CI · depends on: WL-1
-Windows is the main platform (ctypes ICMP code path).
-- [ ] matrix `ubuntu-latest` + `windows-latest`, `fail-fast: true`, both green
-
 ### WL-10 · Show "wholagged" as the app name everywhere in the UI
 `feature` · `P1` · `XS` · BRAND · depends on: —
 The name is decided; the window still says "Dota 2 Network Check".
@@ -278,6 +273,16 @@ Needed to separate Wi-Fi/router problems from provider problems.
 - [ ] `QT_QPA_PLATFORM=offscreen`, builds `MainWindow`, runs a check against `FakeNet`, sees the verdict card
 - [ ] passes in CI: on `ubuntu-latest` Qt needs `libegl1` and `libxkbcommon0` (install them in `ci.yml`, or
       skip the test cleanly when Qt can't load)
+
+### WL-95 · Test the Windows ctypes ping on the Windows runner
+`test` · `P2` · `XS` · QUALITY · depends on: —
+Found in WL-2: CI runs on Windows, but FakeNet replaces `icmp.ping`, so `_ping_windows` (`IcmpSendEcho`)
+is never executed by any test.
+- [ ] a Windows-only test (`skipif` elsewhere) loads `iphlpapi.dll` via `_load_iphlpapi()` and pings
+      `127.0.0.1` through `_ping_windows`, getting a number; loopback only, so the suite stays offline
+      (hosted runners block outbound ICMP). If loopback ICMP fails on the runner, check the reply parsing
+      with a fake reply buffer instead
+- [ ] a timeout or unreachable reply returns `None`, not an exception
 
 ### WL-93 · SECURITY.md
 `security` · `P2` · `XS` · QUALITY · depends on: —

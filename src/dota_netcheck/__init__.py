@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 
 def run_cli() -> int:

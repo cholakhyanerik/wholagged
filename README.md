@@ -105,8 +105,8 @@ The goal is for the tool to run on Windows, macOS and Linux. For now, only Windo
   language. A native implementation without the `ping` command, like the one on Windows, is planned.
 - **Advice is Windows-specific.** Some tips mention Windows Firewall, `ipconfig /flushdns`, network adapter settings
   and `steam.exe` / `dota2.exe`. These don't apply on macOS or Linux.
-- **CI runs on Linux only so far.** Every code push to `main` and every pull request is linted and tested on Linux;
-  Windows and macOS runs are planned. The tests use a fake network, so they don't cover the issues above.
+- **No CI on macOS yet.** Every code push to `main` and every pull request that changes code is tested on
+  Windows and Linux; a macOS run is planned. The tests use a fake network, so they don't cover the issues above.
 
 ### Minimum system versions
 
@@ -145,7 +145,8 @@ The checker is free for personal use, and all of its source code, including the 
 
 Planned:
 
-- **Cross-platform:** fix the [known issues](#known-issues-fixes-planned) and run the tests on Windows, macOS and Linux in CI.
+- **Cross-platform:** fix the [known issues](#known-issues-fixes-planned) and run the tests on macOS in CI too
+  (Windows and Linux already run).
 - **Your network vs your provider:** also ping your own router, so the tool can tell a bad Wi-Fi connection apart
   from a problem on your provider's side.
 - **More Valve games:** CS2 and Deadlock use the same Valve relay network, so the same checks can cover them.

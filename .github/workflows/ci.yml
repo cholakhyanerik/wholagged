@@ -25,18 +25,25 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, windows-latest] # Windows is the main platform
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # The uv cache is on by default (enable-cache: auto). uv itself is the newest version this pinned
-      # action ships a checksum for, so a new uv arrives only with a reviewed bump of the pin.
+      # uv is the newest version this pinned action ships a checksum for, so a new uv arrives only with a
+      # reviewed bump of the pin. No cache: on Linux a cold `uv sync` took 2 s, saving the cache 4 s, and every
+      # version bump changes the cache key anyway.
       - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
           version: latest-known
           require-checksums: true
+          enable-cache: false
       - run: uv sync --locked
       - run: uv run ruff check
+        if: runner.os == 'Linux' # lint results don't depend on the OS
       - run: uv run pytest -q

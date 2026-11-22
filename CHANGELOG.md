@@ -4,6 +4,17 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.1.3] - 2026-11-22
+
+### Added
+- CI now also runs the tests on Windows, the main platform, next to Linux. If one platform fails, the
+  other job stops at once. (WL-2)
+
+### Changed
+- CI lints only on Linux (the result doesn't depend on the OS) and no longer keeps a uv cache: on Linux a fresh
+  install took 2 s, saving the cache took 4 s, and every version bump made the cache unusable anyway.
+  (WL-2)
+
 ## [0.1.2] - 2026-11-22
 
 ### Added
@@ -69,6 +80,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.1.3]: https://github.com/cholakhyanerik/wholagged/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/cholakhyanerik/wholagged/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/cholakhyanerik/wholagged/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/cholakhyanerik/wholagged/releases/tag/v0.1.0
