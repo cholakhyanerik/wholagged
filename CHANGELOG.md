@@ -4,6 +4,12 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.2.4] - 2026-11-22
+
+### Changed
+- The READMEs (English and Armenian) now show the `wholagged` command, and the finished "one name
+  everywhere" roadmap item is gone. (WL-14)
+
 ## [0.2.3] - 2026-11-22
 
 ### Changed
@@ -129,6 +135,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.2.4]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.0...v0.2.1

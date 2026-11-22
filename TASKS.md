@@ -35,10 +35,6 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-14 · Update the READMEs for the new name and commands
-`docs` · `P1` · `XS` · BRAND · depends on: WL-12
-- [ ] README.md and README.hy.md: commands, structure, "one name everywhere" roadmap item removed
-
 ### WL-15 · Reserve `wholagged` on PyPI with Trusted Publishing
 `security` · `P2` · `XS` · BRAND · depends on: WL-12
 Found in the WL-11 audit: once any doc says `uvx wholagged` or `uv tool install wholagged`, someone else could

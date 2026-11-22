@@ -37,13 +37,13 @@ wholagged-ը փոքր desktop tool է Windows-ի համար (macOS-ի և Linux-�
 git clone https://github.com/cholakhyanerik/wholagged.git
 cd wholagged
 uv sync
-uv run dota-netcheck          # բացում է պատուհանը
+uv run wholagged              # բացում է պատուհանը
 ```
 
 Այլ հրամաններ.
 
 ```powershell
-uv run dota-netcheck --cli    # terminal-ում, առանց պատուհանի
+uv run wholagged --cli        # terminal-ում, առանց պատուհանի
 uv run pytest                 # test-երը (առանց internet-ի, fake ցանցով)
 uv run ruff check             # կոդի ստուգում (lint)
 ```
@@ -158,9 +158,6 @@ Tool-ն անձնական օգտագործման համար անվճար է, և �
   provider-ի կողմի խնդրից։
 - **Valve-ի այլ խաղեր.** CS2-ն և Deadlock-ը օգտագործում են Valve-ի նույն relay ցանցը, այնպես որ նույն ստուգումները կաշխատեն նաև դրանց համար։
   wholagged անունը կապված չէ որևէ խաղի հետ, դրա համար այն կմնա նույնը։
-- **Մեկ անուն ամենուր.** պատուհանում, terminal-ի output-ում և report-ում արդեն գրված է wholagged (v0.2.0-ից)։
-  Python package-ն էլ է կոչվում `wholagged` (v0.2.1-ից), հրամանն էլ (v0.2.2-ից, իսկ `dota-netcheck`-ը
-  շարունակում է աշխատել)։
 - **Ֆոնային մոնիթորինգ (վճարովի Pro տարբերակ).** ամբողջ օրը գրանցել ping-ն ու packet loss-ը, ցույց տալ գրաֆիկներ
   և պատրաստել PDF report, որը կարող ես ուղարկել provider-ին որպես ապացույց։
 - **Microsoft Store**-ում թողարկում։

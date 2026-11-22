@@ -39,13 +39,13 @@ and gives you a verdict on where the problem is, with steps to fix it.
 git clone https://github.com/cholakhyanerik/wholagged.git
 cd wholagged
 uv sync
-uv run dota-netcheck          # opens the window
+uv run wholagged              # opens the window
 ```
 
 Other commands:
 
 ```powershell
-uv run dota-netcheck --cli    # runs in the terminal, no window
+uv run wholagged --cli        # runs in the terminal, no window
 uv run pytest                 # runs the tests (offline, uses a fake network)
 uv run ruff check             # lints the code
 ```
@@ -162,9 +162,6 @@ Planned:
   from a problem on your provider's side.
 - **More Valve games:** CS2 and Deadlock use the same Valve relay network, so the same checks can cover them.
   The name wholagged isn't tied to any game, so it stays the same.
-- **One name everywhere:** the window, the terminal output and the report already say wholagged (since v0.2.0).
-  The Python package is `wholagged` too (since v0.2.1), and so is the command (since v0.2.2; `dota-netcheck`
-  keeps working).
 - **Background monitoring (paid Pro version):** record ping and packet loss for the whole day, show graphs,
   and build a PDF report you can send to your provider as evidence.
 - **Microsoft Store** release.
