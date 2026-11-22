@@ -1,6 +1,6 @@
 **English** · [Հայերեն](README.hy.md)
 
-# Dota 2 Network Check
+# wholagged
 
 [![Python 3.15+](https://img.shields.io/badge/python-3.15%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows&logoColor=white)](#requirements)
@@ -10,7 +10,7 @@
 
 **Dota 2 is stuck on "Searching for Game Coordinator". Is the problem your internet, your provider, or Valve's servers?**
 
-Dota 2 Network Check is a small desktop tool for Windows (macOS and Linux support is in progress) that answers that one question in about 10–20 seconds.
+wholagged is a small desktop tool for Windows (macOS and Linux support is in progress) that answers that one question in about 10–20 seconds.
 It runs six network checks, from basic connectivity to ping and packet loss on Valve's game relays,
 and gives you a verdict on where the problem is, with steps to fix it.
 
@@ -146,7 +146,9 @@ Planned:
 - **Your network vs your provider:** also ping your own router, so the tool can tell a bad Wi-Fi connection apart
   from a problem on your provider's side.
 - **More Valve games:** CS2 and Deadlock use the same Valve relay network, so the same checks can cover them.
-  The project will probably get a game-neutral name at that point.
+  The name wholagged isn't tied to any game, so it stays the same.
+- **One name everywhere:** the window title, the package and the command are still called
+  *Dota 2 Network Check* / `dota-netcheck`. They will be renamed to wholagged.
 - **Background monitoring (paid Pro version):** record ping and packet loss for the whole day, show graphs,
   and build a PDF report you can send to your provider as evidence.
 - **Microsoft Store** release.
