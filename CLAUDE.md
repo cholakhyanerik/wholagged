@@ -13,8 +13,9 @@ advice and builds a plain-text report the user can send to their provider.
 - **Stack:** Python 3.15 · PySide6 (`pyside6-essentials`) for the window · standard library for all
   networking · uv · pytest · ruff.
 - **Platforms:** Windows 10/11 fully supported; macOS and Linux run but are still in progress.
-- **Names:** the product and repo are `wholagged`; the UI shows `APP_NAME` from `__init__.py` (never
-  hard-code the name). The project, the package (`src/wholagged/`) and the command are `wholagged`.
+- **Names:** the product and repo are `wholagged`; the UI and the User-Agent use `APP_NAME` from
+  `__init__.py` (never hard-code the name; the one literal is the fixed 32-byte ICMP payload in `icmp.py`).
+  The project, the package (`src/wholagged/`) and the command are `wholagged`.
   `dota-netcheck` is a deprecated alias script for the same `main`; keep it working (a test checks both).
 - **License:** PolyForm Noncommercial 1.0.0. The repo is **public**. External contributions will need a CLA.
 - **Status:** v0.2.x. The road to 1.0 is in [TASKS.md](TASKS.md).

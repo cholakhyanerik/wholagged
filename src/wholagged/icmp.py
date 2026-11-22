@@ -17,7 +17,7 @@ import sys
 import time
 
 DEFAULT_TIMEOUT_MS = 1000
-_PAYLOAD = b"dota-netcheck-ping-0123456789abc"  # 32 bytes, like Windows ping
+_PAYLOAD = b"wholagged-ping-0123456789abcdefg"  # 32 bytes, like Windows ping
 
 
 def ping(ip: str, timeout_ms: int = DEFAULT_TIMEOUT_MS) -> float | None:

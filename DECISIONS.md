@@ -5,6 +5,9 @@ Each entry: the decision, then why. Revisit an entry by adding a new one; don't 
 
 ## 2026-11-22
 
+- **The User-Agent is built from `APP_NAME`; the ICMP payload stays a literal (WL-13).** `checks.py` already
+  imports from the package, so the name has one source there. `icmp.py` keeps a fixed 32-byte literal
+  (`wholagged-ping-0123456789abcdefg`) so its size can't drift; a test checks the prefix and the length.
 - **`[tool.uv.build-backend] module-name` is removed (WL-12):** with the project named `wholagged`, uv_build
   finds `src/wholagged/` by itself, so the line would only repeat the default.
 - **The `dota-netcheck` alias prints no deprecation notice.** The CHANGELOG marks it deprecated; a runtime

@@ -4,6 +4,13 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.2.3] - 2026-11-22
+
+### Changed
+- Requests to Steam now identify the app as `wholagged/<version>` (they said `dota-netcheck/<version>`),
+  and the Windows ping packet carries `wholagged` in its 32-byte payload. Nothing else about the
+  checks changes. (WL-13)
+
 ## [0.2.2] - 2026-11-22
 
 ### Added
@@ -122,6 +129,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.2.3]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/cholakhyanerik/wholagged/compare/v0.1.3...v0.2.0

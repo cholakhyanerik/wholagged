@@ -1,6 +1,6 @@
 [project]
 name = "wholagged"
-version = "0.2.2"
+version = "0.2.3"
 description = "wholagged: is it your internet, your provider or Valve's servers? A network check for Dota 2."
 readme = "README.md"
 license = "PolyForm-Noncommercial-1.0.0"

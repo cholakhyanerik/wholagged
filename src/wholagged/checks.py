@@ -21,13 +21,13 @@ from dataclasses import dataclass, field
 from itertools import pairwise
 from typing import Any
 
-from . import __version__, icmp
+from . import APP_NAME, __version__, icmp
 from .models import CheckResult, Status
 
 TCP_TIMEOUT_S = 3.0
 HTTP_TIMEOUT_S = 8.0
 MAX_BODY_BYTES = 4_000_000  # Valve's largest answer (the SDR config) is far below this
-USER_AGENT = f"dota-netcheck/{__version__}"
+USER_AGENT = f"{APP_NAME}/{__version__}"
 
 CM_LIST_URL = (
     "https://api.steampowered.com/ISteamDirectory/GetCMListForConnect/v1/"

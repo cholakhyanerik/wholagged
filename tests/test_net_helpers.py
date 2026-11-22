@@ -109,6 +109,13 @@ def test_product_name_is_wholagged():
     assert wholagged.APP_NAME == "wholagged"
 
 
+def test_network_identity_uses_the_new_name():
+    """Valve sees `wholagged/<version>`; the ICMP echo payload names us and stays 32 bytes like Windows ping (WL-13)."""
+    assert checks.USER_AGENT == f"wholagged/{wholagged.__version__}"
+    assert icmp._PAYLOAD.startswith(b"wholagged")
+    assert len(icmp._PAYLOAD) == 32
+
+
 def test_both_commands_start_the_same_app():
     """`wholagged` is the command; `dota-netcheck` stays as an alias so old commands keep working (WL-12)."""
     project = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text(encoding="utf-8"))["project"]

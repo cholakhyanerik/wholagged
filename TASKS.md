@@ -35,10 +35,6 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-13 · Use the new name in the User-Agent and the ICMP payload
-`chore` · `P2` · `XS` · BRAND · depends on: WL-11
-- [ ] `USER_AGENT = "wholagged/<version>"`; ICMP payload starts with `wholagged`, still 32 bytes
-
 ### WL-14 · Update the READMEs for the new name and commands
 `docs` · `P1` · `XS` · BRAND · depends on: WL-12
 - [ ] README.md and README.hy.md: commands, structure, "one name everywhere" roadmap item removed
