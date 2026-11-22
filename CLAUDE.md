@@ -29,6 +29,7 @@ src/dota_netcheck/
   gui.py       PySide6 window, design tokens, CheckWorker (QThread)
 tests/         offline tests: fakes.py (FakeNet), scenarios, parsing, helpers, hook tests
 .claude/       agents/, skills/, hooks/, settings.json (Claude Code tooling, see below)
+.github/       workflows/ci.yml (lint + tests)
 TASKS.md · CHANGELOG.md · DECISIONS.md · README.md (+ README.hy.md, README.ru.md planned)
 ```
 
@@ -170,10 +171,14 @@ The look is defined in `gui.py`; reuse it, don't invent new styles.
 
 ## GitHub Actions budget
 
-There is no CI yet (WL-1). When adding it, follow the `ci-workflow` skill: narrow triggers with `paths`,
-`concurrency` cancel-in-progress, `timeout-minutes: 10`, uv cache, Linux first, Windows for tests, macOS only
-on PRs or manual runs, release builds only on `release: published` / `workflow_dispatch`, no cron jobs.
-Run lint and tests locally before every push.
+`.github/workflows/ci.yml` runs `uv sync --locked`, ruff and pytest on `ubuntu-latest` for code pushes to
+`main` and PRs (the `paths` list: `src`, `tests`, `.claude/hooks`, `pyproject.toml`, `uv.lock`,
+`.python-version`, workflows). Docs-only and tag pushes don't run it. Every change under `.github/` follows the
+`ci-workflow` skill: narrow `paths`, `concurrency` cancel-in-progress, `timeout-minutes: 10`, uv cache,
+SHA-pinned actions, Windows only for tests, macOS only on PRs or manual runs, release builds only on
+`release: published` / `workflow_dispatch`, no cron jobs. Run lint and tests locally before every push, then
+check the run once (`gh run list --workflow ci.yml --limit 1`).
+Local `actionlint` via `uvx` is refused by the auto-mode classifier; the first CI run validates a workflow.
 
 ## Claude Code tooling in `.claude/`
 

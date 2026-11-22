@@ -4,6 +4,22 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.1.2] - 2026-11-22
+
+### Added
+- Continuous integration: every push to `main` and every pull request that changes code, tests, the
+  dependencies or the Python version is linted (ruff) and tested (pytest) on Linux. Docs-only changes and
+  tag pushes don't start it. A CI badge is in the README. (WL-1)
+
+### Security
+- The workflow has read-only repository access, pins its actions to full commit SHAs, doesn't keep the
+  checkout token and installs a checksum-verified uv. (WL-1)
+
+### Development
+- The `ci-workflow` skill's trigger list now also covers `.claude/hooks/**` (the guard hook has tests) and
+  `.python-version`. The skill now requires a checksum-verified uv tied to the `setup-uv` pin, and leaves
+  the uv cache on its default (`auto`), with no cache in release or signing jobs. (WL-1)
+
 ## [0.1.1] - 2026-11-22
 
 ### Fixed
@@ -53,5 +69,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.1.2]: https://github.com/cholakhyanerik/wholagged/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/cholakhyanerik/wholagged/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/cholakhyanerik/wholagged/releases/tag/v0.1.0

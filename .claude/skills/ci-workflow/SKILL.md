@@ -12,14 +12,17 @@ Windows minutes count 2× and macOS minutes 10×; write every workflow as if it 
 ## Budget rules
 1. **Test locally first** (`uv run ruff check`, `uv run pytest -q`) so CI is not used to find bugs.
 2. **Trigger narrowly:** `push` to `main` and `pull_request`, with `paths:` limited to code and config
-   (`src/**`, `tests/**`, `pyproject.toml`, `uv.lock`, `.github/workflows/**`). Docs-only changes don't run CI.
-   No `schedule:` unless it is really needed (then weekly at most). Add `workflow_dispatch` for manual runs.
+   (`src/**`, `tests/**`, `.claude/hooks/**` (the guard hook has tests), `pyproject.toml`, `uv.lock`,
+   `.python-version`, `.github/workflows/**`). Docs-only changes don't run CI. Write the list once as a YAML
+   anchor (`paths: &code-paths`) and reuse it (`paths: *code-paths`). Tag pushes don't trigger CI, because
+   the `push` filter lists only `branches`. No `schedule:` unless it is really needed (then weekly at most). Add `workflow_dispatch` for manual runs.
 3. **Cancel superseded runs:** `concurrency: { group: ${{ github.workflow }}-${{ github.ref }}, cancel-in-progress: true }`.
 4. **Hard time limit** on every job: `timeout-minutes: 10` (tests take about a second; installing takes the rest).
 5. **Cheapest runner by default:** `ubuntu-latest` for lint and tests. Add `windows-latest` (the main platform)
    only to the test job. Add `macos-latest` only where macOS behaviour is under test, ideally on
    `pull_request` or `workflow_dispatch` only.
-6. **Cache:** `astral-sh/setup-uv` with `enable-cache: true`; install with `uv sync --locked`.
+6. **Cache:** `astral-sh/setup-uv`'s default `enable-cache: auto` caches on GitHub-hosted runners (and skips
+   release and tag events); install with `uv sync --locked`. Release or signing jobs set `enable-cache: false`.
 7. `fail-fast: true` in matrices; one job for lint and tests when possible.
 8. Artifacts only when needed, with `retention-days: 3`. Release builds only on `release: published` or
    `workflow_dispatch`, never on `push: tags` (every finished task creates a tag).
@@ -32,16 +35,26 @@ Windows minutes count 2× and macOS minutes 10×; write every workflow as if it 
   `gh api repos/<owner>/<repo>/commits/<tag> --jq .sha`.
 - Never use `pull_request_target` with a checkout of PR code. Never echo secrets.
 - `persist-credentials: false` on `actions/checkout` unless the job pushes.
+- uv itself: `setup-uv` with `version: latest-known` and `require-checksums: true`, so CI runs the newest uv
+  the pinned action has a checksum for. uv moves forward when `update-deps` bumps the `setup-uv` pin.
 
 ## Template
+The live workflow is `.github/workflows/ci.yml`; copy its current SHA pins rather than resolving new ones.
 ```yaml
 name: CI
 on:
   push:
     branches: [main]
-    paths: ["src/**", "tests/**", "pyproject.toml", "uv.lock", ".github/workflows/**"]
+    paths: &code-paths
+      - "src/**"
+      - "tests/**"
+      - ".claude/hooks/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".python-version"
+      - ".github/workflows/**"
   pull_request:
-    paths: ["src/**", "tests/**", "pyproject.toml", "uv.lock", ".github/workflows/**"]
+    paths: *code-paths
   workflow_dispatch:
 permissions:
   contents: read
@@ -62,7 +75,8 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@<sha> # vX.Y.Z
         with:
-          enable-cache: true
+          version: latest-known
+          require-checksums: true
       - run: uv sync --locked
       - run: uv run ruff check
       - run: uv run pytest -q

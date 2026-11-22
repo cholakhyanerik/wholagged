@@ -2,6 +2,7 @@
 
 # wholagged
 
+[![CI](https://github.com/cholakhyanerik/wholagged/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/cholakhyanerik/wholagged/actions/workflows/ci.yml)
 [![Python 3.15+](https://img.shields.io/badge/python-3.15%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows&logoColor=white)](#պահանջներ)
 [![GUI: PySide6](https://img.shields.io/badge/GUI-PySide6-41CD52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
@@ -102,7 +103,7 @@ firewall-ում թույլատրել `steam.exe`-ն և `dota2.exe`-ն, ստու�
   համակարգի լեզվից։ Նախատեսված է native implementation առանց `ping` հրամանի, ինչպես Windows-ում։
 - **Խորհուրդները Windows-ի համար են։** Որոշ խորհուրդներում նշված են Windows Firewall, `ipconfig /flushdns`, network adapter-ի կարգավորումներ
   և `steam.exe` / `dota2.exe`։ macOS-ում և Linux-ում դրանք չեն գործում։
-- **macOS-ում և Linux-ում CI դեռ չկա։** Test-երը օգտագործում են fake ցանց և պետք է ամենուր անցնեն, բայց վերևի խնդիրները չեն ծածկում։
+- **CI-ն առայժմ աշխատում է միայն Linux-ում։** `main`-ում կոդի ամեն push-ից և ամեն pull request-ից հետո lint-ը և test-երը գործարկվում են Linux-ում, իսկ Windows-ի և macOS-ի համար նույնը նախատեսված է։ Test-երը օգտագործում են fake ցանց, դրա համար վերևի խնդիրները չեն ծածկում։
 
 ### Համակարգի նվազագույն տարբերակներ
 

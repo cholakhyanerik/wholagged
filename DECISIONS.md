@@ -5,6 +5,26 @@ Each entry: the decision, then why. Revisit an entry by adding a new one; don't 
 
 ## 2026-11-22
 
+- **CI also triggers on `.claude/hooks/**` and `.python-version`**, beyond the skill's original list:
+  `tests/test_claude_hooks.py` loads the guard hook, and `.python-version` picks the Python that uv installs
+  in CI. The `paths` list is written once as a YAML anchor (supported by GitHub Actions) and reused for
+  `pull_request`, so the two lists can't drift apart.
+- **CI installs the full lock (`uv sync --locked`), PySide6 included**, though today's tests don't import
+  Qt: it proves the lock installs on the runner, and the headless GUI test (WL-92) will need it. The uv
+  cache doesn't make this cheap: setup-uv keys it on the hash of `pyproject.toml` and `uv.lock`, and every
+  task bumps the version in both, so task pushes miss it; only re-runs and unchanged PR pushes hit.
+  Whether to keep it is decided from the first runs' timings (WL-2).
+- **WL-1 and WL-2 ship as two versions** (0.1.2, then 0.1.3): one card in progress at a time, and one
+  commit, tag and CHANGELOG entry per finished task.
+- **CI uses `setup-uv` with `version: latest-known` and `require-checksums: true`, and leaves `enable-cache` on
+  its default (`auto`)**, following the WL-1 security audit. uv in CI moves only with a reviewed bump of the
+  action pin. `auto` caches on these triggers, and it won't restore a possibly poisoned cache in a future
+  release job. The audit's repo-setting findings (fork PR approval, enforced SHA pinning) became WL-5 rather
+  than being changed here: they are outside this card, and enforced pinning first needs a check that it
+  doesn't break GitHub's own Dependency Graph job.
+- **"A docs-only push does not start CI" rests on the `paths` filter.** The push filter lists only
+  `branches`, so tag pushes don't start it either. A finished docs task still runs CI, because its version
+  bump touches `pyproject.toml` and `uv.lock`; only commits without a bump are free.
 - **"System Python" means the newest stable CPython installed outside the project's `.venv`**
   (`uv python list --only-installed`). The project pins its `major.minor` in `.python-version` and
   `requires-python`. Today that is 3.15.2 → 3.15, so no change was needed. The SessionStart hook reports a

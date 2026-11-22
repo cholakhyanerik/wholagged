@@ -2,6 +2,7 @@
 
 # wholagged
 
+[![CI](https://github.com/cholakhyanerik/wholagged/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/cholakhyanerik/wholagged/actions/workflows/ci.yml)
 [![Python 3.15+](https://img.shields.io/badge/python-3.15%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows&logoColor=white)](#requirements)
 [![GUI: PySide6](https://img.shields.io/badge/GUI-PySide6-41CD52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
@@ -104,8 +105,8 @@ The goal is for the tool to run on Windows, macOS and Linux. For now, only Windo
   language. A native implementation without the `ping` command, like the one on Windows, is planned.
 - **Advice is Windows-specific.** Some tips mention Windows Firewall, `ipconfig /flushdns`, network adapter settings
   and `steam.exe` / `dota2.exe`. These don't apply on macOS or Linux.
-- **No CI on macOS and Linux yet.** The tests use a fake network and should pass everywhere, but they don't
-  cover the issues above.
+- **CI runs on Linux only so far.** Every code push to `main` and every pull request is linted and tested on Linux;
+  Windows and macOS runs are planned. The tests use a fake network, so they don't cover the issues above.
 
 ### Minimum system versions
 

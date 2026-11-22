@@ -35,15 +35,6 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-1 · Add a minimal CI workflow (ruff + pytest on Linux)
-`ci` · `P1` · `S` · CI · depends on: —
-Protects "new code must not break old code" on every push.
-- [ ] `.github/workflows/ci.yml` follows the `ci-workflow` skill: `paths` filter, `concurrency` with
-      cancel-in-progress, `timeout-minutes: 10`, `permissions: contents: read`, actions pinned by SHA,
-      uv cache, `uv sync --locked`
-- [ ] green on `main`; a docs-only push does not start it
-- [ ] README: CI badge
-
 ### WL-2 · Run the tests on windows-latest too
 `ci` · `P1` · `XS` · CI · depends on: WL-1
 Windows is the main platform (ctypes ICMP code path).
@@ -95,6 +86,14 @@ macOS minutes are the most expensive, so not on every push.
 ### WL-4 · Dependabot for GitHub Actions versions (monthly, grouped)
 `security` · `P2` · `XS` · CI · depends on: WL-1
 - [ ] `.github/dependabot.yml`: `github-actions` ecosystem, monthly, one grouped PR
+
+### WL-5 · Harden the repo's Actions settings
+`security` · `P2` · `XS` · CI · depends on: WL-1
+Found in the WL-1 audit: after one merged PR, a contributor's next PR can rewrite `ci.yml` and run without
+approval, and SHA pinning is a convention, not enforced.
+- [ ] fork PR approval policy `all_external_contributors`
+- [ ] `sha_pinning_required: true`, after checking that GitHub's own "Dependency Graph" runs still succeed
+- [ ] settings listed in CLAUDE.md → Security
 
 ### WL-21 · Move check titles and hints (`CHECKS`) to i18n keys
 `chore` · `P1` · `XS` · I18N · depends on: WL-20
@@ -277,6 +276,8 @@ Needed to separate Wi-Fi/router problems from provider problems.
 ### WL-92 · Headless GUI smoke test in pytest
 `test` · `P2` · `XS` · QUALITY · depends on: —
 - [ ] `QT_QPA_PLATFORM=offscreen`, builds `MainWindow`, runs a check against `FakeNet`, sees the verdict card
+- [ ] passes in CI: on `ubuntu-latest` Qt needs `libegl1` and `libxkbcommon0` (install them in `ci.yml`, or
+      skip the test cleanly when Qt can't load)
 
 ### WL-93 · SECURITY.md
 `security` · `P2` · `XS` · QUALITY · depends on: —

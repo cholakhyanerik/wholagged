@@ -1,0 +1,42 @@
+# Lint and offline tests for code pushes to main and pull requests. Kept cheap on purpose: see the ci-workflow skill.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths: &code-paths
+      - "src/**"
+      - "tests/**"
+      - ".claude/hooks/**" # tests/test_claude_hooks.py tests the guard hook
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".python-version"
+      - ".github/workflows/**"
+  pull_request:
+    paths: *code-paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The uv cache is on by default (enable-cache: auto). uv itself is the newest version this pinned
+      # action ships a checksum for, so a new uv arrives only with a reviewed bump of the pin.
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          version: latest-known
+          require-checksums: true
+      - run: uv sync --locked
+      - run: uv run ruff check
+      - run: uv run pytest -q
