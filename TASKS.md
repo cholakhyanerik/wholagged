@@ -35,6 +35,37 @@ _Nothing in progress._
 
 ## To Do
 
+### WL-21 · Move check titles and hints (`CHECKS`) to i18n keys
+`chore` · `P1` · `XS` · I18N · depends on: WL-20
+- [ ] each `CheckSpec` title and hint is a `check.<key>.title` / `check.<key>.hint` entry in `locales/hy.py`,
+      read with `t()` when shown, so a language switch (WL-32) takes effect
+- [ ] the window, the CLI and the report show the same Armenian text as before; tests unchanged
+
+### WL-22 · Move the texts of checks 1–3 and `short_error` to i18n keys
+`chore` · `P1` · `S` · I18N · depends on: WL-20
+- [ ] internet, DNS and Steam Web API summaries/details; error words in `short_error`
+- [ ] first, decide and log in DECISIONS.md how results keep their texts: the checks and `decide()` run in
+      the worker thread, so finished strings freeze the language of that moment. Either `CheckResult` /
+      `Verdict` carry `key + params` and the GUI renders them on display (WL-32 can then switch a finished
+      run), or texts stay rendered strings and WL-32 re-renders only the static UI. Found in WL-20's review
+
+### WL-23 · Move the texts of checks 4–6 and the runner messages to i18n keys
+`chore` · `P1` · `S` · I18N · depends on: WL-20
+- [ ] Steam CM, Dota GC, relays; "skipped because there is no internet"; "internal error"
+
+### WL-24 · Move the verdict texts (`verdict.py`) to i18n keys
+`chore` · `P1` · `S` · I18N · depends on: WL-20
+- [ ] headlines, explanations and advice; numbers stay placeholders (`{loss}`, `{ms}`)
+
+### WL-25 · Move the report and CLI texts to i18n keys
+`chore` · `P1` · `XS` · I18N · depends on: WL-20
+- [ ] `report.py` (labels, side names) and `__init__.py` (banner, headings)
+
+### WL-26 · Move the GUI texts to i18n keys
+`chore` · `P1` · `XS` · I18N · depends on: WL-20
+- [ ] buttons, status words, side chips, subtitle, "details" toggles
+- [ ] the subtitle uses the existing `app.subtitle` key (already in all three catalogues since WL-20)
+
 ### WL-15 · Reserve `wholagged` on PyPI with Trusted Publishing
 `security` · `P2` · `XS` · BRAND · depends on: WL-12
 Found in the WL-11 audit: once any doc says `uvx wholagged` or `uv tool install wholagged`, someone else could
@@ -42,14 +73,6 @@ register the name and ship their code to our users. Needs the owner's PyPI accou
 - [ ] `wholagged` (and optionally `dota-netcheck`) registered as pending Trusted Publishers (OIDC, no token
       in the repo), bound to a release workflow that runs only on `release: published` (ci-workflow skill)
 - [ ] no doc mentions installing from PyPI before this is done
-
-### WL-20 · Add the i18n core: `t(key, **params)` with hy / ru / en catalogues
-`feature` · `P1` · `S` · I18N · depends on: —
-Default languages of the project are Armenian, Russian and English.
-- [ ] `src/wholagged/i18n.py`: current language, `set_language()`, `t()`; fallback en → key
-- [ ] catalogue format chosen and logged in DECISIONS.md (suggested: one Python dict module per
-      language: no file I/O, packaged automatically)
-- [ ] unit tests: lookup, placeholders, fallback, unknown language
 
 ---
 
@@ -72,29 +95,6 @@ approval, and SHA pinning is a convention, not enforced.
 - [ ] `sha_pinning_required: true`, after checking that GitHub's own "Dependency Graph" runs still succeed
 - [ ] settings listed in CLAUDE.md → Security
 
-### WL-21 · Move check titles and hints (`CHECKS`) to i18n keys
-`chore` · `P1` · `XS` · I18N · depends on: WL-20
-
-### WL-22 · Move the texts of checks 1–3 and `short_error` to i18n keys
-`chore` · `P1` · `S` · I18N · depends on: WL-20
-- [ ] internet, DNS and Steam Web API summaries/details; error words in `short_error`
-
-### WL-23 · Move the texts of checks 4–6 and the runner messages to i18n keys
-`chore` · `P1` · `S` · I18N · depends on: WL-20
-- [ ] Steam CM, Dota GC, relays; "skipped because there is no internet"; "internal error"
-
-### WL-24 · Move the verdict texts (`verdict.py`) to i18n keys
-`chore` · `P1` · `S` · I18N · depends on: WL-20
-- [ ] headlines, explanations and advice; numbers stay placeholders (`{loss}`, `{ms}`)
-
-### WL-25 · Move the report and CLI texts to i18n keys
-`chore` · `P1` · `XS` · I18N · depends on: WL-20
-- [ ] `report.py` (labels, side names) and `__init__.py` (banner, headings)
-
-### WL-26 · Move the GUI texts to i18n keys
-`chore` · `P1` · `XS` · I18N · depends on: WL-20
-- [ ] buttons, status words, side chips, subtitle, "details" toggles
-
 ### WL-27 · English catalogue
 `feature` · `P1` · `S` · I18N · depends on: WL-21 … WL-26
 - [ ] every key translated by the `translator` subagent; reads naturally
@@ -105,7 +105,7 @@ approval, and SHA pinning is a convention, not enforced.
 
 ### WL-29 · Test that the three catalogues are complete
 `test` · `P1` · `XS` · I18N · depends on: WL-27, WL-28
-- [ ] same keys in hy/ru/en, same placeholders per key, no empty strings
+- [ ] same key set in hy/ru/en (tests/test_i18n.py already checks placeholders against hy and empty texts)
 
 ### WL-30 · Pick the language from the OS locale
 `feature` · `P1` · `XS` · I18N · depends on: WL-29
@@ -118,7 +118,8 @@ approval, and SHA pinning is a convention, not enforced.
 ### WL-32 · Language switcher in the window header
 `ux` · `P1` · `S` · I18N · depends on: WL-30
 - [ ] ՀԱՅ / РУС / ENG control in the header, styled like the existing buttons
-- [ ] switching updates every visible text (rows, verdict, buttons) without restarting a check
+- [ ] switching updates every visible text (rows, verdict, buttons) without restarting a check, as far as
+      the WL-22 decision on how results keep their texts allows
 
 ### WL-33 · Remember the chosen language
 `ux` · `P2` · `XS` · I18N · depends on: WL-32

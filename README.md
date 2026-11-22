@@ -139,11 +139,14 @@ src/wholagged/
   report.py     plain-text report
   models.py     data classes: CheckResult, Verdict, Status, Side
   gui.py        PySide6 window
+  i18n.py       translations: t(key) in the current language (hy / ru / en)
+  locales/      the text catalogues: hy.py (the source), ru.py, en.py
 tests/
   fakes.py            fake network with switches to break each part
   test_scenarios.py   end-to-end scenarios: break one thing, expect one verdict
   test_parsing.py     parsing of Valve's API responses
   test_net_helpers.py HTTP error handling, the ping command, version sync
+  test_i18n.py        translation lookup, placeholders and fallbacks
   test_claude_hooks.py the guard hook used by Claude Code in this repo
 ```
 

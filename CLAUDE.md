@@ -18,7 +18,7 @@ advice and builds a plain-text report the user can send to their provider.
   The project, the package (`src/wholagged/`) and the command are `wholagged`.
   `dota-netcheck` is a deprecated alias script for the same `main`; keep it working (a test checks both).
 - **License:** PolyForm Noncommercial 1.0.0. The repo is **public**. External contributions will need a CLA.
-- **Status:** v0.2.x. The road to 1.0 is in [TASKS.md](TASKS.md).
+- **Status:** v0.3.x. The road to 1.0 is in [TASKS.md](TASKS.md).
 
 ```
 src/wholagged/
@@ -29,7 +29,9 @@ src/wholagged/
   report.py    plain-text report
   models.py    CheckResult, Verdict, Status, Side
   gui.py       PySide6 window, design tokens, CheckWorker (QThread)
-tests/         offline tests: fakes.py (FakeNet), scenarios, parsing, helpers, hook tests
+  i18n.py      t(key, **params), get_language() / set_language(); lookup: language → en → key
+  locales/     hy.py (source), ru.py, en.py: one MESSAGES dict each
+tests/         offline tests: fakes.py (FakeNet), scenarios, parsing, helpers, i18n, hook tests
 .claude/       agents/, skills/, hooks/, settings.json (Claude Code tooling, see below)
 .github/       workflows/ci.yml (lint + tests)
 TASKS.md · CHANGELOG.md · DECISIONS.md · README.md (+ README.hy.md, README.ru.md planned)
@@ -119,8 +121,10 @@ Every version gets a `vX.Y.Z` tag.
 - Modern typed Python 3.15: `from __future__ import annotations`, dataclasses, `StrEnum`, PEP 695 generics.
 - ruff must be clean. `# noqa: <code> - <reason>` only with a reason.
 - The version lives in `pyproject.toml` and `__init__.__version__`; a test fails if they differ.
-- User-facing strings: Armenian, inline, until the i18n core lands (WL-20). After that, every string goes
-  through `t()` with hy/ru/en entries.
+- User-facing strings go through `i18n.t("group.name", **params)`: add the key to `locales/hy.py` first,
+  then `ru.py` and `en.py` (the `translator` subagent), with the same `{placeholders}`. The old inline
+  Armenian strings move to keys in WL-21 … WL-26; don't add new inline ones. The default language is hy
+  until WL-30 reads the OS locale; `set_language()` raises ValueError for an unknown code.
 
 ## Languages
 
@@ -151,7 +155,9 @@ The look is defined in `gui.py`; reuse it, don't invent new styles.
   `icmp.ping`, `time.sleep`); each attribute is a knob that breaks one thing (`internet`, `dns`, `tcp_ok`,
   `cert_ok`, `relays_ok`, `control_ok`, `loss_every`, `relay_extra_ms`, `http[url]`).
 - Each verdict branch has a scenario in `test_scenarios.py`. Helpers are tested in `test_parsing.py` and
-  `test_net_helpers.py`. `test_claude_hooks.py` tests the guard hook.
+  `test_net_helpers.py`. `test_i18n.py` covers `t()` (lookup, fallbacks, placeholders) and checks that
+  every catalogue uses the same placeholders as `hy`; its autouse fixture restores the language and the
+  catalogue cache. `test_claude_hooks.py` tests the guard hook.
 - Don't weaken an assertion to make a change pass: a failing old test means old behaviour broke.
 
 ## Security

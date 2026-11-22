@@ -4,6 +4,14 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.3.0] - 2026-11-22
+
+### Added
+- Translation support, the base for the Armenian, Russian and English interface: the app now has one
+  catalogue of texts per language and is ready to switch between them. Nothing you see changes yet: the
+  window stays in Armenian until its texts move into the catalogues and get their Russian and English
+  versions. (WL-20)
+
 ## [0.2.4] - 2026-11-22
 
 ### Changed
@@ -135,6 +143,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.3.0]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.4...v0.3.0
 [0.2.4]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.1...v0.2.2

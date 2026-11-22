@@ -136,11 +136,14 @@ src/wholagged/
   report.py     text report
   models.py     data class-ներ՝ CheckResult, Verdict, Status, Side
   gui.py        PySide6 պատուհան
+  i18n.py       թարգմանություններ՝ t(key) ընթացիկ լեզվով (hy / ru / en)
+  locales/      տեքստերի catalogue-ները՝ hy.py (աղբյուրը), ru.py, en.py
 tests/
   fakes.py            fake ցանց՝ ամեն մասը կոտրելու switch-երով
   test_scenarios.py   end-to-end սցենարներ. կոտրիր մի բան, սպասիր մեկ եզրակացություն
   test_parsing.py     Valve-ի API պատասխանների parsing
   test_net_helpers.py HTTP սխալների մշակում, ping հրամանը, version-ի համաժամեցում
+  test_i18n.py        թարգմանությունների որոնում, placeholder-ներ և fallback-ներ
   test_claude_hooks.py Claude Code-ի guard hook-ը այս repo-ում
 ```
 

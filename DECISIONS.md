@@ -5,6 +5,25 @@ Each entry: the decision, then why. Revisit an entry by adding a new one; don't 
 
 ## 2026-11-22
 
+- **Translation catalogues are Python modules, one per language** (`src/wholagged/locales/{hy,ru,en}.py`,
+  a `MESSAGES` dict each), as the card suggested: no file I/O or parser, packaged with the code, checked by
+  ruff, and only the needed language is imported (lazily, once). Armenian is the source catalogue. They are
+  loaded with plain `from .locales import hy` statements, not `importlib` with a computed name, so a
+  freezer (PyInstaller or Nuitka, WL-80/81) bundles all three.
+- **`t()` never raises for ordinary values (str, int, float, None):** lookup goes current language →
+  English → the key itself (an empty translation
+  counts as missing), and a field whose parameter is missing stays exactly as written (`{name}`,
+  `{pops[0]}`, `{ms!r}`), so a missing text shows up instead of crashing the window. Fields are rendered one
+  by one with `string.Formatter`, because `format_map` with a `__missing__` dict indexed or converted the
+  stand-in text (`{pops[0]}` became `{`). Parameters are only substituted into our own templates, so
+  untrusted values from Valve can't inject format fields.
+- **`set_language()` accepts only `hy`, `ru` and `en` (any case) and raises ValueError otherwise.** Mapping OS
+  locales such as `hy_AM` or `be` is WL-30's job, and WL-31's `--lang` can show the allowed values from the
+  error. The default stays `hy`, so the app looks the same until WL-30.
+- **The catalogues start with one real key, `app.subtitle`**, in all three languages (the translator's text
+  from WL-10), so the format and the tests work on real data; WL-26 wires it into the window.
+- **The I18N "move" cards WL-21 … WL-26 moved from Backlog to To Do**, now that WL-20 unblocks them; WL-15
+  waits behind them, since it needs the owner's PyPI account.
 - **The User-Agent is built from `APP_NAME`; the ICMP payload stays a literal (WL-13).** `checks.py` already
   imports from the package, so the name has one source there. `icmp.py` keeps a fixed 32-byte literal
   (`wholagged-ping-0123456789abcdefg`) so its size can't drift; a test checks the prefix and the length.

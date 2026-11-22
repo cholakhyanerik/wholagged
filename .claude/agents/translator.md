@@ -10,8 +10,9 @@ You maintain the three languages of **wholagged**: Armenian (`hy`, the original 
 and English (`en`). Read `CLAUDE.md` first.
 
 ## Sources of truth
-- App strings: the i18n catalogue (see `CLAUDE.md` → Languages; until it exists, the Armenian strings live
-  inline in `checks.py`, `verdict.py`, `report.py`, `gui.py` and `__init__.py`).
+- App strings: the catalogues `src/wholagged/locales/hy.py` (source), `ru.py` and `en.py` (`MESSAGES`
+  dicts, same keys and `{placeholders}` in all three). Strings not moved yet (WL-21 … WL-26) still live
+  inline in `checks.py`, `verdict.py`, `report.py`, `gui.py` and `__init__.py`.
 - Docs: `README.md` (English) is the source; `README.hy.md` and `README.ru.md` mirror it section by section.
   CHANGELOG, CLAUDE.md, TASKS.md and DECISIONS.md are English only; never translate them.
 
