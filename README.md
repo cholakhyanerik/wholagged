@@ -50,6 +50,17 @@ uv run pytest                 # runs the tests (offline, uses a fake network)
 uv run ruff check             # lints the code
 ```
 
+Updating an existing clone:
+
+```powershell
+git pull
+uv sync
+```
+
+The project was renamed to wholagged in v0.2.2. If the old `dota-netcheck` command says "Failed to spawn"
+after updating a clone from an older version, run `uv sync --reinstall-package wholagged` once. The new
+`wholagged` command works either way.
+
 ## What it checks
 
 | # | Check | How | What it tells you |
@@ -152,8 +163,8 @@ Planned:
 - **More Valve games:** CS2 and Deadlock use the same Valve relay network, so the same checks can cover them.
   The name wholagged isn't tied to any game, so it stays the same.
 - **One name everywhere:** the window, the terminal output and the report already say wholagged (since v0.2.0).
-  The Python package is `wholagged` too (since v0.2.1). A `wholagged` command is coming; `dota-netcheck` will
-  keep working.
+  The Python package is `wholagged` too (since v0.2.1), and so is the command (since v0.2.2; `dota-netcheck`
+  keeps working).
 - **Background monitoring (paid Pro version):** record ping and packet loss for the whole day, show graphs,
   and build a PDF report you can send to your provider as evidence.
 - **Microsoft Store** release.

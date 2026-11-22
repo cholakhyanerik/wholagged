@@ -4,6 +4,25 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.2.2] - 2026-11-22
+
+### Added
+- A `wholagged` command: `uv run wholagged` opens the window, `uv run wholagged --cli` runs in the
+  terminal. (WL-12)
+
+### Changed
+- The project is now named `wholagged` (it was `dota-netcheck`). If, in a clone made before v0.2.2,
+  `uv run dota-netcheck` says "Failed to spawn" after an update, run
+  `uv sync --reinstall-package wholagged` once; a plain `uv sync` right after `git pull` avoids it. (WL-12)
+
+### Deprecated
+- The `dota-netcheck` command. It still works exactly as before and starts the same app; use `wholagged`
+  instead. (WL-12)
+
+### Security
+- Builds also leave out `.dev.vars`, `.pypirc`, `.npmrc`, `.netrc` and SSH key files, matching
+  `.gitignore` and the guard hook. (WL-12)
+
 ## [0.2.1] - 2026-11-22
 
 ### Changed
@@ -103,6 +122,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.2.2]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/cholakhyanerik/wholagged/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/cholakhyanerik/wholagged/compare/v0.1.2...v0.1.3

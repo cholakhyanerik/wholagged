@@ -14,9 +14,8 @@ advice and builds a plain-text report the user can send to their provider.
   networking · uv · pytest · ruff.
 - **Platforms:** Windows 10/11 fully supported; macOS and Linux run but are still in progress.
 - **Names:** the product and repo are `wholagged`; the UI shows `APP_NAME` from `__init__.py` (never
-  hard-code the name). The package is `wholagged` (`src/wholagged/`). The project and the command are
-  still `dota-netcheck` until WL-12 renames them (until then `[tool.uv.build-backend] module-name` points
-  uv_build at the package); keep `dota-netcheck` working as an alias after that.
+  hard-code the name). The project, the package (`src/wholagged/`) and the command are `wholagged`.
+  `dota-netcheck` is a deprecated alias script for the same `main`; keep it working (a test checks both).
 - **License:** PolyForm Noncommercial 1.0.0. The repo is **public**. External contributions will need a CLA.
 - **Status:** v0.2.x. The road to 1.0 is in [TASKS.md](TASKS.md).
 
@@ -41,8 +40,8 @@ uv is mandatory: never `pip`, `venv`, `requirements.txt` or a bare `python` (the
 
 ```powershell
 uv sync                              # install exactly what uv.lock says
-uv run dota-netcheck                 # the window
-uv run dota-netcheck --cli           # the same checks in the terminal (real network)
+uv run wholagged                     # the window (dota-netcheck is the old alias)
+uv run wholagged --cli               # the same checks in the terminal (real network)
 uv run pytest -q                     # all tests, offline, ~1 s
 uv run ruff check                    # lint (default rules + security rules)
 uv add <pkg> / uv add --dev <pkg>    # dependencies: never hand-edit the lists in pyproject.toml
@@ -221,3 +220,9 @@ unless listed in `.claude/hooks/allowed-documents.txt`.
   run a `general-purpose` agent and tell it to follow the agent file.
 - The Claude Code auto-mode classifier may refuse edits to permission rules in `.claude/settings.json`.
   Don't work around it; mention it to the owner.
+- After renaming the project (distribution) or a script, `uv run` (inexact sync) installs the new one next to
+  the old one, and the next `uv sync` (exact) removes the old one with every script both list (v0.2.2:
+  `dota-netcheck.exe` vanished). Run `uv sync` before any `uv run` after such a rename, or repair with
+  `uv sync --reinstall-package wholagged`. `test_both_commands_are_installed` catches it.
+- This shell has `.venv\Scripts` on PATH, so `uv run <cmd>` in another checkout silently falls back to this
+  venv's script. Take it off PATH when reproducing install problems elsewhere.

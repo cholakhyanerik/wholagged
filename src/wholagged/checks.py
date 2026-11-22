@@ -2,7 +2,7 @@
 
 Every check function takes a shared Context and returns a CheckResult.
 Only the standard library is used here, so the module also runs without Qt
-(`uv run dota-netcheck --cli`).
+(`uv run wholagged --cli`).
 """
 
 from __future__ import annotations

@@ -19,7 +19,7 @@ surrounding code to judge each change in context. Do not edit files; you only re
    network calls, verdict rules in the wrong priority order.
 2. **Backward compatibility (old code keeps working).** Check keys (`internet`, `dns`, `steam_api`, `steam_cm`,
    `dota_gc`, `relays`), `data` flag names, `CheckResult`/`Verdict` fields, the `--cli` flag, the
-   `dota-netcheck` command and the report layout must not change silently. A removed or renamed public thing
+   `wholagged` and `dota-netcheck` commands and the report layout must not change silently. A removed or renamed public thing
    needs a compatibility shim and a CHANGELOG note.
 3. **Performance.** Network probes run in parallel through `checks.parallel` with bounded workers, nothing
    blocks the GUI thread, no repeated work in loops, no new heavy dependency where the standard library

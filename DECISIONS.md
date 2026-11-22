@@ -5,6 +5,18 @@ Each entry: the decision, then why. Revisit an entry by adding a new one; don't 
 
 ## 2026-11-22
 
+- **`[tool.uv.build-backend] module-name` is removed (WL-12):** with the project named `wholagged`, uv_build
+  finds `src/wholagged/` by itself, so the line would only repeat the default.
+- **The `dota-netcheck` alias prints no deprecation notice.** The CHANGELOG marks it deprecated; a runtime
+  notice would need a new user-facing string in three languages (before i18n exists) and would only add noise
+  to a command that keeps working.
+- **The upgrade break in old clones is documented, not worked around.** A plain `uv sync` after `git pull`
+  uninstalls `dota-netcheck` and then installs `wholagged`, and both commands work. The break needs an inexact
+  `uv run` first (it installs `wholagged` next to the old distribution), then an exact `uv sync`, which removes
+  the old distribution and the `dota-netcheck` script both list. `uv sync --reinstall-package wholagged` repairs
+  it from any state, and the next change to `pyproject.toml` (every release) heals it. The automatic
+  alternative, `[tool.uv] reinstall-package = ["wholagged"]`, rebuilds the project on every `uv run` (rule 3).
+  A test now checks that both commands are installed, so a broken dev venv fails the Stop hook with the fix.
 - **No `dota_netcheck` import shim after the package rename (WL-11).** wholagged is an app, not a library:
   nothing outside the repo imports the package or runs it with `python -m`, and the `dota-netcheck` command
   (what users run) keeps working. A shim would be a second top-level module in the wheel for no user.

@@ -35,14 +35,6 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-12 · Rename the project and command to `wholagged`, keep `dota-netcheck` as an alias
-`chore` · `P1` · `XS` · BRAND · depends on: WL-11
-Old commands must keep working.
-- [ ] `[project] name = "wholagged"`, scripts `wholagged` and `dota-netcheck` (deprecated alias)
-- [ ] both `uv run wholagged` and `uv run dota-netcheck` work; CHANGELOG notes the deprecation
-- [ ] `[project] description` starts with wholagged (it still says "Dota 2 network check")
-- [ ] `[tool.uv.build-backend] module-name` (added in WL-11) removed or kept, decided and logged
-
 ### WL-13 · Use the new name in the User-Agent and the ICMP payload
 `chore` · `P2` · `XS` · BRAND · depends on: WL-11
 - [ ] `USER_AGENT = "wholagged/<version>"`; ICMP payload starts with `wholagged`, still 32 bytes

@@ -1,7 +1,7 @@
 [project]
-name = "dota-netcheck"
-version = "0.2.1"
-description = "Dota 2 network check: is it your internet, your provider or Valve's servers?"
+name = "wholagged"
+version = "0.2.2"
+description = "wholagged: is it your internet, your provider or Valve's servers? A network check for Dota 2."
 readme = "README.md"
 license = "PolyForm-Noncommercial-1.0.0"
 license-files = ["LICENSE"]
@@ -14,16 +14,20 @@ dependencies = [
 ]
 
 [project.scripts]
-dota-netcheck = "wholagged:main"
+wholagged = "wholagged:main"
+dota-netcheck = "wholagged:main"  # deprecated alias (WL-12), kept so old commands work
 
 [build-system]
 requires = ["uv_build>=0.13.9,<0.14.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-module-name = "wholagged"  # the project is still named dota-netcheck until WL-12
 # uv_build ignores .gitignore: never ship secrets or junk dropped into src/ (CLAUDE.md, Security)
-source-exclude = ["**/.env*", "**/*.pem", "**/*.key", "**/*.pfx", "**/*.p12", "**/*.tmp", "**/*.log", "**/*.bak", "**/*.orig", "**/*.rej"]
+source-exclude = [
+    "**/.env*", "**/.dev.vars", "**/.pypirc", "**/.npmrc", "**/.netrc",  # the secret files .gitignore lists
+    "**/*.pem", "**/*.key", "**/*.pfx", "**/*.p12", "**/id_rsa*", "**/id_ed25519*", "**/id_ecdsa*",
+    "**/*.tmp", "**/*.log", "**/*.bak", "**/*.orig", "**/*.rej",
+]
 
 [dependency-groups]
 dev = [

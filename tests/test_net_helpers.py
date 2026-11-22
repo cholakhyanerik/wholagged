@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import http.client
+import shutil
 import ssl
 import subprocess
+import sysconfig
 import tomllib
 import urllib.error
 from pathlib import Path
@@ -105,3 +107,18 @@ def test_version_is_the_same_everywhere():
 
 def test_product_name_is_wholagged():
     assert wholagged.APP_NAME == "wholagged"
+
+
+def test_both_commands_start_the_same_app():
+    """`wholagged` is the command; `dota-netcheck` stays as an alias so old commands keep working (WL-12)."""
+    project = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    assert project["name"] == "wholagged"
+    assert project["scripts"] == {"wholagged": "wholagged:main", "dota-netcheck": "wholagged:main"}
+    assert callable(wholagged.main)
+
+
+def test_both_commands_are_installed():
+    """The scripts exist in this environment, not just in pyproject.toml (a rename can delete one, WL-12)."""
+    scripts = sysconfig.get_path("scripts")
+    missing = [name for name in ("wholagged", "dota-netcheck") if shutil.which(name, path=scripts) is None]
+    assert not missing, f"{missing} not in {scripts}: run `uv sync --reinstall-package wholagged`"

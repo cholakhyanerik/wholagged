@@ -13,7 +13,7 @@ translated READMEs).
    - `uv run ruff check` and `uv run pytest -q` pass.
    - GUI touched? Smoke-test it headless:
      `QT_QPA_PLATFORM=offscreen uv run python -c "from PySide6.QtWidgets import QApplication; from wholagged.gui import MainWindow; app = QApplication([]); w = MainWindow(); w.show(); app.processEvents(); print('gui ok')"`
-   - CLI touched? Run `uv run dota-netcheck --cli` once if a network is available.
+   - CLI touched? Run `uv run wholagged --cli` once if a network is available.
 2. **Review.** For anything beyond a trivial change, run the `code-reviewer` subagent; also run
    `security-auditor` when networking, subprocess/ctypes, dependencies, workflows, packaging or web parts
    changed. Fix every `blocker`/`should-fix` (and every `critical`/`high`/`medium`) and re-verify.
