@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-import dota_netcheck
-from dota_netcheck import checks
-from dota_netcheck.checks import run_checks
-from dota_netcheck.models import Side, Status
-from dota_netcheck.report import build_report
-from dota_netcheck.verdict import decide
+import wholagged
+from wholagged import checks
+from wholagged.checks import run_checks
+from wholagged.models import Side, Status
+from wholagged.report import build_report
+from wholagged.verdict import decide
 
 from fakes import FakeNet
 
@@ -136,15 +136,15 @@ OLD_NAME = "Dota 2 Network Check"  # the pre-WL-10 product name
 def test_report_starts_with_the_product_name_and_version(net):
     results, verdict = run(net)
     text = build_report(results, verdict)
-    assert text.splitlines()[0] == f"wholagged {dota_netcheck.__version__} · Dota 2"
+    assert text.splitlines()[0] == f"wholagged {wholagged.__version__} · Dota 2"
     assert OLD_NAME not in text
 
 
 def test_cli_banner_names_wholagged_and_dota_2(net, capsys):
-    assert dota_netcheck.run_cli() == 0
+    assert wholagged.run_cli() == 0
     out = capsys.readouterr().out
     first = out.splitlines()[0]
-    assert first.startswith(f"wholagged {dota_netcheck.__version__}")
+    assert first.startswith(f"wholagged {wholagged.__version__}")
     assert "Dota 2" in first
     assert OLD_NAME not in out
 

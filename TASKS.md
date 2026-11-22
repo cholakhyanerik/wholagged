@@ -35,17 +35,13 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-11 · Rename the package `dota_netcheck` → `wholagged`
-`chore` · `P1` · `S` · BRAND · depends on: WL-1
-- [ ] `src/wholagged/`, all imports, tests, `README*` structure sections and `CLAUDE.md` updated
-- [ ] `uv run pytest` green, GUI smoke test passes
-
 ### WL-12 · Rename the project and command to `wholagged`, keep `dota-netcheck` as an alias
 `chore` · `P1` · `XS` · BRAND · depends on: WL-11
 Old commands must keep working.
 - [ ] `[project] name = "wholagged"`, scripts `wholagged` and `dota-netcheck` (deprecated alias)
 - [ ] both `uv run wholagged` and `uv run dota-netcheck` work; CHANGELOG notes the deprecation
 - [ ] `[project] description` starts with wholagged (it still says "Dota 2 network check")
+- [ ] `[tool.uv.build-backend] module-name` (added in WL-11) removed or kept, decided and logged
 
 ### WL-13 · Use the new name in the User-Agent and the ICMP payload
 `chore` · `P2` · `XS` · BRAND · depends on: WL-11
@@ -55,10 +51,18 @@ Old commands must keep working.
 `docs` · `P1` · `XS` · BRAND · depends on: WL-12
 - [ ] README.md and README.hy.md: commands, structure, "one name everywhere" roadmap item removed
 
+### WL-15 · Reserve `wholagged` on PyPI with Trusted Publishing
+`security` · `P2` · `XS` · BRAND · depends on: WL-12
+Found in the WL-11 audit: once any doc says `uvx wholagged` or `uv tool install wholagged`, someone else could
+register the name and ship their code to our users. Needs the owner's PyPI account.
+- [ ] `wholagged` (and optionally `dota-netcheck`) registered as pending Trusted Publishers (OIDC, no token
+      in the repo), bound to a release workflow that runs only on `release: published` (ci-workflow skill)
+- [ ] no doc mentions installing from PyPI before this is done
+
 ### WL-20 · Add the i18n core: `t(key, **params)` with hy / ru / en catalogues
 `feature` · `P1` · `S` · I18N · depends on: —
 Default languages of the project are Armenian, Russian and English.
-- [ ] `src/dota_netcheck/i18n.py`: current language, `set_language()`, `t()`; fallback en → key
+- [ ] `src/wholagged/i18n.py`: current language, `set_language()`, `t()`; fallback en → key
 - [ ] catalogue format chosen and logged in DECISIONS.md (suggested: one Python dict module per
       language: no file I/O, packaged automatically)
 - [ ] unit tests: lookup, placeholders, fallback, unknown language

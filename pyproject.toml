@@ -1,6 +1,6 @@
 [project]
 name = "dota-netcheck"
-version = "0.2.0"
+version = "0.2.1"
 description = "Dota 2 network check: is it your internet, your provider or Valve's servers?"
 readme = "README.md"
 license = "PolyForm-Noncommercial-1.0.0"
@@ -14,11 +14,16 @@ dependencies = [
 ]
 
 [project.scripts]
-dota-netcheck = "dota_netcheck:main"
+dota-netcheck = "wholagged:main"
 
 [build-system]
 requires = ["uv_build>=0.13.9,<0.14.0"]
 build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "wholagged"  # the project is still named dota-netcheck until WL-12
+# uv_build ignores .gitignore: never ship secrets or junk dropped into src/ (CLAUDE.md, Security)
+source-exclude = ["**/.env*", "**/*.pem", "**/*.key", "**/*.pfx", "**/*.p12", "**/*.tmp", "**/*.log", "**/*.bak", "**/*.orig", "**/*.rej"]
 
 [dependency-groups]
 dev = [

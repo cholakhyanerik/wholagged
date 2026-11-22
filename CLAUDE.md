@@ -14,13 +14,14 @@ advice and builds a plain-text report the user can send to their provider.
   networking · uv · pytest · ruff.
 - **Platforms:** Windows 10/11 fully supported; macOS and Linux run but are still in progress.
 - **Names:** the product and repo are `wholagged`; the UI shows `APP_NAME` from `__init__.py` (never
-  hard-code the name). The package is still `dota_netcheck` and the command `dota-netcheck` until
-  WL-11 / WL-12 rename them; keep `dota-netcheck` working as an alias after that.
+  hard-code the name). The package is `wholagged` (`src/wholagged/`). The project and the command are
+  still `dota-netcheck` until WL-12 renames them (until then `[tool.uv.build-backend] module-name` points
+  uv_build at the package); keep `dota-netcheck` working as an alias after that.
 - **License:** PolyForm Noncommercial 1.0.0. The repo is **public**. External contributions will need a CLA.
 - **Status:** v0.2.x. The road to 1.0 is in [TASKS.md](TASKS.md).
 
 ```
-src/dota_netcheck/
+src/wholagged/
   __init__.py  entry point: GUI by default, --cli for the terminal; __version__, APP_NAME
   checks.py    the six checks + run_checks(); standard library only
   icmp.py      ping: IcmpSendEcho via ctypes on Windows, the `ping` command elsewhere
@@ -46,11 +47,11 @@ uv run pytest -q                     # all tests, offline, ~1 s
 uv run ruff check                    # lint (default rules + security rules)
 uv add <pkg> / uv add --dev <pkg>    # dependencies: never hand-edit the lists in pyproject.toml
 uv tree --outdated --depth 1         # what is behind;  uv audit  # known vulnerabilities
-uv version --bump patch|minor        # then set the same __version__ in src/dota_netcheck/__init__.py
+uv version --bump patch|minor        # then set the same __version__ in src/wholagged/__init__.py
 uv run --no-project python .claude/skills/cleanup/cleanup.py   # remove junk
 ```
 Headless GUI smoke test:
-`QT_QPA_PLATFORM=offscreen uv run python -c "from PySide6.QtWidgets import QApplication; from dota_netcheck.gui import MainWindow; app = QApplication([]); w = MainWindow(); w.show(); app.processEvents(); print('gui ok')"`
+`QT_QPA_PLATFORM=offscreen uv run python -c "from PySide6.QtWidgets import QApplication; from wholagged.gui import MainWindow; app = QApplication([]); w = MainWindow(); w.show(); app.processEvents(); print('gui ok')"`
 
 ## The owner's rules (always follow)
 

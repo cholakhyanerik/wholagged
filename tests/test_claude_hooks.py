@@ -134,7 +134,7 @@ def test_blocks_in_powershell(command):
         "git push -u origin main",
         "git status --porcelain && git diff --stat",
         "git restore --staged .",
-        "git restore src/dota_netcheck/checks.py",
+        "git restore src/wholagged/checks.py",
         "git checkout main",
         "git clean -n",
         "git branch -d merged-branch",
@@ -172,7 +172,7 @@ def test_secret_and_document_file_names():
     for name in (".env", "config/.env.local", "cert.pfx", "store.p12", ".claude/settings.local.json", "id_rsa",
                  ".dev.vars", ".pypirc"):
         assert guard.SECRET_FILE_RE.search(name), name
-    for name in ("README.md", "src/dota_netcheck/checks.py", "uv.lock", "environment.md"):
+    for name in ("README.md", "src/wholagged/checks.py", "uv.lock", "environment.md"):
         assert not guard.SECRET_FILE_RE.search(name), name
     with pytest.raises(guard.Blocked):
         guard.check_file_names(["docs/invoice.pdf"], "test")

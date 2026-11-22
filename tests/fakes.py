@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dota_netcheck import checks, icmp
+from wholagged import checks, icmp
 
 CM_LIST = {
     "response": {

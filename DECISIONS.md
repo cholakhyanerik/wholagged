@@ -5,6 +5,15 @@ Each entry: the decision, then why. Revisit an entry by adding a new one; don't 
 
 ## 2026-11-22
 
+- **No `dota_netcheck` import shim after the package rename (WL-11).** wholagged is an app, not a library:
+  nothing outside the repo imports the package or runs it with `python -m`, and the `dota-netcheck` command
+  (what users run) keeps working. A shim would be a second top-level module in the wheel for no user.
+- **The build excludes secret and junk patterns (`source-exclude`)**, because uv_build ignores `.gitignore`;
+  the WL-11 audit showed a `.pfx` dropped into `src/wholagged/` would ship. Verified with planted files.
+- **Reserving `wholagged` on PyPI is a card (WL-15), not done here:** it needs the owner's PyPI account, and
+  nothing installs from PyPI today (the README says `uv` from a clone only).
+- **Until WL-12, `[tool.uv.build-backend] module-name = "wholagged"`** tells uv_build where the package is,
+  because it otherwise derives the module from the project name (`dota-netcheck` → `dota_netcheck`).
 - **The product name lives in one constant, `APP_NAME` in the package `__init__`**, next to `__version__`.
   The window, the CLI banner and the report use it, so the name isn't scattered again.
 - **The report header and the CLI banner carry the version and the game (`wholagged 0.2.0 · Dota 2`).** The card only asked for the

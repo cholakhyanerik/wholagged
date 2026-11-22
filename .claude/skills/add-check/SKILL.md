@@ -5,7 +5,7 @@ description: Step-by-step recipe for adding or changing a network check or a ver
 
 # Add or change a check / verdict rule
 
-## The check (`src/dota_netcheck/checks.py`)
+## The check (`src/wholagged/checks.py`)
 - Standard library only (the CLI must run without Qt). Every socket/HTTP call has a timeout
   (`TCP_TIMEOUT_S`, `HTTP_TIMEOUT_S`, `icmp.DEFAULT_TIMEOUT_MS`). Fan out with `parallel()`.
 - Signature `def check_x(ctx: Context) -> CheckResult`. Share data between checks through `Context`.
@@ -17,7 +17,7 @@ description: Step-by-step recipe for adding or changing a network check or a ver
 - **Compatibility:** never rename existing keys or `data` flags; tests, the verdict and users' reports
   depend on them. The whole run must stay within about 10–20 seconds.
 
-## The verdict (`src/dota_netcheck/verdict.py`)
+## The verdict (`src/wholagged/verdict.py`)
 - Rules run top to bottom; the first match wins. Place the new rule by priority: hard failures on the
   user's side first, then Valve, then the route, then quality, then "the network is fine".
 - Each `Verdict` has a side, a headline, an explanation and 3–5 practical advice items, in the same tone

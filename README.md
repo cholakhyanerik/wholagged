@@ -66,7 +66,7 @@ Steam's web servers instead. If a check crashes, it is marked as skipped and the
 
 ## How the verdict is decided
 
-The rules in [`verdict.py`](src/dota_netcheck/verdict.py) are checked from top to bottom, and the first one that matches decides the verdict:
+The rules in [`verdict.py`](src/wholagged/verdict.py) are checked from top to bottom, and the first one that matches decides the verdict:
 
 1. No internet → **your side**
 2. DNS can't resolve Steam → **your side (DNS)**
@@ -120,7 +120,7 @@ These come from the PySide6 wheels in `uv.lock`:
 ## Project structure
 
 ```
-src/dota_netcheck/
+src/wholagged/
   __init__.py   entry point (GUI by default, --cli for the terminal)
   checks.py     the six network checks (standard library only)
   icmp.py       ping on Windows via IcmpSendEcho (ctypes)
@@ -152,7 +152,8 @@ Planned:
 - **More Valve games:** CS2 and Deadlock use the same Valve relay network, so the same checks can cover them.
   The name wholagged isn't tied to any game, so it stays the same.
 - **One name everywhere:** the window, the terminal output and the report already say wholagged (since v0.2.0).
-  The package and the command are still called `dota_netcheck` / `dota-netcheck`; they will be renamed too.
+  The Python package is `wholagged` too (since v0.2.1). A `wholagged` command is coming; `dota-netcheck` will
+  keep working.
 - **Background monitoring (paid Pro version):** record ping and packet loss for the whole day, show graphs,
   and build a PDF report you can send to your provider as evidence.
 - **Microsoft Store** release.
@@ -165,7 +166,7 @@ suggestions may be affiliate links. If that happens, these suggestions will:
 - always be clearly marked as a recommendation and as an affiliate link;
 - appear only when the verdict points to your provider's route or an unstable connection, where such a service can actually help;
 - never appear when the problem is on Valve's side, on your Wi-Fi or on your PC;
-- never change the verdict itself. The verdict logic is public in [`verdict.py`](src/dota_netcheck/verdict.py), so anyone can check this.
+- never change the verdict itself. The verdict logic is public in [`verdict.py`](src/wholagged/verdict.py), so anyone can check this.
 
 ## Support the project
 

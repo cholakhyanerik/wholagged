@@ -4,6 +4,20 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.2.1] - 2026-11-22
+
+### Changed
+- The Python package is renamed from `dota_netcheck` to `wholagged` (`src/wholagged/`). The
+  `dota-netcheck` command works exactly as before. `python -m dota_netcheck` is now
+  `python -m wholagged`, and code that imported `dota_netcheck` must import `wholagged`. (WL-11)
+
+### Fixed
+- Armenian README: four article and case-ending slips ("կոճակն", "clipboard-ում", "uv-ն", "Tool-ն"). (WL-11)
+
+### Security
+- Builds leave out secret and junk files even if one is dropped into `src/` (`.env*`, `.pem`, `.key`,
+  `.pfx`, `.p12`, temp and backup files): uv_build doesn't read `.gitignore`. (WL-11)
+
 ## [0.2.0] - 2026-11-22
 
 ### Changed
@@ -89,6 +103,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.2.1]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/cholakhyanerik/wholagged/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/cholakhyanerik/wholagged/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/cholakhyanerik/wholagged/compare/v0.1.1...v0.1.2

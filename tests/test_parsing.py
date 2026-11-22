@@ -1,4 +1,4 @@
-from dota_netcheck.checks import parse_sdr_pops, pick_cm_targets, short_error
+from wholagged.checks import parse_sdr_pops, pick_cm_targets, short_error
 
 from fakes import CM_LIST, SDR
 

@@ -12,7 +12,7 @@ translated READMEs).
 1. **Verify.**
    - `uv run ruff check` and `uv run pytest -q` pass.
    - GUI touched? Smoke-test it headless:
-     `QT_QPA_PLATFORM=offscreen uv run python -c "from PySide6.QtWidgets import QApplication; from dota_netcheck.gui import MainWindow; app = QApplication([]); w = MainWindow(); w.show(); app.processEvents(); print('gui ok')"`
+     `QT_QPA_PLATFORM=offscreen uv run python -c "from PySide6.QtWidgets import QApplication; from wholagged.gui import MainWindow; app = QApplication([]); w = MainWindow(); w.show(); app.processEvents(); print('gui ok')"`
    - CLI touched? Run `uv run dota-netcheck --cli` once if a network is available.
 2. **Review.** For anything beyond a trivial change, run the `code-reviewer` subagent; also run
    `security-auditor` when networking, subprocess/ctypes, dependencies, workflows, packaging or web parts
@@ -21,7 +21,7 @@ translated READMEs).
    acceptance criteria). Re-order To Do by priority. Bugs you found were already fixed, not filed.
 4. **Version.** Bump with uv: `uv version --bump minor` for a new feature, `uv version --bump patch` for
    anything else (fix, docs, tooling, dependencies). Then set the same value in
-   `src/dota_netcheck/__init__.py` (`__version__`); `tests/test_net_helpers.py` checks they match.
+   `src/wholagged/__init__.py` (`__version__`); `tests/test_net_helpers.py` checks they match.
 5. **CHANGELOG.md.** Add a section `## [x.y.z] - YYYY-MM-DD` at the top with `Added` / `Changed` /
    `Fixed` / `Security` / `Dependencies` entries written for users, each ending with the task id
    (`(WL-12)`). Update the compare links at the bottom.
