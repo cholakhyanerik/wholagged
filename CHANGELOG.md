@@ -4,6 +4,16 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.3.1] - 2026-11-23
+
+### Changed
+- The READMEs are easier to scan: long paragraphs are now short lists, and version history moved out of
+  them into this changelog. The app itself doesn't change. (WL-96)
+- For contributors: `CLAUDE.md` is down to the project rules, the architecture and pointers (170 lines,
+  was 235). The details now live in `.claude/rules/`, one file per topic, each loaded only when the files
+  it covers are read. A new rule 17 keeps it that way, and a test fails if `CLAUDE.md` grows past 400
+  lines or a rules file isn't scoped to existing files. (WL-96)
+
 ## [0.3.0] - 2026-11-22
 
 ### Added
@@ -143,6 +153,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.3.1]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.4...v0.3.0
 [0.2.4]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.2...v0.2.3

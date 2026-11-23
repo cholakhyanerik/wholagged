@@ -31,7 +31,7 @@ description: Step-by-step recipe for adding or changing a network check or a ver
   `tests/test_net_helpers.py`. The `test-engineer` subagent can do this part.
 
 ## Text and docs
-- User-facing strings in every UI language (see `CLAUDE.md` → Languages); use the `translator` subagent.
+- User-facing strings in every UI language (rule 14, `.claude/rules/i18n.md`); use the `translator` subagent.
 - `README.md`: the "What it checks" table and "How the verdict is decided" list; then sync the translated
   READMEs.
 - Finish with the `finish-task` skill.

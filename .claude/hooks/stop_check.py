@@ -1,6 +1,8 @@
-"""Stop hook: don't end a turn with broken code or unshipped work (CLAUDE.md rules 4, 7, 8).
+"""Stop hook: don't end a turn with broken code or unshipped work (CLAUDE.md rules 4, 7, 8, 17).
 
-1. If Python code, pyproject.toml or uv.lock changed: run the tests and ruff.
+1. If Python code, pyproject.toml, uv.lock, CLAUDE.md or .claude/rules/ changed, or a file was deleted
+   or renamed (a rules-file glob may now match nothing): run the tests and ruff.
+   tests/test_claude_md.py checks CLAUDE.md and .claude/rules/.
    On failure Claude is sent back (exit code 2) with the output.
 2. If the tree is dirty or commits are unpushed: remind Claude once to finish
    the task with the finish-task skill, or to say why it stops mid-task.
@@ -16,6 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CODE_FILES = (".py", "pyproject.toml", "uv.lock")
+TESTED_DOCS = ("CLAUDE.md", ".claude/rules/")  # rule 17: size and path scoping are tested
 
 
 def run(*args: str, timeout: float = 300) -> tuple[int, str]:
@@ -48,7 +51,8 @@ def main() -> int:
     if not changed and not unpushed:
         return 0
 
-    if any(name.endswith(CODE_FILES) for name in changed):
+    moved = any(code in line[:2] for line in status.splitlines() for code in "DR")
+    if moved or any(name.endswith(CODE_FILES) or name.startswith(TESTED_DOCS) for name in changed):
         code, out = run("uv", "run", "--frozen", "--quiet", "pytest", "-q", "-x")
         if code != 0:
             print("Tests fail. New code must not break old code (CLAUDE.md). Fix this first:\n" + tail(out),

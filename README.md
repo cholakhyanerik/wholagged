@@ -11,27 +11,38 @@
 
 **Dota 2 is stuck on "Searching for Game Coordinator". Is the problem your internet, your provider, or Valve's servers?**
 
-wholagged is a small desktop tool for Windows (macOS and Linux support is in progress) that answers that one question in about 10–20 seconds.
-It runs six network checks, from basic connectivity to ping and packet loss on Valve's game relays,
-and gives you a verdict on where the problem is, with steps to fix it.
+wholagged is a small desktop tool that answers that one question in about 10–20 seconds:
+
+- it runs six network checks, from basic connectivity to ping and packet loss on Valve's game relays;
+- it tells you whose side the problem is on;
+- it lists steps to fix it.
+
+It runs on Windows; macOS and Linux support is in progress.
 
 > **Note:** the app's interface is in Armenian. An Armenian version of this README is available in [README.hy.md](README.hy.md).
 
 ## Features
 
-- **One-click diagnosis.** Six checks run one after another, and the window updates as each one finishes.
-- **A clear verdict.** The tool tells you whose side the problem is on (yours, your provider's, Valve's, or your PC / Steam client) and lists what to do next.
-- **A report you can copy.** The *Copy report* button copies all results to the clipboard as plain text, headed by the app name and version, so you can send them to your ISP's support team as evidence.
-- **No admin rights needed.** Ping uses the Windows `IcmpSendEcho` API directly, so there is no UAC prompt, no console window flashes up, and the results don't depend on the Windows language.
-- **GUI or terminal.** The tool opens a PySide6 window by default, and `--cli` prints the same checks as text in the terminal.
-- **Quick links** to [steamstat.us](https://steamstat.us/) and [isdown.app](https://isdown.app/status/dota-2), so you can compare with what other players are seeing.
+- **One-click diagnosis.** Six checks run one after another; the window updates as each one finishes.
+- **A clear verdict:** whose side the problem is on (yours, your provider's, Valve's, or your PC / Steam
+  client) and what to do next.
+- **A report you can copy.** *Copy report* puts all results on the clipboard as plain text, headed by the
+  app name and version: evidence for your provider's support team.
+- **No admin rights needed.** Ping uses the Windows `IcmpSendEcho` API directly:
+  - no UAC prompt;
+  - no console window flashing up;
+  - the results don't depend on the Windows language.
+- **GUI or terminal.** A PySide6 window by default; `--cli` prints the same checks in the terminal.
+- **Quick links** to [steamstat.us](https://steamstat.us/) and [isdown.app](https://isdown.app/status/dota-2),
+  to compare with what other players are seeing.
 
 ## Requirements
 
 - Windows 10 or 11 (for macOS and Linux, see [Platform support](#platform-support))
-- [uv](https://docs.astral.sh/uv/) by Astral. **uv is required:** the project is managed only with uv
-  (`pyproject.toml` + `uv.lock`). There is no `requirements.txt`, and `pip install` is not supported.
-  uv also downloads Python 3.15 for you if you don't have it.
+- [uv](https://docs.astral.sh/uv/) by Astral. **uv is required:**
+  - the project is managed only with uv (`pyproject.toml` + `uv.lock`);
+  - there is no `requirements.txt`, and `pip install` is not supported;
+  - uv downloads Python 3.15 for you if you don't have it.
 
 ## Getting started
 
@@ -57,9 +68,10 @@ git pull
 uv sync
 ```
 
-The project was renamed to wholagged in v0.2.2. If the old `dota-netcheck` command says "Failed to spawn"
-after updating a clone from an older version, run `uv sync --reinstall-package wholagged` once. The new
-`wholagged` command works either way.
+Troubleshooting:
+
+- The old `dota-netcheck` command says "Failed to spawn" after you update a clone older than v0.2.2
+  (the rename to wholagged): run `uv sync --reinstall-package wholagged` once. The `wholagged` command works either way.
 
 ## What it checks
 
@@ -72,8 +84,9 @@ after updating a clone from an older version, run `uv sync --reinstall-package w
 | 5 | Dota 2 Game Coordinator | `IGCVersion_570/GetServerVersion` | Is the GC answering? (indirect check) |
 | 6 | Valve's game network | ICMP ping to Valve's SDR relays (from `GetSDRConfig`), then 10 pings to each of the 3 fastest | Ping, packet loss, jitter and routing problems |
 
-If there is no internet, the remaining checks are skipped. If the CM server list can't be fetched, check 4 tests
-Steam's web servers instead. If a check crashes, it is marked as skipped and the remaining checks still run.
+- No internet: the remaining checks are skipped.
+- The CM server list can't be fetched: check 4 tests Steam's web servers instead.
+- A check crashes: it is marked as skipped, and the remaining checks still run.
 
 ## How the verdict is decided
 
@@ -89,15 +102,21 @@ The rules in [`verdict.py`](src/wholagged/verdict.py) are checked from top to bo
 8. Packet loss > 5%, ping > 150 ms or jitter > 30 ms → **connection quality**
 9. Everything passes → **the network is fine; the problem is on your PC or in the Steam client**
 
-Each verdict comes with practical advice, such as restarting the router, switching DNS to 1.1.1.1 / 8.8.8.8,
-allowing `steam.exe` and `dota2.exe` through the firewall, testing over a phone hotspot, or verifying the game files.
+Each verdict comes with practical advice, for example:
+
+- restart the router;
+- switch DNS to 1.1.1.1 / 8.8.8.8;
+- allow `steam.exe` and `dota2.exe` through the firewall;
+- test over a phone hotspot;
+- verify the game files.
 
 ## Limitations
 
-- Checking the Game Coordinator directly would require logging in with a Steam account, so the tool checks it indirectly through the Web API.
-  If that endpoint changes, the check is marked as skipped, and the tool does not blame Valve.
-- The data endpoint behind steamstat.us is not a public API, and its owners ask people not to use it, so the tool only opens the site in your browser.
-- If ICMP is blocked on your network, relay ping can't be measured, and that check is marked as skipped.
+- **The Game Coordinator is checked indirectly,** through the Web API: a direct check needs a Steam login.
+  If that endpoint changes, the check is skipped and Valve is not blamed.
+- **The tool only opens steamstat.us in your browser** and never reads its data: that endpoint is not a
+  public API, and its owners ask people not to use it.
+- **ICMP blocked on your network:** relay ping can't be measured, and that check is skipped.
 
 ## Platform support
 
@@ -111,13 +130,14 @@ The goal is for the tool to run on Windows, macOS and Linux. For now, only Windo
 
 ### Known issues (fixes planned)
 
-- **macOS and Linux: ping uses the system `ping` command.** Since v0.1.1 it passes the timeout in the right unit
-  (milliseconds on macOS, seconds on Linux) and runs in a neutral locale, so the output doesn't depend on the system
-  language. A native implementation without the `ping` command, like the one on Windows, is planned.
-- **Advice is Windows-specific.** Some tips mention Windows Firewall, `ipconfig /flushdns`, network adapter settings
-  and `steam.exe` / `dota2.exe`. These don't apply on macOS or Linux.
-- **No CI on macOS yet.** Every code push to `main` and every pull request that changes code is tested on
-  Windows and Linux; a macOS run is planned. The tests use a fake network, so they don't cover the issues above.
+- **macOS and Linux: ping uses the system `ping` command.**
+  - It passes the timeout in the right unit (milliseconds on macOS, seconds on Linux).
+  - It runs in a neutral locale, so the output doesn't depend on the system language.
+  - A native implementation without the `ping` command, like the one on Windows, is planned.
+- **Advice is Windows-specific.** Tips about Windows Firewall, `ipconfig /flushdns`, network adapter settings
+  and `steam.exe` / `dota2.exe` don't apply on macOS or Linux.
+- **No CI on macOS yet.** Code changes are tested on Windows and Linux; a macOS run is planned. The tests
+  use a fake network, so they don't cover the issues above.
 
 ### Minimum system versions
 
@@ -148,10 +168,14 @@ tests/
   test_net_helpers.py HTTP error handling, the ping command, version sync
   test_i18n.py        translation lookup, placeholders and fallbacks
   test_claude_hooks.py the guard hook used by Claude Code in this repo
+  test_claude_md.py   keeps CLAUDE.md short and its rules files valid
 ```
 
-Development notes: planned work is in [TASKS.md](TASKS.md), the history of changes in [CHANGELOG.md](CHANGELOG.md),
-and the rules for contributors and AI agents in [CLAUDE.md](CLAUDE.md).
+Development notes:
+
+- planned work: [TASKS.md](TASKS.md);
+- the history of changes: [CHANGELOG.md](CHANGELOG.md);
+- the rules for contributors and AI agents: [CLAUDE.md](CLAUDE.md), with the details in [`.claude/rules/`](.claude/rules/).
 
 ## Roadmap
 

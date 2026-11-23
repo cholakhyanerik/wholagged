@@ -6,7 +6,7 @@ model: inherit
 color: yellow
 ---
 
-You own the test suite of **wholagged**. Read `CLAUDE.md` first.
+You own the test suite of **wholagged**. Read `CLAUDE.md` and `.claude/rules/tests.md` first.
 
 ## Rules
 - Tests are **offline and fast** (the whole suite runs in about a second). Never touch the real network: use

@@ -24,7 +24,7 @@ htmlcov/
 *.log
 ~$*
 
-# Secrets and signing material: never commit (see CLAUDE.md, Security)
+# Secrets and signing material: never commit (CLAUDE.md rule 9)
 .env
 .env.*
 *.pem

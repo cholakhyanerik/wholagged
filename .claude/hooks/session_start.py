@@ -1,8 +1,9 @@
-"""SessionStart hook: what needs attention before work starts (CLAUDE.md rules 1, 2, 5, 8, 11).
+"""SessionStart hook: what needs attention before work starts (CLAUDE.md rules 1, 2, 5, 8, 11, 17).
 
 Prints a short plain-text status that Claude Code adds to the session context:
 system Python vs the project pin, outdated dependencies, the uv build backend
-range, leftovers from the last session, the last CI run and the next tasks.
+range, leftovers from the last session, the last CI run, the size of CLAUDE.md
+and the next tasks.
 It never fails the session: every probe has a timeout and degrades to a note.
 """
 
@@ -17,6 +18,7 @@ import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+CLAUDE_MD_TARGET_LINES = 200  # rule 17's soft target; tests/test_claude_md.py enforces the hard limit
 
 
 def run(*args: str, timeout: float = 20) -> tuple[int, str]:
@@ -116,6 +118,14 @@ def private_guard_status() -> str:
     return ""
 
 
+def claude_md_status() -> str:
+    lines = len((ROOT / "CLAUDE.md").read_text(encoding="utf-8").splitlines())
+    if lines > CLAUDE_MD_TARGET_LINES:
+        return (f"ACTION (rule 17): CLAUDE.md has {lines} lines (aim for ~{CLAUDE_MD_TARGET_LINES}; "
+                "tests/test_claude_md.py enforces the hard limit). Move details to path-scoped .claude/rules/ files.")
+    return ""
+
+
 def tasks_status() -> str:
     path = ROOT / "TASKS.md"
     if not path.exists():
@@ -139,7 +149,8 @@ def tasks_status() -> str:
 
 def main() -> int:
     lines = ["[wholagged session check - .claude/hooks/session_start.py]"]
-    probes = (python_status, deps_status, build_backend_status, git_status, ci_status, private_guard_status, tasks_status)
+    probes = (python_status, deps_status, build_backend_status, git_status, ci_status, private_guard_status, claude_md_status,
+              tasks_status)
     for probe in probes:
         try:
             line = probe()

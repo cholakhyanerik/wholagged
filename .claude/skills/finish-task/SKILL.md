@@ -1,6 +1,6 @@
 ---
 name: finish-task
-description: Ship a finished task in the wholagged repo - verify, review, update TASKS.md, CHANGELOG, version, READMEs, CLAUDE.md and DECISIONS.md, then commit, push and clean up, without asking. Use every time a task (or a bug fix) is done.
+description: Ship a finished task in the wholagged repo - verify, review, update TASKS.md, CHANGELOG, version, READMEs, CLAUDE.md / .claude/rules and DECISIONS.md, then commit, push and clean up, without asking. Use every time a task (or a bug fix) is done.
 argument-hint: "[WL-id]"
 ---
 
@@ -26,14 +26,20 @@ translated READMEs).
    `Fixed` / `Security` / `Dependencies` entries written for users, each ending with the task id
    (`(WL-12)`). Update the compare links at the bottom.
 6. **README.md** (English) for any user-visible change: features, checks table, verdict rules, commands,
-   known issues, platform table, project structure. Then have the `translator` subagent mirror the
-   changes into `README.hy.md` (and `README.ru.md` when it exists).
-7. **CLAUDE.md.** Improve it with what this task taught: new commands, conventions, pitfalls, files.
-   Keep it short and current; remove anything that became false.
+   known issues, platform table, project structure. Write short lists, not long paragraphs, and leave
+   history ("since v0.x") to the CHANGELOG. Then have the `translator` subagent mirror the changes into
+   `README.hy.md` (and `README.ru.md` when it exists).
+7. **CLAUDE.md and `.claude/rules/`** (rule 17). Record what this task taught, and remove anything that
+   became false.
+   - A new convention, feature detail or pitfall goes into the matching `.claude/rules/*.md` file. If none
+     fits, create one with a `paths:` list and add it to CLAUDE.md's "Where the details are" table.
+   - CLAUDE.md itself changes only for a rule, the architecture, a command or a pointer. Keep it near
+     200 lines; `tests/test_claude_md.py` fails above 400.
 8. **DECISIONS.md.** Log every decision you made on your own (date, decision, why).
 9. **Commit.** Stage explicit paths (`git add <files>`, never secrets; the guard hook scans the commit).
-   Message: `WL-<id>: <imperative summary>` (or `fix: …` / `chore: …` for work without a card),
+   Message: `WL-<id>: <imperative summary>` (or `fix: …` / `chore: …` / `docs: …` for work without a card),
    a short body with the why, and the attribution trailer the harness specifies.
+   Git has `core.autocrlf=true` here: "LF will be replaced by CRLF" warnings are harmless.
 10. **Push and tag.** `git push`. If it is rejected, `git pull --rebase` and push again. Never force-push.
     Then `git tag vX.Y.Z` (the new version) and `git push origin vX.Y.Z`.
     If a CI workflow ran for the push, check it once with `gh run list --limit 1` before the next task.

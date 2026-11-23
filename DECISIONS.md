@@ -1,7 +1,32 @@
 # Decisions
 
-Decisions taken without asking (see [CLAUDE.md](CLAUDE.md) → Autonomy), newest first.
+Decisions taken without asking ([CLAUDE.md](CLAUDE.md) rule 12), newest first.
 Each entry: the decision, then why. Revisit an entry by adding a new one; don't rewrite history.
+
+## 2026-11-23
+
+- **The owner's note on keeping CLAUDE.md short became rule 17,** done as card WL-96 (no card existed;
+  the next free QUALITY id). One card, not two: the README change applies the same style rule and is `XS`.
+- **CLAUDE.md keeps the rules, the architecture, the commands and the tooling table;** the details went to
+  nine `.claude/rules/` files cut by where they apply (checks, gui, i18n, python, packaging, tests, ci,
+  claude-tooling, docs). The security essentials stay in rule 9, because secrets and private data matter
+  in every file, commit and request, which no `paths:` glob can cover.
+- **Every rule now states its why.** The owner gave the what; the whys were inferred from the project and
+  kept to one line each. The owner can correct any of them.
+- **The size limit is a pytest test** (`tests/test_claude_md.py`), not a CI-only check: the Stop hook runs
+  it locally whenever CLAUDE.md or `.claude/rules/` changes, and CI runs it with every task because the
+  version bump touches `pyproject.toml`. `CLAUDE.md` is not added to CI's `paths`, so a docs-only fix
+  costs no runner minutes (rule 11). The SessionStart hook reports CLAUDE.md past ~200 lines, the soft
+  target.
+- **The test also requires every `paths:` glob to match a file and every rules file to be listed in
+  CLAUDE.md:** a glob broken by a rename makes its rules silently never load, and an unlisted file is
+  invisible to anyone reading CLAUDE.md. Brace globs (`{a,b}`) are refused because the test's
+  `PurePath.full_match` can't expand them.
+- **Rules-file globs are matched against `git ls-files --cached --others --exclude-standard`,** the
+  files CI's checkout will hold once the task is committed. A tree walk would also count ignored local
+  files (a glob matching only those passes locally and fails in CI). git also never walks `.venv`.
+- **The `core.autocrlf` note moved into the finish-task skill:** it matters only when committing, and no
+  `paths:` glob covers "running git".
 
 ## 2026-11-22
 

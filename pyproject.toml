@@ -1,6 +1,6 @@
 [project]
 name = "wholagged"
-version = "0.3.0"
+version = "0.3.1"
 description = "wholagged: is it your internet, your provider or Valve's servers? A network check for Dota 2."
 readme = "README.md"
 license = "PolyForm-Noncommercial-1.0.0"
@@ -22,7 +22,7 @@ requires = ["uv_build>=0.13.9,<0.14.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-# uv_build ignores .gitignore: never ship secrets or junk dropped into src/ (CLAUDE.md, Security)
+# uv_build ignores .gitignore: never ship secrets or junk dropped into src/ (CLAUDE.md rule 9)
 source-exclude = [
     "**/.env*", "**/.dev.vars", "**/.pypirc", "**/.npmrc", "**/.netrc",  # the secret files .gitignore lists
     "**/*.pem", "**/*.key", "**/*.pfx", "**/*.p12", "**/id_rsa*", "**/id_ed25519*", "**/id_ecdsa*",
@@ -39,7 +39,7 @@ dev = [
 line-length = 120
 
 [tool.ruff.lint]
-# Ruff's default rule set plus flake8-bandit security rules (CLAUDE.md: security).
+# Ruff's default rule set plus flake8-bandit security rules (CLAUDE.md rule 9).
 extend-select = ["S"]
 
 [tool.ruff.lint.per-file-ignores]

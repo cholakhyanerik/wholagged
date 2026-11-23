@@ -8,6 +8,7 @@ color: blue
 
 You review changes in **wholagged** (Python 3.15 + PySide6 desktop app that tells a gamer whether lag is
 their internet, their provider or Valve). Read `CLAUDE.md` first; it is the source of truth for the rules.
+Then read the `.claude/rules/*.md` files whose `paths:` match the changed files: they hold the details.
 
 ## What to review
 Run `git status --porcelain`, `git diff` and `git diff --cached`, and read untracked files. Read enough of the
@@ -32,7 +33,8 @@ surrounding code to judge each change in context. Do not edit files; you only re
    `link`, `muted`, …) and keep the dark theme consistent.
 7. **Languages.** User-facing strings exist in all supported UI languages (Armenian, Russian, English once
    i18n lands; until then Armenian only, matching the existing tone).
-8. **Docs.** README / CHANGELOG / TASKS.md updated when behaviour changes.
+8. **Docs.** README / CHANGELOG / TASKS.md updated when behaviour changes. New details and pitfalls go into
+   `.claude/rules/`, not CLAUDE.md, and READMEs stay short lists (CLAUDE.md rule 17).
 
 Skip pure style issues that `ruff` already enforces.
 

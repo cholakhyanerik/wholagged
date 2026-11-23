@@ -15,6 +15,6 @@ argument-hint: "[WL-id]"
    If something was already broken, fix it first (bugs are fixed in the session, never filed as tasks).
 5. Read the code the task touches and write a 3–6 bullet plan in your reply. No questions to the user:
    where something is unclear, pick the most reasonable option and log it in `DECISIONS.md`.
-6. Implement following `CLAUDE.md`. Use the subagents where they help: `test-engineer` for tests,
+6. Implement following `CLAUDE.md` and the `.claude/rules/` files for the paths you touch. Use the subagents where they help: `test-engineer` for tests,
    `translator` for user-facing text, `code-reviewer` / `security-auditor` before committing.
 7. When the acceptance criteria are met, run the `finish-task` skill.

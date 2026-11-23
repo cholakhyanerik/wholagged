@@ -1,4 +1,4 @@
-"""PreToolUse guard (CLAUDE.md: security, uv only, never break or lose work).
+"""PreToolUse guard (CLAUDE.md rules 4, 9 and uv only: never break or lose work).
 
 Shell commands (Bash, PowerShell), including commands nested in `uv run`, `bash -c`,
 `powershell -Command` and `cmd /c`. Blocked (exit code 2, the reason goes to Claude on stderr):

@@ -1,7 +1,7 @@
 # TASKS
 
 The task board for **wholagged**, kept like a Jira/Trello board. It is updated in every session
-(see [CLAUDE.md](CLAUDE.md) → Tasks): a finished card is deleted (its history goes to
+([CLAUDE.md](CLAUDE.md) rule 5): a finished card is deleted (its history goes to
 [CHANGELOG.md](CHANGELOG.md)), new work is added as small cards, and the order of **To Do** is the
 priority order.
 
@@ -93,7 +93,7 @@ Found in the WL-1 audit: after one merged PR, a contributor's next PR can rewrit
 approval, and SHA pinning is a convention, not enforced.
 - [ ] fork PR approval policy `all_external_contributors`
 - [ ] `sha_pinning_required: true`, after checking that GitHub's own "Dependency Graph" runs still succeed
-- [ ] settings listed in CLAUDE.md → Security
+- [ ] settings listed in CLAUDE.md rule 9 and `.claude/rules/ci.md`
 
 ### WL-27 · English catalogue
 `feature` · `P1` · `S` · I18N · depends on: WL-21 … WL-26
@@ -267,6 +267,14 @@ is never executed by any test.
       (hosted runners block outbound ICMP). If loopback ICMP fails on the runner, check the reply parsing
       with a fake reply buffer instead
 - [ ] a timeout or unreachable reply returns `None`, not an exception
+
+### WL-97 · Test that the translated READMEs keep the English structure
+`test` · `P3` · `XS` · QUALITY · depends on: —
+README changes are mirrored by hand (the `translator` subagent); nothing catches a missed section or list.
+Found in WL-96.
+- [ ] a test compares `README.md` with `README.hy.md` (and `README.ru.md` once it exists): the same
+      number of `##` / `###` headings, table rows, code blocks and links, and identical code blocks
+- [ ] passes on the current files
 
 ### WL-93 · SECURITY.md
 `security` · `P2` · `XS` · QUALITY · depends on: —
