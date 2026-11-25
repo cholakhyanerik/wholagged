@@ -35,12 +35,6 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-21 · Move check titles and hints (`CHECKS`) to i18n keys
-`chore` · `P1` · `XS` · I18N · depends on: WL-20
-- [ ] each `CheckSpec` title and hint is a `check.<key>.title` / `check.<key>.hint` entry in `locales/hy.py`,
-      read with `t()` when shown, so a language switch (WL-32) takes effect
-- [ ] the window, the CLI and the report show the same Armenian text as before; tests unchanged
-
 ### WL-22 · Move the texts of checks 1–3 and `short_error` to i18n keys
 `chore` · `P1` · `S` · I18N · depends on: WL-20
 - [ ] internet, DNS and Steam Web API summaries/details; error words in `short_error`
@@ -52,6 +46,8 @@ _Nothing in progress._
 ### WL-23 · Move the texts of checks 4–6 and the runner messages to i18n keys
 `chore` · `P1` · `S` · I18N · depends on: WL-20
 - [ ] Steam CM, Dota GC, relays; "skipped because there is no internet"; "internal error"
+- [ ] the crash test in `test_scenarios.py` builds its spec with `dataclasses.replace(spec, func=boom)`
+      instead of passing rendered titles where `CheckSpec` expects keys (WL-21 review)
 
 ### WL-24 · Move the verdict texts (`verdict.py`) to i18n keys
 `chore` · `P1` · `S` · I18N · depends on: WL-20

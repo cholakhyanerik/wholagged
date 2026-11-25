@@ -9,7 +9,7 @@ import string
 
 import pytest
 
-from wholagged import i18n, locales
+from wholagged import checks, i18n, locales
 from wholagged.i18n import t
 
 ARMENIAN = re.compile(r"[Ա-և]")
@@ -255,6 +255,26 @@ def test_translations_use_the_same_placeholders_as_armenian(lang):
     for key, text in _messages(lang).items():
         if key in source:
             assert _placeholders(text) == _placeholders(source[key]), key
+
+
+# --- texts moved out of the code -----------------------------------------------------------------
+
+
+@pytest.mark.parametrize("spec", checks.CHECKS, ids=lambda s: s.key)
+def test_check_title_and_hint_are_armenian_catalogue_entries(spec):
+    hy = _messages("hy")
+    assert (spec.title_key, spec.hint_key) == (f"check.{spec.key}.title", f"check.{spec.key}.hint")
+    assert spec.title == hy[spec.title_key]
+    assert spec.hint == hy[spec.hint_key]
+
+
+def test_check_title_and_hint_follow_a_language_switch(monkeypatch):
+    spec = checks.CHECKS[0]
+    armenian = spec.title, spec.hint
+    _use(monkeypatch, "en", {spec.title_key: "Internet", spec.hint_key: "Connects to Cloudflare"})
+    assert (spec.title, spec.hint) == ("Internet", "Connects to Cloudflare")  # read when shown, not when built
+    i18n.set_language("hy")
+    assert (spec.title, spec.hint) == armenian
 
 
 @pytest.mark.parametrize(

@@ -4,6 +4,13 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.3.2] - 2026-11-25
+
+### Changed
+- The names and short descriptions of the six checks now come from the translation catalogue, so they
+  can be shown in Russian and English once those translations exist. They read exactly as before.
+  (WL-21)
+
 ## [0.3.1] - 2026-11-23
 
 ### Changed
@@ -153,6 +160,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.3.2]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.4...v0.3.0
 [0.2.4]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.3...v0.2.4

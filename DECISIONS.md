@@ -3,6 +3,19 @@
 Decisions taken without asking ([CLAUDE.md](CLAUDE.md) rule 12), newest first.
 Each entry: the decision, then why. Revisit an entry by adding a new one; don't rewrite history.
 
+## 2026-11-25
+
+- **`CheckSpec` stores i18n keys (`title_key`, `hint_key`) and `title` / `hint` are properties that call
+  `t()` on every read (WL-21).** Every place that shows them (the window's rows and status line, the
+  CLI, `res.title` in the report) keeps reading `spec.title` and gets the current language; nothing
+  caches a rendered title. The keys are written out in `CHECKS` rather than built from `spec.key`, so a
+  search for `check.dns.title` finds where it is used. A spec built with plain text instead of a key
+  (one existing test does this) still shows that text, because `t()` returns an unknown key as it is.
+- **The "move" cards (WL-21 … WL-26) add their keys to `hy.py` only; `ru.py` and `en.py` get them in
+  WL-27 / WL-28.** The language is always `hy` until WL-30, so no user sees a missing translation
+  meanwhile. Translating the whole catalogue in one pass also lets the translator keep the terms
+  consistent across checks, verdicts and the UI.
+
 ## 2026-11-23
 
 - **The owner's note on keeping CLAUDE.md short became rule 17,** done as card WL-96 (no card existed;

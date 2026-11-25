@@ -12,8 +12,11 @@ description: Step-by-step recipe for adding or changing a network check or a ver
 - Return `Status.OK / WARN / FAIL / SKIP`. **SKIP means "we can't tell"** and must never lead to blaming
   anyone. Put machine-readable facts for the verdict in `data` (e.g. `{"tls_error": True}`).
 - Exceptions are caught by `run_checks`, but don't rely on it: handle expected failures yourself.
-- Add a `CheckSpec(key, title, hint, func)` to `CHECKS` in the order it should run. The GUI builds its rows
-  from `CHECKS`, so nothing else is needed there.
+- Add `check.<key>.title` and `check.<key>.hint` to `locales/hy.py` first, then a
+  `CheckSpec(key, "check.<key>.title", "check.<key>.hint", func)` to `CHECKS` in the order it should run.
+  Pass the keys, never the text: `t()` shows an unknown key as it is, so inline text would look right in
+  Armenian and silently skip translation. The GUI builds its rows from `CHECKS`, so nothing else is
+  needed there.
 - **Compatibility:** never rename existing keys or `data` flags; tests, the verdict and users' reports
   depend on them. The whole run must stay within about 10–20 seconds.
 

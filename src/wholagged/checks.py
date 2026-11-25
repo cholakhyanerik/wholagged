@@ -22,6 +22,7 @@ from itertools import pairwise
 from typing import Any
 
 from . import APP_NAME, __version__, icmp
+from .i18n import t
 from .models import CheckResult, Status
 
 TCP_TIMEOUT_S = 3.0
@@ -493,18 +494,26 @@ def check_relays(ctx: Context) -> CheckResult:
 @dataclass(frozen=True)
 class CheckSpec:
     key: str
-    title: str
-    hint: str
+    title_key: str  # i18n keys; `title` and `hint` look them up in the language current when they are read
+    hint_key: str
     func: Callable[[Context], CheckResult]
+
+    @property
+    def title(self) -> str:
+        return t(self.title_key)
+
+    @property
+    def hint(self) -> str:
+        return t(self.hint_key)
 
 
 CHECKS: list[CheckSpec] = [
-    CheckSpec("internet", "Internet կապ", "Միանում է Cloudflare, Google, Quad9 սերվերներին", check_internet),
-    CheckSpec("dns", "DNS", "Լուծում է Steam-ի և Google-ի հասցեները", check_dns),
-    CheckSpec("steam_api", "Steam Web API", "Valve-ից ստանում է login սերվերների ցուցակը", check_steam_api),
-    CheckSpec("steam_cm", "Steam login սերվերներ", "Միանում է Steam-ի մոտակա CM սերվերներին", check_steam_cm),
-    CheckSpec("dota_gc", "Dota 2 Game Coordinator", "Հարցնում է GC-ի version-ը Web API-ից", check_dota_gc),
-    CheckSpec("relays", "Valve-ի խաղային ցանց", "Ping, packet loss և jitter Valve-ի relay-ներին", check_relays),
+    CheckSpec("internet", "check.internet.title", "check.internet.hint", check_internet),
+    CheckSpec("dns", "check.dns.title", "check.dns.hint", check_dns),
+    CheckSpec("steam_api", "check.steam_api.title", "check.steam_api.hint", check_steam_api),
+    CheckSpec("steam_cm", "check.steam_cm.title", "check.steam_cm.hint", check_steam_cm),
+    CheckSpec("dota_gc", "check.dota_gc.title", "check.dota_gc.hint", check_dota_gc),
+    CheckSpec("relays", "check.relays.title", "check.relays.hint", check_relays),
 ]
 
 
