@@ -7,6 +7,9 @@ the key itself, so a missing text shows up as its key instead of crashing the UI
 Texts use `str.format` syntax: `t("relay.ping", ms=42)` fills `{ms}`. Write a literal brace as `{{` / `}}`.
 A field without a value stays visible as written (`{name}`, `{pops[0]}`, `{ms:.0f}`; an empty spec such as
 `{ms:}` comes back as `{ms}`). A template that can't be filled is shown raw, with its `{{` escapes.
+
+Texts that outlive the moment they are made (check results, made in the worker thread) are `Msg` objects:
+strings that also keep their key and params, so `render()` can show them again after a language switch.
 """
 
 from __future__ import annotations
@@ -14,6 +17,7 @@ from __future__ import annotations
 import re
 import string
 from collections.abc import Mapping
+from typing import Self
 
 LANGUAGES = ("hy", "ru", "en")  # the app's languages (CLAUDE.md rule 14)
 DEFAULT_LANGUAGE = "hy"  # the UI has been Armenian so far; WL-30 picks the language from the OS
@@ -93,3 +97,43 @@ def t(key: str, /, **params: object) -> str:
         return _render(text, params)
     except _FORMAT_ERRORS:
         return text  # a malformed template, or a value that doesn't fit its field: show the raw text
+
+
+class Msg(str):
+    """A translated text that remembers its key and parameters, so it can be shown again in another language.
+
+    The checks run in a worker thread, so a result's texts are made in the language of that moment. A Msg
+    is that text (a real `str`: f-strings, Qt labels, the report and `==` all see the rendered text) and
+    also keeps `key` and `params`, so `render()` can give the same message in the current language. A
+    parameter that is itself a Msg, such as the error word in a summary, is rendered again too.
+    """
+
+    key: str
+    params: dict[str, object]
+
+    def __new__(cls, key: str, /, **params: object) -> Self:
+        self = super().__new__(cls, t(key, **params))
+        self.key = key
+        self.params = params
+        return self
+
+    def render(self) -> str:
+        """This message in the current language."""
+        return t(self.key, **{name: render(value) for name, value in self.params.items()})
+
+    def __reduce__(self) -> tuple[object, ...]:
+        # copy, deepcopy and pickle: keep the text as it was made. Without this, `str` rebuilds the copy with
+        # `Msg(rendered text)`, looking the text up as if it were a key.
+        return _restore, (str(self), self.key, self.params)
+
+
+def _restore(text: str, key: str, params: dict[str, object]) -> Msg:
+    msg = str.__new__(Msg, text)
+    msg.key = key
+    msg.params = params
+    return msg
+
+
+def render[T](text: T) -> T | str:
+    """`text` in the current language if it is a Msg; anything else (plain text, numbers) as it is."""
+    return text.render() if isinstance(text, Msg) else text

@@ -14,6 +14,8 @@ class Status(StrEnum):
 
 @dataclass
 class CheckResult:
+    # summary, details and title are rendered in the language of the run. Most are `i18n.Msg` (a str that keeps
+    # its key and params), so `i18n.render()` can show a finished result again in another language.
     key: str
     status: Status
     summary: str

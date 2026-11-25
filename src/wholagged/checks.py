@@ -22,7 +22,7 @@ from itertools import pairwise
 from typing import Any
 
 from . import APP_NAME, __version__, icmp
-from .i18n import t
+from .i18n import Msg
 from .models import CheckResult, Status
 
 TCP_TIMEOUT_S = 3.0
@@ -82,18 +82,19 @@ def _clip(text: str, limit: int = 70) -> str:
 
 
 def short_error(exc: BaseException | str) -> str:
+    """A few words on what went wrong: our own (translated) words for the common errors, else the OS's text."""
     if isinstance(exc, str):
-        return _clip(exc)
+        return exc if isinstance(exc, Msg) else _clip(exc)
     if isinstance(exc, (TimeoutError, socket.timeout)):
-        return "timeout"
+        return Msg("error.timeout")
     if isinstance(exc, ConnectionRefusedError):
-        return "կապը մերժվեց"
+        return Msg("error.refused")
     if isinstance(exc, ConnectionResetError):
-        return "կապը խզվեց"
+        return Msg("error.reset")
     if isinstance(exc, socket.gaierror):
-        return "DNS-ը չգտավ հասցեն"
+        return Msg("error.dns")
     if isinstance(exc, ssl.SSLError):
-        return "SSL սխալ"
+        return Msg("error.ssl")
     if isinstance(exc, OSError) and exc.strerror:
         return _clip(exc.strerror)
     return _clip(str(exc) or type(exc).__name__)
@@ -113,6 +114,7 @@ def tcp_probe(host: str, port: int, timeout: float = TCP_TIMEOUT_S) -> tuple[flo
 class HttpFailure(Exception):
     def __init__(self, message: str, status: int | None = None, cert_error: str | None = None) -> None:
         super().__init__(message)
+        self.message = message  # may be a Msg; `str(exc)` would flatten it to text in one language
         self.status = status
         # Set (to the reason) only when the server's certificate was rejected: system clock, antivirus
         # HTTPS scanning, captive portal or missing CA certificates. Other TLS errors, such as a handshake
@@ -140,11 +142,11 @@ def http_get_json(url: str, timeout: float = HTTP_TIMEOUT_S) -> tuple[Any, float
         raise HttpFailure(short_error(exc)) from exc
     ms = (time.perf_counter() - t0) * 1000
     if len(body) > MAX_BODY_BYTES:
-        raise HttpFailure("պատասխանը չափազանց մեծ է", status=200)
+        raise HttpFailure(Msg("error.too_big"), status=200)
     try:
         return json.loads(body), ms
     except ValueError as exc:
-        raise HttpFailure("պատասխանը JSON չէ", status=200) from exc
+        raise HttpFailure(Msg("error.not_json"), status=200) from exc
 
 
 def parallel[T, R](func: Callable[[T], R], items: Iterable[T], workers: int = 16) -> list[R]:
@@ -168,23 +170,18 @@ def check_internet(ctx: Context) -> CheckResult:
     ok: list[float] = []
     for (ip, port, name), (ms, err) in zip(INTERNET_PROBES, results):
         if ms is None:
-            details.append(f"{name} ({ip}:{port}) — չհաջողվեց ({err})")
+            details.append(Msg("check.probe_failed", target=f"{name} ({ip}:{port})", error=err))
         else:
             details.append(f"{name} ({ip}:{port}) — {fmt_ms(ms)}")
             ok.append(ms)
 
     ctx.internet_ok = bool(ok)
     if not ok:
-        return CheckResult(
-            "internet",
-            Status.FAIL,
-            "Internet չկա. ոչ մի արտաքին սերվերի չհաջողվեց միանալ",
-            details,
-        )
+        return CheckResult("internet", Status.FAIL, Msg("check.internet.fail"), details)
     return CheckResult(
         "internet",
         Status.OK,
-        f"Internet-ն աշխատում է ({len(ok)}/{len(INTERNET_PROBES)}, {fmt_ms(min(ok))})",
+        Msg("check.internet.ok", ok=len(ok), total=len(INTERNET_PROBES), ms=fmt_ms(min(ok))),
         details,
         latency_ms=min(ok),
     )
@@ -211,25 +208,24 @@ def check_dns(ctx: Context) -> CheckResult:
     for name, (ip, ms, err) in zip(names, results):
         if ip is None:
             failed.append(name)
-            details.append(f"{name} — չլուծվեց ({err})")
+            details.append(Msg("check.dns.name_failed", name=name, error=err))
         else:
             times.append(ms or 0.0)
             details.append(f"{name} → {ip} ({fmt_ms(ms or 0.0)})")
 
     steam_failed = any(n in failed for n in STEAM_DNS_NAMES)
     if len(failed) == len(names):
-        return CheckResult("dns", Status.FAIL, "DNS-ը չի աշխատում. ոչ մի հասցե չլուծվեց", details,
-                           data={"steam_dns_fail": True})
+        return CheckResult("dns", Status.FAIL, Msg("check.dns.fail"), details, data={"steam_dns_fail": True})
     if failed:
         return CheckResult(
             "dns",
             Status.WARN,
-            "Որոշ հասցեներ չլուծվեցին՝ " + ", ".join(failed),
+            Msg("check.dns.some_failed", names=", ".join(failed)),
             details,
             data={"steam_dns_fail": steam_failed},
         )
-    return CheckResult("dns", Status.OK, f"Բոլոր հասցեները լուծվեցին ({fmt_ms(max(times))})",
-                       details, latency_ms=max(times))
+    return CheckResult("dns", Status.OK, Msg("check.dns.ok", ms=fmt_ms(max(times))), details,
+                       latency_ms=max(times))
 
 
 # --------------------------------------------------------------------------- #
@@ -244,7 +240,7 @@ def check_steam_api(ctx: Context) -> CheckResult:
             return CheckResult(
                 "steam_api",
                 Status.WARN,
-                f"Steam-ը պատասխանեց սխալով ({exc})",
+                Msg("check.steam_api.server_error", error=exc.message),
                 [CM_LIST_URL],
                 data={"reached": True, "server_error": True},
             )
@@ -254,14 +250,14 @@ def check_steam_api(ctx: Context) -> CheckResult:
             return CheckResult(
                 "steam_api",
                 Status.FAIL,
-                f"Steam-ի հետ անվտանգ (HTTPS) կապը չհաստատվեց ({exc})",
-                [CM_LIST_URL, f"Սերտիֆիկատ՝ {exc.cert_error}"],
+                Msg("check.steam_api.cert_error", error=exc.message),
+                [CM_LIST_URL, Msg("check.steam_api.certificate", reason=exc.cert_error)],
                 data={"reached": False, "cert_error": True},
             )
         return CheckResult(
             "steam_api",
             Status.FAIL,
-            f"Steam Web API-ին չհաջողվեց հասնել ({exc})",
+            Msg("check.steam_api.unreachable", error=exc.message),
             [CM_LIST_URL],
             data={"reached": False},
         )
@@ -273,7 +269,7 @@ def check_steam_api(ctx: Context) -> CheckResult:
         return CheckResult(
             "steam_api",
             Status.WARN,
-            "Steam-ը պատասխանեց, բայց login սերվերների ցուցակը դատարկ է",
+            Msg("check.steam_api.empty"),
             data={"reached": True, "server_error": True},
         )
 
@@ -286,8 +282,8 @@ def check_steam_api(ctx: Context) -> CheckResult:
     return CheckResult(
         "steam_api",
         Status.OK,
-        f"Steam Web API-ն պատասխանեց ({fmt_ms(ms)}, {len(servers)} login սերվեր)",
-        [f"Ամենամոտ data center-ները՝ {', '.join(dcs[:5])}"] if dcs else [],
+        Msg("check.steam_api.ok", ms=fmt_ms(ms), count=len(servers)),
+        [Msg("check.steam_api.data_centers", dcs=", ".join(dcs[:5]))] if dcs else [],
         latency_ms=ms,
         data={"reached": True},
     )
@@ -500,11 +496,11 @@ class CheckSpec:
 
     @property
     def title(self) -> str:
-        return t(self.title_key)
+        return Msg(self.title_key)  # a Msg, so `CheckResult.title` can be shown again in another language
 
     @property
     def hint(self) -> str:
-        return t(self.hint_key)
+        return Msg(self.hint_key)
 
 
 CHECKS: list[CheckSpec] = [

@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import socket
+import ssl
+from urllib.parse import urlsplit
+
 from wholagged import checks, icmp
 
 CM_LIST = {
@@ -32,12 +36,27 @@ RELAY_MS = {"10.0.0.1": 58.0, "10.0.0.2": 47.0, "10.0.0.3": 52.0, "10.0.0.4": 71
 CONTROL = {"1.1.1.1": 9.0, "8.8.8.8": 11.0}
 
 
+# The error words the real helpers give: `short_error()` of the exception they would catch, so the fake
+# network returns the same `i18n.Msg` texts as production, in the language current when the check runs.
+def _timeout() -> str:
+    return checks.short_error(TimeoutError())
+
+
+def _no_such_name() -> str:
+    return checks.short_error(socket.gaierror())
+
+
+def _bad_certificate() -> str:
+    return checks.short_error(ssl.SSLCertVerificationError(1, "certificate verify failed"))
+
+
 class FakeNet:
     """Each attribute is a knob a test can turn to break one part of the network."""
 
     def __init__(self) -> None:
         self.internet = True
         self.dns = True
+        self.unresolved: set[str] = set()  # names that don't resolve while the rest of DNS works
         self.http: dict[str, object] = {
             checks.CM_LIST_URL: CM_LIST,
             checks.SDR_CONFIG_URL: SDR,
@@ -61,23 +80,25 @@ class FakeNet:
 
     def tcp_probe(self, host, port, timeout=0):
         if not self.internet:
-            return None, "timeout"
+            return None, _timeout()
         if host[0].isdigit() and host.count(".") == 3 and host in CONTROL | {"9.9.9.9": 0}:
             return 12.0, None
-        if not self.dns:
-            return None, "DNS-ը չգտավ հասցեն"
-        return (35.0, None) if self.tcp_ok else (None, "timeout")
+        if not self.dns or host in self.unresolved:
+            return None, _no_such_name()
+        return (35.0, None) if self.tcp_ok else (None, _timeout())
 
     def resolve(self, name):
-        if self.internet and self.dns:
+        if self.internet and self.dns and name not in self.unresolved:
             return "1.2.3.4", 4.0, None
-        return None, None, "DNS-ը չգտավ հասցեն"
+        return None, None, _no_such_name()
 
     def http_get_json(self, url, timeout=0):
         if not (self.internet and self.dns and self.tcp_ok):
-            raise checks.HttpFailure("timeout")
+            raise checks.HttpFailure(_timeout())
+        if urlsplit(url).hostname in self.unresolved:
+            raise checks.HttpFailure(_no_such_name())
         if not self.cert_ok:
-            raise checks.HttpFailure("SSL սխալ", cert_error="certificate has expired")
+            raise checks.HttpFailure(_bad_certificate(), cert_error="certificate has expired")
         value = self.http[url]
         if isinstance(value, int):
             raise checks.HttpFailure(f"HTTP {value}", status=value)

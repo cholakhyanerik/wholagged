@@ -4,6 +4,14 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.3.3] - 2026-11-25
+
+### Changed
+- The results of the internet, DNS and Steam Web API checks, and the short error words such as
+  "timeout", now come from the translation catalogue. Each result also remembers which text it is, so
+  a finished check can later be shown again in another language without running it again. Everything
+  reads exactly as before. (WL-22)
+
 ## [0.3.2] - 2026-11-25
 
 ### Changed
@@ -160,6 +168,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.3.3]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/cholakhyanerik/wholagged/compare/v0.2.4...v0.3.0

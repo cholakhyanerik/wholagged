@@ -4,17 +4,20 @@ from __future__ import annotations
 
 import http.client
 import shutil
+import socket
 import ssl
 import subprocess
 import sysconfig
 import tomllib
 import urllib.error
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
 
 import wholagged
 from wholagged import checks, icmp
+from wholagged.i18n import Msg
 
 
 def _raise(exc: BaseException):
@@ -63,6 +66,70 @@ def test_oversized_answer_is_refused(monkeypatch):
     with pytest.raises(checks.HttpFailure) as info:
         checks.http_get_json("https://example.invalid/")
     assert info.value.status == 200
+
+
+def _answer(body: Callable[[int], bytes]):
+    """A fake `urlopen` whose response body is `body(n)` for `read(n)`."""
+
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def read(self, n):
+            return body(n)
+
+    return lambda *a, **k: Response()
+
+
+@pytest.mark.parametrize(
+    ("body", "key"),
+    [(lambda n: b"x" * n, "error.too_big"), (lambda n: b"<html>Service Unavailable</html>", "error.not_json")],
+    ids=["too-big", "not-json"],
+)
+def test_bad_answer_keeps_its_reason_as_a_msg(monkeypatch, body, key):
+    monkeypatch.setattr(checks.urllib.request, "urlopen", _answer(body))
+    with pytest.raises(checks.HttpFailure) as info:
+        checks.http_get_json("https://example.invalid/")
+    message = info.value.message
+    assert isinstance(message, Msg)  # `str(exc)` would have flattened it to one language
+    assert message.key == key
+    assert str(info.value) == message  # code that formats the exception still gets the text
+    assert info.value.status == 200
+    assert info.value.cert_error is None
+
+
+@pytest.mark.parametrize(
+    ("raised", "key"),
+    [
+        (urllib.error.URLError(TimeoutError()), "error.timeout"),
+        (urllib.error.URLError(socket.gaierror(11001, "getaddrinfo failed")), "error.dns"),
+        (urllib.error.URLError(ConnectionRefusedError(10061, "refused")), "error.refused"),
+        (urllib.error.URLError(ssl.SSLCertVerificationError(1, "certificate verify failed")), "error.ssl"),
+        (urllib.error.URLError(ssl.SSLEOFError(8, "EOF occurred in violation of protocol")), "error.ssl"),
+        (ConnectionResetError(10054, "reset"), "error.reset"),  # the link drops while the body is read
+    ],
+    ids=["timeout", "dns", "refused", "certificate", "handshake-cut", "reset"],
+)
+def test_network_failure_keeps_the_error_word_as_a_msg(monkeypatch, raised, key):
+    monkeypatch.setattr(checks.urllib.request, "urlopen", _raise(raised))
+    with pytest.raises(checks.HttpFailure) as info:
+        checks.http_get_json("https://example.invalid/")
+    assert isinstance(info.value.message, Msg)
+    assert info.value.message.key == key
+    assert info.value.status is None
+
+
+def test_http_error_message_is_the_status_code(monkeypatch):
+    error = urllib.error.HTTPError("https://example.invalid/", 503, "Service Unavailable", None, None)
+    monkeypatch.setattr(checks.urllib.request, "urlopen", _raise(error))
+    with pytest.raises(checks.HttpFailure) as info:
+        checks.http_get_json("https://example.invalid/")
+    assert info.value.message == "HTTP 503"
+    assert not isinstance(info.value.message, Msg)  # a status code, the same in every language
+    assert info.value.status == 503
 
 
 def test_plain_network_error_is_not_tls(monkeypatch):

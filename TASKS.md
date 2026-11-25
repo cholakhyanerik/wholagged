@@ -35,23 +35,16 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-22 · Move the texts of checks 1–3 and `short_error` to i18n keys
-`chore` · `P1` · `S` · I18N · depends on: WL-20
-- [ ] internet, DNS and Steam Web API summaries/details; error words in `short_error`
-- [ ] first, decide and log in DECISIONS.md how results keep their texts: the checks and `decide()` run in
-      the worker thread, so finished strings freeze the language of that moment. Either `CheckResult` /
-      `Verdict` carry `key + params` and the GUI renders them on display (WL-32 can then switch a finished
-      run), or texts stay rendered strings and WL-32 re-renders only the static UI. Found in WL-20's review
-
 ### WL-23 · Move the texts of checks 4–6 and the runner messages to i18n keys
 `chore` · `P1` · `S` · I18N · depends on: WL-20
 - [ ] Steam CM, Dota GC, relays; "skipped because there is no internet"; "internal error"
-- [ ] the crash test in `test_scenarios.py` builds its spec with `dataclasses.replace(spec, func=boom)`
-      instead of passing rendered titles where `CheckSpec` expects keys (WL-21 review)
+- [ ] built with `Msg(...)` like checks 1–3 (`.claude/rules/i18n.md`); failed probes reuse `check.probe_failed`;
+      errors go in as `exc.message`, not `{exc}`
 
 ### WL-24 · Move the verdict texts (`verdict.py`) to i18n keys
 `chore` · `P1` · `S` · I18N · depends on: WL-20
 - [ ] headlines, explanations and advice; numbers stay placeholders (`{loss}`, `{ms}`)
+- [ ] `Verdict` texts are `Msg` (made in the worker thread), so WL-32 can switch a shown verdict
 
 ### WL-25 · Move the report and CLI texts to i18n keys
 `chore` · `P1` · `XS` · I18N · depends on: WL-20
@@ -94,10 +87,12 @@ approval, and SHA pinning is a convention, not enforced.
 ### WL-27 · English catalogue
 `feature` · `P1` · `S` · I18N · depends on: WL-21 … WL-26
 - [ ] every key translated by the `translator` subagent; reads naturally
+- [ ] counts (`{count}`, `{ok}/{total}`) are worded so they read right for any number: `t()` has no plurals
 
 ### WL-28 · Russian catalogue
 `feature` · `P1` · `S` · I18N · depends on: WL-21 … WL-26
 - [ ] every key translated by the `translator` subagent; informal `ты`, common gamer terms
+- [ ] counts (`{count}`, `{ok}/{total}`) are worded so they read right for any number: `t()` has no plurals
 
 ### WL-29 · Test that the three catalogues are complete
 `test` · `P1` · `XS` · I18N · depends on: WL-27, WL-28
@@ -114,8 +109,10 @@ approval, and SHA pinning is a convention, not enforced.
 ### WL-32 · Language switcher in the window header
 `ux` · `P1` · `S` · I18N · depends on: WL-30
 - [ ] ՀԱՅ / РУС / ENG control in the header, styled like the existing buttons
-- [ ] switching updates every visible text (rows, verdict, buttons) without restarting a check, as far as
-      the WL-22 decision on how results keep their texts allows
+- [ ] switching updates every visible text without restarting a check: static texts with `t()`, a finished
+      run's rows and verdict with `i18n.render()` (results are `Msg`, DECISIONS 2026-11-25)
+- [ ] a result or verdict that arrives after a switch, made in the old language mid-run, is shown through
+      `i18n.render()` too (WL-22 review)
 
 ### WL-33 · Remember the chosen language
 `ux` · `P2` · `XS` · I18N · depends on: WL-32
@@ -123,6 +120,8 @@ approval, and SHA pinning is a convention, not enforced.
 
 ### WL-34 · Report in the UI language, with app version and language in the header
 `feature` · `P2` · `XS` · I18N · depends on: WL-25
+- [ ] `build_report()` renders titles, summaries, details and the verdict with `i18n.render()`, so a run
+      made in one language is copied in the language shown now
 
 ### WL-35 · Russian README and language links in all READMEs
 `docs` · `P1` · `S` · I18N · depends on: WL-27

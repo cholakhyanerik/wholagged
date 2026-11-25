@@ -5,6 +5,30 @@ Each entry: the decision, then why. Revisit an entry by adding a new one; don't 
 
 ## 2026-11-25
 
+- **Results carry key + params, as `i18n.Msg`: a `str` subclass that is rendered when it is made and
+  also keeps `key` and `params` (WL-22).** The checks and `decide()` run in the worker thread, so any
+  rendered text freezes the language of that moment. Of the card's two options, this one lets WL-32
+  switch the language of a finished run (rows, verdict, report) with `i18n.render()`, which the plain
+  rendered strings could not. Making it a `str` keeps everything that already uses results working
+  unchanged: the report, the CLI, Qt labels, `in` / `==` in the tests and the user's report layout.
+  A separate key + params object (not a `str`) would have meant changing every reader and test at once.
+  - Parameters that are themselves `Msg` (an error word inside a summary) are rendered again too.
+    `HttpFailure.message` keeps the `Msg`, because `str(exc)` would flatten it to one language.
+  - The GUI keeps showing the text as it was made; re-rendering on display would be needless work while
+    the language can't change (rule 3). WL-32 calls `render()` when the language switches, and WL-34
+    calls it when the report is built.
+  - Texts with no words to translate stay plain f-strings: `api.steampowered.com → 1.2.3.4 (4 ms)`,
+    `Cloudflare (1.1.1.1:443) — 12 ms`. `fmt_ms()` keeps "ms", which gamers read the same in all three
+    languages. The OS's own error text (`strerror`) and OpenSSL's certificate reason stay as they come.
+  - `check.probe_failed` ("{target} — failed ({error})") is shared by every check that probes a list of
+    servers, so the translator writes it once; WL-23 reuses it for the Steam login servers.
+  - `CheckSpec.title` / `.hint` now return a fresh `Msg` instead of `t()`'s plain text (this revisits the
+    WL-21 entry below), so `run_checks()`'s `res.title = spec.title` keeps the key as well.
+  - A result can reach the window after a language switch, because `check_done` is a queued signal.
+    WL-32 therefore renders every result it shows whenever the run's language differs from the current
+    one, not only the rows already on screen at the moment of the switch.
+  - `Msg.__reduce__` keeps a copy's text as it was made: `str`'s default would rebuild the copy as
+    `Msg(rendered text)`, looking the text up as a key.
 - **`CheckSpec` stores i18n keys (`title_key`, `hint_key`) and `title` / `hint` are properties that call
   `t()` on every read (WL-21).** Every place that shows them (the window's rows and status line, the
   CLI, `res.title` in the report) keeps reading `spec.title` and gets the current language; nothing

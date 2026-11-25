@@ -29,7 +29,8 @@ src/wholagged/
   report.py    plain-text report
   models.py    CheckResult, Verdict, Status, Side
   gui.py       PySide6 window, design tokens, CheckWorker (QThread)
-  i18n.py      t(key, **params), get_language() / set_language(); lookup: language → en → key
+  i18n.py      t(key, **params), get_language() / set_language(); lookup: language → en → key;
+               Msg (a str that keeps key + params, for results) and render() to show it again
   locales/     hy.py (source), ru.py, en.py: one MESSAGES dict each
 tests/         offline tests; fakes.py (FakeNet) replaces the network
 .claude/       agents/, skills/, hooks/, rules/, settings.json (Claude Code tooling, see below)

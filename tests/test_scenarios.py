@@ -48,6 +48,27 @@ def test_dns_broken(net):
     assert "DNS" in verdict.headline
 
 
+def test_one_steam_name_not_resolving_is_blamed_on_dns(net):
+    net.unresolved = {"steamcommunity.com"}
+    results, verdict = run(net)
+    assert results["dns"].status == Status.WARN  # the other names still resolve
+    assert results["dns"].data["steam_dns_fail"] is True
+    assert "steamcommunity.com" in results["dns"].summary
+    assert results["steam_api"].status == Status.OK
+    assert verdict.side == Side.YOU
+    assert "DNS" in verdict.headline
+
+
+def test_non_steam_name_not_resolving_is_not_blamed_on_dns(net):
+    net.unresolved = {"google.com"}
+    results, verdict = run(net)
+    assert results["dns"].status == Status.WARN
+    assert results["dns"].data["steam_dns_fail"] is False
+    assert "google.com" in results["dns"].summary
+    assert verdict.side == Side.PC  # Steam's names resolve: nothing for Dota to trip over
+    assert "DNS" not in verdict.headline
+
+
 def test_valve_returns_503(net):
     net.http[checks.CM_LIST_URL] = 503
     results, verdict = run(net)
@@ -162,8 +183,9 @@ def test_a_crashing_check_does_not_kill_the_run(net, monkeypatch):
 
     patched = list(checks.CHECKS)
     spec = patched[4]
-    patched[4] = checks.CheckSpec(spec.key, spec.title, spec.hint, boom)
+    patched[4] = checks.CheckSpec(spec.key, spec.title_key, spec.hint_key, boom)
     monkeypatch.setattr(checks, "CHECKS", patched)
     results = run_checks()
     assert results["dota_gc"].status == Status.SKIP
+    assert results["dota_gc"].title.key == "check.dota_gc.title"  # the spec passes keys, not rendered titles
     assert results["relays"].status == Status.OK
