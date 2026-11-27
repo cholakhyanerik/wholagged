@@ -5,6 +5,13 @@ Each entry: the decision, then why. Revisit an entry by adding a new one; don't 
 
 ## 2026-11-27
 
+- **The first PyPI upload is v0.3.8, released as it was tagged (WL-101).** It is the first tag whose
+  commit has `release.yml`, it passed CI, and a release of an existing tag needs no new version. The name
+  was free until then, so the sooner the better. Installing it from PyPI in a clean environment worked:
+  both commands are there, and the window module imports.
+- **READMEs don't tell users to install from PyPI yet (WL-101).** That is a docs change in two languages
+  with its own wording (WL-103), and the alias needs care until WL-102 reserves `dota-netcheck`.
+
 - **WL-15 is split: this repo's side is done, and the first upload is WL-101 (WL-15).** PyPI's docs say a
   pending publisher "does not create a project or reserve a project's name until it is actually used to
   publish", and someone else registering the name first invalidates it. So only a first release reserves

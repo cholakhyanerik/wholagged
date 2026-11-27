@@ -4,6 +4,12 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.3.9] - 2026-11-27
+
+### Added
+- wholagged is on PyPI: https://pypi.org/project/wholagged/. Version 0.3.8 was the first upload, made
+  by the release workflow without a stored token, so the name now belongs to this project. (WL-101)
+
 ## [0.3.8] - 2026-11-27
 
 ### Security
@@ -227,6 +233,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.3.9]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.8...v0.3.9
 [0.3.8]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.7...v0.3.8
 [0.3.7]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.5...v0.3.6

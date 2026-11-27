@@ -35,28 +35,20 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-101 · First PyPI release: register the pending publisher, then publish
-`security` · `P2` · `XS` · BRAND · depends on: —
-Split from WL-15. A pending publisher does not reserve the name: only the first upload does, and if someone
-else registers `wholagged` first, the pending publisher is invalidated (docs.pypi.org). The registration
-needs the owner's PyPI login, once; `release.yml` and the `pypi` environment are ready.
-- [ ] pypi.org → Account settings → Publishing → add a pending GitHub publisher: project `wholagged`, owner
-      `cholakhyanerik`, repository `wholagged`, workflow `release.yml`, environment `pypi`
-- [ ] `gh release create v<current version>` → `release.yml` uploads it; https://pypi.org/project/wholagged/
-      shows the version
-- [ ] only then may a doc mention `uvx wholagged` / `uv tool install wholagged` (README, README.hy.md);
-      the alias always as `uvx --from wholagged dota-netcheck`, never `uvx dota-netcheck` (WL-102)
-- [ ] the publisher on the project's Publishing page has environment `pypi` (the field is optional on
-      PyPI's form; without it, any ref could publish), and the account has no PyPI API token
-- [ ] the release's tag is this repo's first version with `release.yml` (v0.3.8) or later: an older tag
-      runs no workflow
+### WL-103 · Install from PyPI in the READMEs
+`docs` · `P2` · `XS` · BRAND · depends on: —
+`wholagged` is on PyPI since WL-101, so players can install it without cloning the repo.
+- [ ] README.md: `uv tool install wholagged` (then `wholagged`) and `uvx wholagged` as the quickest way in,
+      next to the from-source steps; a PyPI badge; README.hy.md mirrors it (`translator`)
+- [ ] the alias only as `uvx --from wholagged dota-netcheck`, never `uvx dota-netcheck` (WL-102)
 
 ### WL-102 · Reserve `dota-netcheck` on PyPI as an alias package
-`security` · `P3` · `XS` · BRAND · depends on: WL-101
+`security` · `P3` · `XS` · BRAND · depends on: —
 Found in the WL-15 audit: the README documents `dota-netcheck` as a command, so a user may type
 `uvx dota-netcheck`, which installs whatever is registered under that name.
 - [ ] a minimal `dota-netcheck` package that depends on `wholagged` and exposes the same entry point,
       published by a second pending publisher (same workflow and environment)
+- [ ] the owner adds that pending publisher on pypi.org (their login, like WL-101), then a release uploads it
 
 ---
 

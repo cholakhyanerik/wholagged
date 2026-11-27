@@ -25,8 +25,10 @@ paths:
 ## PyPI
 - Published by `.github/workflows/release.yml` (`.claude/rules/ci.md`). `[project.urls]` gives the PyPI
   page its links: the README's relative links don't work there.
-- A pending publisher does not reserve the name: only the first upload does (WL-101). Until then, no doc
-  may say `uvx wholagged` or `uv tool install wholagged`.
+- `wholagged` is on PyPI, so the name is ours; its publisher is `release.yml` + environment `pypi`, with no
+  API token. To publish: `gh release create vX.Y.Z --verify-tag` on a task's tag. A tag alone uploads nothing.
+- Docs may say `uv tool install wholagged` / `uvx wholagged`; the alias only as
+  `uvx --from wholagged dota-netcheck` until `dota-netcheck` is reserved too (WL-102).
 
 ## Pitfalls
 - After renaming the distribution or a script, `uv run` (inexact sync) installs the new one next to the old
