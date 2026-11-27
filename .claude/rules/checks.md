@@ -31,7 +31,8 @@ The step-by-step recipe for a new check or verdict rule is the `add-check` skill
 ## Stable identifiers (rule 4)
 - Check keys (`internet`, `dns`, `steam_api`, `steam_cm`, `dota_gc`, `relays`) and `data` flags are an API
   for the verdict, the tests and users' reports. Never rename them.
-- Keep the report layout (`report.py`): people send it to their provider.
+- Keep the report layout (`report.py`): people send it to their provider. Its labels come from
+  `report.*` keys; the marks, colons, indents, numbering and the product line stay in code.
 
 ## Verdict (`verdict.py`)
 - `decide()` rules run top to bottom; the first match wins.

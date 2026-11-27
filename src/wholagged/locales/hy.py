@@ -161,6 +161,21 @@ MESSAGES: dict[str, str] = {
     "advice.gc_unchecked": "GC-ն ուղղակիորեն ստուգել չհաջողվեց. {steamstat}",
     "advice.relays_icmp_blocked": "Relay-ների ping-ը չստուգվեց (ICMP-ն փակ է), packet loss-ը հայտնի չէ",
     "advice.relays_unchecked": "Relay-ների ping-ը չստուգվեց, packet loss-ը հայտնի չէ",
+    # Whose side the problem is on (`models.Side`), shown after report.side.
+    "side.you": "Քո internet-ը / կապը",
+    "side.isp": "Provider-ի route-ը, VPN-ը կամ firewall-ը",
+    "side.valve": "Valve-ի սերվերները",
+    "side.pc": "Համակարգիչը / Steam client-ը",
+    "side.unclear": "Valve-ը կամ provider-ը (տես խորհուրդները)",
+    # Labels of the copied report and the --cli output; the code adds ": " and the value after each.
+    # report.verdict is written in capitals, as a heading.
+    "report.time": "Ժամանակ",
+    "report.system": "Համակարգ",
+    "report.verdict": "ԵԶՐԱԿԱՑՈՒԹՅՈՒՆ",
+    "report.side": "Ում կողմից",
+    "report.advice": "Ինչ անել",
+    # --cli: shown after "wholagged <version> · Dota 2 — " while the checks run.
+    "cli.checking": "ստուգում եմ...",
     # Short error words, shown in brackets after what failed.
     "error.timeout": "timeout",
     "error.refused": "կապը մերժվեց",

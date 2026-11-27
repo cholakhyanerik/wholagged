@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import copy
+import datetime as dt
 import importlib
 import pickle
 import pkgutil
@@ -11,14 +12,16 @@ import re
 import string
 import sys
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
-from wholagged import checks, i18n, icmp, locales, models, verdict
+import wholagged
+from wholagged import checks, i18n, icmp, locales, models, report, verdict
 from wholagged.i18n import Msg, render, t
-from wholagged.models import Side
+from wholagged.models import Side, Status
 
 from fakes import FakeNet
 
@@ -363,14 +366,20 @@ def test_every_key_used_in_the_code_gets_exactly_its_placeholders():
 
 
 # Modules whose user-facing texts have all moved to the catalogues: not one Armenian letter is left, not even
-# in a comment. Add a module when its move card is done (report.py and __init__.py: WL-25; gui.py: WL-26).
-MOVED_MODULES = [checks, icmp, models, verdict]
+# in a comment. Add a module when its move card is done (gui.py: WL-26). `wholagged` is the package's __init__.py.
+MOVED_MODULES = [checks, icmp, models, verdict, report, wholagged]
 
 
 @pytest.mark.parametrize("module", MOVED_MODULES, ids=lambda module: module.__name__)
 def test_moved_module_has_no_inline_armenian(module):
     lines = Path(module.__file__).read_text(encoding="utf-8").splitlines()
     assert [f"{n}: {line.strip()}" for n, line in enumerate(lines, 1) if ARMENIAN.search(line)] == []
+
+
+def test_armenian_scan_reads_the_package_init_and_skips_the_layout_punctuation():
+    assert Path(wholagged.__file__).name == "__init__.py"  # the package itself: run_cli() lives in this file
+    assert not ARMENIAN.search(f"{wholagged.APP_NAME} 0.3.6 · Dota 2 — [ ! ] → «» …")  # product line, CLI banner
+    assert ARMENIAN.search("Ա") and ARMENIAN.search("և")  # both ends of the range are still found
 
 
 # --- Msg: a text that can be shown again in another language ------------------------------------
@@ -470,8 +479,8 @@ def test_copying_a_msg_never_looks_its_text_up_as_a_key(monkeypatch, duplicate):
 
 # --- a finished run, shown again after a language switch -----------------------------------------
 
-# Test English for every key a run of the six checks, the runner and the verdict uses. Each text differs from the
-# Armenian one, so a text that wasn't rendered again can't pass by accident.
+# Test English for every key a run of the six checks, the runner, the verdict, the report and the CLI use. Each text
+# differs from the Armenian one, so a text that wasn't rendered again can't pass by accident.
 RUN_EN = {
     "check.internet.title": "Internet connection",
     "check.dns.title": "Name lookup (DNS)",
@@ -584,6 +593,19 @@ RUN_EN = {
     "advice.gc_unchecked": "The GC couldn't be checked directly: {steamstat}",
     "advice.relays_icmp_blocked": "Relay ping wasn't checked (ICMP is blocked): packet loss unknown",
     "advice.relays_unchecked": "Relay ping wasn't checked: packet loss unknown",
+    # Whose side it is (`report.side_label()`), the labels of the report and the --cli output (the code adds ": "),
+    # and the end of the CLI banner.
+    "side.you": "Your internet / connection",
+    "side.isp": "The provider's route, a VPN or a firewall",
+    "side.valve": "Valve's servers",
+    "side.pc": "The PC / the Steam client",
+    "side.unclear": "Valve or the provider (see the advice)",
+    "report.time": "Time",
+    "report.system": "System",
+    "report.verdict": "VERDICT",
+    "report.side": "Whose side",
+    "report.advice": "What to do",
+    "cli.checking": "checking...",
 }
 
 # [title, summary, *details] of a check, as shown after the switch.
@@ -1361,3 +1383,196 @@ def test_verdict_numbers_have_no_decimals_in_any_language(net, monkeypatch, brea
     text = render(made.explanation)
     assert text.startswith(english)
     assert not re.search(r"\d[.,]\d", text)
+
+
+# --- the report and the --cli output: the labels are keys, the layout is code ---------------------
+
+# What users paste to their provider (rule 4): a translation may change the words, never these.
+REPORT_MARKS = {Status.OK: "[OK]", Status.WARN: "[ ! ]", Status.FAIL: "[XX]", Status.SKIP: "[ - ]"}
+DETAIL_INDENT = " " * 7
+_LAYOUT = re.compile(
+    "|".join([*(re.escape(f"{mark} ") for mark in REPORT_MARKS.values()), r" {7}(?=\S)", r" {2}\d+\. "])
+)
+REPORT_TIME = "2026-11-27 18:30:05 AMT"
+REPORT_SYSTEM = "Windows 11"
+PRODUCT_LINE = f"{wholagged.APP_NAME} {wholagged.__version__} · Dota 2"
+
+
+class _FixedNow(dt.datetime):
+    """`report.datetime` at one moment: `now().astimezone()` is REPORT_TIME, whatever the PC's clock and zone."""
+
+    @classmethod
+    def now(cls, tz=None):
+        return cls(2026, 11, 27, 18, 30, 5, tzinfo=dt.timezone(dt.timedelta(hours=4), "AMT"))
+
+    def astimezone(self, tz=None):
+        return self
+
+
+def _fix_time_and_system(monkeypatch) -> None:
+    monkeypatch.setattr(report, "datetime", _FixedNow)
+    monkeypatch.setattr(report, "platform", SimpleNamespace(system=lambda: "Windows", release=lambda: "11"))
+
+
+def _layout(lines: list[str]) -> list[str]:
+    """Each line without its words: its mark, detail indent or advice number, else "text" (or "" if empty)."""
+    return [m.group() if (m := _LAYOUT.match(line)) else "text" if line else "" for line in lines]
+
+
+def _fresh_report(monkeypatch, case: VerdictCase) -> list[str]:
+    """The case's report lines, from a run in the current language on a fresh FakeNet (ping counts start at 0)."""
+    results = _run(FakeNet().install(monkeypatch), case)
+    return report.build_report(results, _decide(monkeypatch, case, results)).split("\n")
+
+
+def _fresh_cli(monkeypatch, capsys, case: VerdictCase) -> list[str]:
+    """What `--cli` prints for the case, in the current language, on a fresh FakeNet."""
+    case.breaks(FakeNet().install(monkeypatch))
+    assert wholagged.run_cli() == 0
+    return capsys.readouterr().out.removesuffix("\n").split("\n")
+
+
+def test_report_marks_are_unchanged_for_every_status():
+    assert report.MARKS == REPORT_MARKS
+    assert set(REPORT_MARKS) == set(Status)
+
+
+def test_every_side_has_its_key_in_the_armenian_catalogue():
+    assert report.SIDE_KEYS == {side: f"side.{side}" for side in Side}
+    assert {key for key in _messages("hy") if key.startswith("side.")} == set(report.SIDE_KEYS.values())
+
+
+@pytest.mark.parametrize("side", list(Side), ids=str)
+def test_side_label_is_the_armenian_text_of_the_side(side):
+    text = _messages("hy")[f"side.{side}"]
+    assert ARMENIAN.search(text)
+    assert report.side_label(side) == text
+    assert report.side_label(side.value) == text  # a plain str works too, as the old SIDE_LABELS dict did
+
+
+@pytest.mark.parametrize("side", ["martian", "", "YOU", "side.you"], ids=repr)
+def test_side_label_of_an_unknown_side_is_the_side_as_it_is(monkeypatch, side):
+    assert report.side_label(side) == side
+    _use(monkeypatch, "en", RUN_EN)
+    assert report.side_label(side) == side  # never looked up as a key, in any language
+
+
+def test_side_label_is_read_in_the_language_shown_at_the_moment(monkeypatch):
+    _use(monkeypatch, "en", RUN_EN)
+    assert {side: report.side_label(side) for side in Side} == {side: RUN_EN[f"side.{side}"] for side in Side}
+    i18n.set_language("hy")
+    hy = _messages("hy")
+    assert {side: report.side_label(side) for side in Side} == {side: hy[f"side.{side}"] for side in Side}
+
+
+def test_every_report_and_cli_key_has_test_english():
+    keys = {key for key in _messages("hy") if key.startswith(("side.", "report.", "cli."))}
+    assert {"report.time", "report.system", "report.verdict", "report.side", "report.advice", "cli.checking"} <= keys
+    assert keys <= RUN_EN.keys()
+
+
+@pytest.mark.parametrize("lang", i18n.LANGUAGES)
+def test_report_and_cli_texts_carry_no_layout(lang):
+    # The code writes the ": ", the line breaks and the indents; a text that brought its own would break the layout.
+    texts = {key: text for key, text in _messages(lang).items() if key.startswith(("side.", "report.", "cli."))}
+    assert [key for key, text in texts.items() if text != text.strip() or len(text.splitlines()) != 1] == []
+    assert [key for key, text in texts.items() if key.startswith("report.") and text.endswith(":")] == []
+
+
+@pytest.mark.parametrize("case", VERDICT_CASES.values(), ids=VERDICT_CASES.keys())
+def test_report_labels_follow_the_language_and_the_layout_stays(monkeypatch, case):
+    _fix_time_and_system(monkeypatch)
+    armenian = _fresh_report(monkeypatch, case)
+    _use(monkeypatch, "en", RUN_EN)
+    english = _fresh_report(monkeypatch, case)
+
+    assert not ARMENIAN.search("\n".join(english))  # not one label is left inline
+    advice = case.english[2:]
+    assert english[:4] == [PRODUCT_LINE, f"Time: {REPORT_TIME}", f"System: {REPORT_SYSTEM}", ""]
+    assert english[-len(advice) - 6 :] == [
+        "",
+        f"VERDICT: {case.english[0]}",
+        f"Whose side: {RUN_EN[f'side.{case.side}']}",
+        case.english[1],
+        "",
+        "What to do:",
+        *[f"  {n}. {tip}" for n, tip in enumerate(advice, 1)],
+    ]
+    rows = _layout(english[4 : -len(advice) - 6])
+    marked = [row for row in rows if row != DETAIL_INDENT]
+    assert rows[0] != DETAIL_INDENT and len(marked) == len(checks.CHECKS)  # one marked line per check, details under it
+    assert set(marked) <= {f"{mark} " for mark in REPORT_MARKS.values()}
+    assert armenian[0] == PRODUCT_LINE
+    assert _layout(english) == _layout(armenian)  # the same lines, marks, indents and numbers: only the words differ
+
+
+# One case per side; together they print every mark.
+CLI_CASES = {
+    name: VERDICT_CASES[name]
+    for name in ("no-internet", "login-servers-partly-refused", "valve-503", "all-ok", "valve-unreachable")
+}
+
+
+@pytest.mark.parametrize("case", CLI_CASES.values(), ids=CLI_CASES.keys())
+def test_cli_output_follows_the_language_and_reads_like_the_report(monkeypatch, capsys, case):
+    here = replace(case, platform=sys.platform)  # run_cli() decides on the real platform: so does its report
+    printed = {}
+    for lang, catalogue in [("hy", _messages("hy")), ("en", RUN_EN)]:
+        _use(monkeypatch, lang, catalogue)
+        lines = _fresh_cli(monkeypatch, capsys, case)
+        assert lines[:2] == [f"{PRODUCT_LINE} — {catalogue['cli.checking']}", ""], lang
+        rule = lines.index("=" * 60)
+        assert lines.count("=" * 60) == 1, lang
+        assert lines[rule - 1 : rule + 3] == [
+            "",
+            "=" * 60,
+            f"{catalogue['report.verdict']}: {catalogue[f'verdict.{case.rule}.headline']}",
+            f"{catalogue['report.side']}: {catalogue[f'side.{case.side}']}",
+        ], lang
+        assert lines[rule + 4 : rule + 6] == ["", f"{catalogue['report.advice']}:"], lang
+        # Under its banner, the terminal prints the report's own lines: the same rows, labels and advice.
+        assert [line for line in lines[2:] if line != "=" * 60] == _fresh_report(monkeypatch, here)[4:], lang
+        printed[lang] = lines
+
+    assert printed["en"][0] == f"{PRODUCT_LINE} — checking..."
+    assert not ARMENIAN.search("\n".join(printed["en"]))
+    assert _layout(printed["en"]) == _layout(printed["hy"])
+
+
+def test_armenian_report_keeps_its_exact_layout(net, monkeypatch):
+    # The text users send their provider, pinned line by line (rule 4). The words come from hy.py; the rest is layout.
+    _fix_time_and_system(monkeypatch)
+    net.internet = False
+    results = checks.run_checks()
+    made = verdict.decide(results)
+    hy = _messages("hy")
+    header = [
+        f"wholagged {wholagged.__version__} · Dota 2",
+        f"{hy['report.time']}: 2026-11-27 18:30:05 AMT",
+        f"{hy['report.system']}: Windows 11",
+        "",
+    ]
+    rows = [
+        f"[XX] {hy['check.internet.title']}: {hy['check.internet.fail']}",
+        *[
+            f"       {hy['check.probe_failed'].format(target=target, error=hy['error.timeout'])}"
+            for target in ("Cloudflare (1.1.1.1:443)", "Google (8.8.8.8:443)", "Quad9 (9.9.9.9:443)")
+        ],
+        *[
+            f"[ - ] {hy[f'check.{key}.title']}: {hy['check.skipped_no_internet']}"
+            for key in ("dns", "steam_api", "steam_cm", "dota_gc", "relays")
+        ],
+    ]
+    verdict_block = [
+        "",
+        f"{hy['report.verdict']}: {hy['verdict.no_internet.headline']}",
+        f"{hy['report.side']}: {hy['side.you']}",
+        hy["verdict.no_internet.explanation"],
+        "",
+        f"{hy['report.advice']}:",
+        f"  1. {hy['advice.router_power_cycle']}",
+        f"  2. {hy['advice.wifi_try_cable']}",
+        f"  3. {hy['advice.call_isp']}",
+    ]
+    assert report.build_report(results, made) == "\n".join(header + rows + verdict_block)
+    assert report.build_report(results, None) == "\n".join(header + rows)  # copied before the verdict is in

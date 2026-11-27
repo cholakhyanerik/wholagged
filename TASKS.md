@@ -35,14 +35,13 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-25 · Move the report and CLI texts to i18n keys
-`chore` · `P1` · `XS` · I18N · depends on: WL-20
-- [ ] `report.py` (labels, side names) and `__init__.py` (banner, headings)
-
 ### WL-26 · Move the GUI texts to i18n keys
 `chore` · `P1` · `XS` · I18N · depends on: WL-20
 - [ ] buttons, status words, side chips, subtitle, "details" toggles
 - [ ] the subtitle uses the existing `app.subtitle` key (already in all three catalogues since WL-20)
+- [ ] side chips are `side.<side>.chip` (`side.<side>` is the report's long name, WL-25); the "What to do"
+      title can reuse `report.advice`
+- [ ] `gui` joins `MOVED_MODULES` in `tests/test_i18n.py`; then every move card is done
 
 ### WL-15 · Reserve `wholagged` on PyPI with Trusted Publishing
 `security` · `P2` · `XS` · BRAND · depends on: WL-12

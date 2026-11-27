@@ -5,6 +5,21 @@ Each entry: the decision, then why. Revisit an entry by adding a new one; don't 
 
 ## 2026-11-27
 
+- **The report's keys are the labels only ("Ժամանակ", "Ում կողմից"); the code adds ": " and the value
+  (WL-25).** People send the report to their provider, so its layout must not change with a translation
+  (rule 4). A whole-line template such as "Time: {time}" would let a translator move or drop the
+  value. The CLI prints the verdict with the same `report.*` labels, so the terminal and the copied report
+  read the same, and the translator writes them once.
+- **`SIDE_LABELS` became `SIDE_KEYS` plus `side_label(side)` (WL-25).** A dict of rendered strings would
+  freeze the language at import. Only `run_cli()` used it, and it is not one of the stable identifiers.
+  `side_label()` keeps the old fallback: a side it doesn't know is shown as it is.
+- **The report and the CLI use `t()`, not `Msg` (WL-25).** Their text is built and used at once, in
+  the current language. Showing a finished run's results in the report in the current language is WL-34
+  (`render()`), unchanged.
+- **The product line "wholagged <version> · Dota 2" stays in code, not in the catalogue (WL-25).** It has
+  no words to translate, and tests and users' reports rely on it as the report's first line. The game
+  name moves to the game model in WL-60.
+
 - **Advice keys are named by what the advice says (`advice.use_cable`), not by the verdict that gives it
   (WL-24).** Five pieces of advice appear in more than one verdict (cable, router restart, firewall,
   hotspot, the report for the provider). One key each keeps them worded the same everywhere, and the

@@ -4,6 +4,15 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.3.6] - 2026-11-27
+
+### Changed
+- The labels of the copied report ("Time", "System", the verdict heading, whose side it is, "What to do")
+  and of the `--cli` output now come from the translation catalogue. The report keeps its exact layout,
+  and everything reads exactly as before. (WL-25)
+- For contributors: `report.SIDE_LABELS` is replaced by `report.side_label(side)`, which returns the
+  label in the current language. (WL-25)
+
 ## [0.3.5] - 2026-11-27
 
 ### Changed
@@ -198,6 +207,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.3.6]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.2...v0.3.3
