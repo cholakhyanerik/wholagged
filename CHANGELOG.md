@@ -4,6 +4,29 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.3.4] - 2026-11-27
+
+### Changed
+- The results of the Steam login server, Dota 2 Game Coordinator and Valve game network checks now come
+  from the translation catalogue, and so do "skipped because there is no internet" and the "internal
+  error" note. Like the first three checks, a finished result can later be shown again in another
+  language. Everything reads exactly as before. (WL-23)
+
+### Fixed
+- A malformed relay list from Valve no longer crashes the game network check into "internal error".
+  Relay addresses that can't be Valve's no longer mislead the verdict either. An address that doesn't
+  answer used to blame your provider; your own PC or home router answered like a perfect relay. Such
+  entries are skipped, so the check says it couldn't tell. (WL-23)
+- A Steam login server list with unusable addresses (a malformed name, `localhost`, an odd port) no longer
+  crashes the check or makes the verdict blame your provider; Steam's web servers are checked instead.
+  (WL-23)
+- When the game network check is skipped for any reason other than a blocked ping, the advice no longer
+  says that your network blocks ICMP. (WL-23)
+- Names and versions from Valve, and error messages from the system or a proxy, are shown as one short
+  line of plain text, so a malformed answer can't add fake lines to the report you send your provider or
+  send control codes to your terminal. (WL-23)
+- A very long or deeply nested answer from Valve no longer slows the run or crashes a check. (WL-23)
+
 ## [0.3.3] - 2026-11-25
 
 ### Changed
@@ -168,6 +191,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.3.4]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.0...v0.3.1

@@ -8,7 +8,9 @@ Only the standard library is used here, so the module also runs without Qt
 from __future__ import annotations
 
 import http.client
+import ipaddress
 import json
+import re
 import socket
 import ssl
 import statistics
@@ -54,6 +56,10 @@ STEAM_FALLBACK_HOSTS = [
 ]
 
 CM_TARGETS = 6
+SHOWN_DATA_CENTERS = 5
+# Valve lists a few dozen relay sites. More than this is a bad answer, not a list to cut: dict order could
+# drop the nearest site and make the ping look high. Two ping rounds of 128 at 24 workers stay within budget.
+MAX_POPS = 128
 QUALITY_PINGS = 10
 QUALITY_POPS = 3
 LOSS_WARN_PCT = 5.0
@@ -78,7 +84,76 @@ class Pop:
 # Helpers
 # --------------------------------------------------------------------------- #
 def _clip(text: str, limit: int = 70) -> str:
+    """Someone else's words (the OS's, a server's, a proxy's) as one short line of printable text.
+
+    A proxy's reason phrase or a bad HTTP status line can carry line breaks and terminal escape codes; they
+    would fake lines in the report and run in a terminal. Every non-printable character becomes a space.
+    """
+    text = " ".join("".join(c if c.isprintable() else " " for c in text).split())
     return text if len(text) <= limit else text[: limit - 1].rstrip() + "…"
+
+
+VALVE_TEXT_MAX_CHARS = 64  # relay site and data center names ("Washington DC (Sterling)") are far shorter
+MAX_HOSTNAME_CHARS = 253  # the DNS limit
+
+
+def _valve_text(value: object, limit: int = VALVE_TEXT_MAX_CHARS) -> str | None:
+    """A text from Valve that is safe to show: a short, printable, one-line `str`, stripped; else None.
+
+    Valve's answers are untrusted input, and their texts end up in the rows and in the report users send to
+    their provider: a line break or a control character there could fake a line of the report.
+    """
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    return text if text and len(text) <= limit and text.isprintable() else None
+
+
+def _ipv4(value: object) -> str | None:
+    """A strict, public, unicast IPv4 address from Valve ("155.133.226.1"), or None.
+
+    A malformed address would only fail to ping, which reads as a routing problem. A non-public one is
+    never a Valve server, and it can answer: 127.0.0.1 is the PC itself and 192.168.1.1 is often the home
+    router, so either would show a perfect ping for a site that wasn't measured. `is_global` rules out
+    private, shared (CGNAT), loopback, link-local, documentation, reserved and broadcast addresses; it lets
+    multicast through, so that is checked on its own.
+    """
+    if not isinstance(value, str):
+        return None
+    try:
+        addr = ipaddress.IPv4Address(value)
+    except ValueError:
+        return None
+    return str(addr) if addr.is_global and not addr.is_multicast else None
+
+
+_HOST_LABEL = re.compile(r"(?!-)[A-Za-z0-9-]{1,63}(?<!-)")
+_TOP_LABEL = re.compile(r"[A-Za-z]{2,63}")  # "net": letters only, so "0x7f.0.0.1" can't pass as a name
+_LOCAL_NAMES = ("localhost", "local")  # the PC itself, or names any machine on the LAN may answer
+
+
+def _host(value: str) -> str | None:
+    """A server's host from Valve: a strict public IPv4 address or a public DNS name, else None.
+
+    A name has two or more ASCII labels of letters, digits and hyphens and ends in a letters-only label.
+    Anything else can't be a Valve server: "cm host" and "[2001:db8::1]" can't be reached, so a list of
+    them would blame the provider; "localhost", "0x7f.0.0.1" (127.0.0.1 to the resolver) and one-label LAN
+    names reach the PC or the LAN, where the Steam client's own ports would answer. Skipped, a bad list falls
+    back to Steam's web servers instead.
+    """
+    if value.replace(".", "").isdigit():  # all digits: only a strict address ("1.2.3" resolves oddly)
+        return _ipv4(value)
+    name = value.removesuffix(".")
+    labels = name.split(".")
+    if (
+        len(name) > MAX_HOSTNAME_CHARS
+        or len(labels) < 2
+        or not all(_HOST_LABEL.fullmatch(label) for label in labels)
+        or not _TOP_LABEL.fullmatch(labels[-1])
+        or labels[-1].lower() in _LOCAL_NAMES
+    ):
+        return None
+    return value
 
 
 def short_error(exc: BaseException | str) -> str:
@@ -95,9 +170,8 @@ def short_error(exc: BaseException | str) -> str:
         return Msg("error.dns")
     if isinstance(exc, ssl.SSLError):
         return Msg("error.ssl")
-    if isinstance(exc, OSError) and exc.strerror:
-        return _clip(exc.strerror)
-    return _clip(str(exc) or type(exc).__name__)
+    text = exc.strerror if isinstance(exc, OSError) and exc.strerror else str(exc)
+    return _clip(text) or type(exc).__name__  # nothing printable left: at least say what it was
 
 
 def tcp_probe(host: str, port: int, timeout: float = TCP_TIMEOUT_S) -> tuple[float | None, str | None]:
@@ -136,7 +210,7 @@ def http_get_json(url: str, timeout: float = HTTP_TIMEOUT_S) -> tuple[Any, float
         reason = exc.reason
         cert = None
         if isinstance(reason, ssl.SSLCertVerificationError):
-            cert = getattr(reason, "verify_message", None) or "certificate verify failed"
+            cert = _clip(getattr(reason, "verify_message", None) or "") or "certificate verify failed"
         raise HttpFailure(short_error(reason), cert_error=cert) from exc
     except (OSError, http.client.HTTPException) as exc:  # e.g. the link drops while reading the body
         raise HttpFailure(short_error(exc)) from exc
@@ -145,7 +219,7 @@ def http_get_json(url: str, timeout: float = HTTP_TIMEOUT_S) -> tuple[Any, float
         raise HttpFailure(Msg("error.too_big"), status=200)
     try:
         return json.loads(body), ms
-    except ValueError as exc:
+    except (ValueError, RecursionError) as exc:  # RecursionError: nesting deeper than the parser's stack
         raise HttpFailure(Msg("error.not_json"), status=200) from exc
 
 
@@ -276,14 +350,16 @@ def check_steam_api(ctx: Context) -> CheckResult:
     ctx.cm_servers = servers
     dcs: list[str] = []
     for s in servers:
-        dc = s.get("dc")
-        if isinstance(dc, str) and dc and dc not in dcs:
+        dc = _valve_text(s.get("dc"))
+        if dc and dc not in dcs:
             dcs.append(dc)
+            if len(dcs) == SHOWN_DATA_CENTERS:  # all that is shown; a longer search is wasted (rule 3)
+                break
     return CheckResult(
         "steam_api",
         Status.OK,
         Msg("check.steam_api.ok", ms=fmt_ms(ms), count=len(servers)),
-        [Msg("check.steam_api.data_centers", dcs=", ".join(dcs[:5]))] if dcs else [],
+        [Msg("check.steam_api.data_centers", dcs=", ".join(dcs))] if dcs else [],
         latency_ms=ms,
         data={"reached": True},
     )
@@ -297,12 +373,13 @@ def pick_cm_targets(servers: list[dict[str, Any]], limit: int = CM_TARGETS) -> l
     pool = websockets or servers
     out: list[tuple[str, int, str]] = []
     for s in pool:
-        endpoint = s.get("endpoint")
-        host, sep, port = (endpoint if isinstance(endpoint, str) else "").rpartition(":")
-        if not sep or not host or not port.isdigit():
+        endpoint = _valve_text(s.get("endpoint"), MAX_HOSTNAME_CHARS + 7)  # host, trailing ".", ":", port
+        host, sep, port = (endpoint or "").rpartition(":")
+        host = _host(host) if sep and host else None
+        # ASCII digits only: "²".isdigit() is true, but int("²") raises.
+        if not host or not (port.isascii() and port.isdigit() and 0 < int(port) <= 65535):
             continue
-        dc = s.get("dc")
-        out.append((host, int(port), dc if isinstance(dc, str) and dc else "?"))
+        out.append((host, int(port), _valve_text(s.get("dc")) or "?"))
         if len(out) >= limit:
             break
     return out
@@ -320,30 +397,50 @@ def check_steam_cm(ctx: Context) -> CheckResult:
     for (host, port, dc), (ms, err) in zip(targets, results):
         label = f"{host}:{port} [{dc}]"
         if ms is None:
-            details.append(f"{label} — չհաջողվեց ({err})")
+            details.append(Msg("check.probe_failed", target=label, error=err))
         else:
             ok.append(ms)
             details.append(f"{label} — {fmt_ms(ms)}")
     if fallback:
-        details.insert(0, "Login սերվերների ցուցակը չստացվեց, ստուգվում են Steam-ի web սերվերները")
+        details.insert(0, Msg("check.steam_cm.fallback"))
 
     n_ok, n = len(ok), len(targets)
     data = {"fallback": fallback, "ok": n_ok, "total": n}
-    what = "Steam-ի web սերվերներ" if fallback else "Steam-ի login սերվերներ"
+    # Separate keys for the login and the web servers: a language inflects the words around them differently.
     if n_ok == 0:
-        return CheckResult("steam_cm", Status.FAIL, f"{what}ից ոչ մեկին չհաջողվեց միանալ", details, data=data)
+        summary = Msg("check.steam_cm.web_fail") if fallback else Msg("check.steam_cm.fail")
+        return CheckResult("steam_cm", Status.FAIL, summary, details, data=data)
     median = statistics.median(ok)
     if n_ok * 2 >= n:
-        return CheckResult("steam_cm", Status.OK, f"{what}ը հասանելի են ({n_ok}/{n}, մեդիան {fmt_ms(median)})",
-                           details, latency_ms=median, data=data)
-    return CheckResult("steam_cm", Status.WARN, f"Հասանելի է միայն {n_ok}/{n} սերվեր", details,
+        shown = fmt_ms(median)
+        summary = (Msg("check.steam_cm.web_ok", ok=n_ok, total=n, ms=shown) if fallback
+                   else Msg("check.steam_cm.ok", ok=n_ok, total=n, ms=shown))
+        return CheckResult("steam_cm", Status.OK, summary, details, latency_ms=median, data=data)
+    return CheckResult("steam_cm", Status.WARN, Msg("check.steam_cm.partial", ok=n_ok, total=n), details,
                        latency_ms=median, data=data)
 
 
 # --------------------------------------------------------------------------- #
 # 5. Dota 2 Game Coordinator (indirect, through the Web API)
 # --------------------------------------------------------------------------- #
-GC_NOTE = "Անուղղակի ստուգում է Web API-ի միջոցով. լրիվ վստահության համար նայիր steamstat.us"
+GC_VERSION_MAX_CHARS = 20  # Valve's version is a number; anything longer is not one
+
+
+def _gc_note() -> list[str]:
+    # Made on every call, not once at import, so it is in the language of the run.
+    return [Msg("check.dota_gc.note")]
+
+
+def _gc_version(result: dict[str, Any]) -> str | None:
+    """Valve's GC version as short text, or None when it is missing or not a number / short string."""
+    for name in ("active_version", "deploy_version"):
+        value = result.get(name)
+        if not value or isinstance(value, bool):  # 0 / "" mean "no version": try the next one
+            continue
+        text = _valve_text(str(value) if isinstance(value, int) else value, GC_VERSION_MAX_CHARS)
+        if text:
+            return text
+    return None
 
 
 def check_dota_gc(ctx: Context) -> CheckResult:
@@ -351,41 +448,44 @@ def check_dota_gc(ctx: Context) -> CheckResult:
         data, ms = http_get_json(GC_VERSION_URL)
     except HttpFailure as exc:
         if exc.status is not None and exc.status >= 500:
-            return CheckResult("dota_gc", Status.FAIL, f"Dota GC-ն չի պատասխանում ({exc})",
-                               [GC_NOTE], data={"gc_down": True})
+            return CheckResult("dota_gc", Status.FAIL, Msg("check.dota_gc.down", error=exc.message),
+                               _gc_note(), data={"gc_down": True})
         # 4xx, bad JSON or a network error: we can't judge.
-        return CheckResult("dota_gc", Status.SKIP, f"Չհաջողվեց ստուգել ({exc})", [GC_NOTE],
+        return CheckResult("dota_gc", Status.SKIP, Msg("check.dota_gc.unknown", error=exc.message), _gc_note(),
                            data={"unknown": True})
 
     result = data.get("result") if isinstance(data, dict) else None
     if not isinstance(result, dict) or "success" not in result:
-        return CheckResult("dota_gc", Status.SKIP, "Պատասխանը սպասված ձևով չէ. չենք կարող գնահատել",
-                           [GC_NOTE], data={"unknown": True})
+        return CheckResult("dota_gc", Status.SKIP, Msg("check.dota_gc.bad_answer"),
+                           _gc_note(), data={"unknown": True})
     if result.get("success") is not True:
-        return CheckResult("dota_gc", Status.FAIL, "Dota GC-ն չի պատասխանում (success = false)",
-                           [GC_NOTE], data={"gc_down": True})
+        return CheckResult("dota_gc", Status.FAIL, Msg("check.dota_gc.down", error="success = false"),
+                           _gc_note(), data={"gc_down": True})
 
-    version = result.get("active_version") or result.get("deploy_version")
-    suffix = f", version {version}" if version else ""
-    return CheckResult("dota_gc", Status.OK, f"Dota GC-ն պատասխանում է ({fmt_ms(ms)}{suffix})",
-                       [GC_NOTE], latency_ms=ms)
+    version = _gc_version(result)
+    summary = (Msg("check.dota_gc.ok_version", ms=fmt_ms(ms), version=version) if version
+               else Msg("check.dota_gc.ok", ms=fmt_ms(ms)))
+    return CheckResult("dota_gc", Status.OK, summary, _gc_note(), latency_ms=ms)
 
 
 # --------------------------------------------------------------------------- #
 # 6. Valve game network (SDR relays): ping, packet loss, jitter
 # --------------------------------------------------------------------------- #
 def parse_sdr_pops(cfg: Any) -> list[Pop]:
+    """Valve's relay sites with one IPv4 address each. Entries of the wrong type are skipped, not trusted."""
     pops = cfg.get("pops") if isinstance(cfg, dict) else None
     if not isinstance(pops, dict):
         return []
     out: list[Pop] = []
-    for code, pop in pops.items():
-        if not isinstance(pop, dict):
+    for key, pop in pops.items():
+        code = _valve_text(key)
+        relays = pop.get("relays") if isinstance(pop, dict) else None
+        if not code or not isinstance(relays, list):
             continue
-        relays = pop.get("relays") or []
-        ip = next((r.get("ipv4") for r in relays if isinstance(r, dict) and r.get("ipv4")), None)
+        # A strict address, or the site is skipped: one that can't be pinged would look like a routing problem.
+        ip = next((addr for r in relays if isinstance(r, dict) and (addr := _ipv4(r.get("ipv4")))), None)
         if ip:
-            out.append(Pop(code, pop.get("desc") or code, ip))
+            out.append(Pop(code, _valve_text(pop.get("desc")) or code, ip))
     return out
 
 
@@ -414,10 +514,12 @@ def check_relays(ctx: Context) -> CheckResult:
     try:
         cfg, _ = http_get_json(SDR_CONFIG_URL)
     except HttpFailure as exc:
-        return CheckResult("relays", Status.SKIP, f"Չհաջողվեց ստանալ relay-ների ցուցակը ({exc})")
+        return CheckResult("relays", Status.SKIP, Msg("check.relays.list_failed", error=exc.message))
     pops = parse_sdr_pops(cfg)
     if not pops:
-        return CheckResult("relays", Status.SKIP, "Relay-ների ցուցակը դատարկ է")
+        return CheckResult("relays", Status.SKIP, Msg("check.relays.empty"))
+    if len(pops) > MAX_POPS:
+        return CheckResult("relays", Status.SKIP, Msg("check.relays.list_failed", error=Msg("error.too_big")))
 
     control = parallel(icmp.ping, CONTROL_PING_IPS)
     first = parallel(lambda p: icmp.ping(p.ip), pops, workers=24)
@@ -433,26 +535,26 @@ def check_relays(ctx: Context) -> CheckResult:
             return CheckResult(
                 "relays",
                 Status.WARN,
-                "Valve-ի relay-ները ping-ին չեն պատասխանում, թեև մնացած internet-ը պատասխանում է",
-                [f"Ստուգված relay-ներ՝ {len(pops)}"],
+                Msg("check.relays.routing"),
+                [Msg("check.relays.checked", count=len(pops))],
                 data={"routing": True},
             )
         return CheckResult(
             "relays",
             Status.SKIP,
-            "Այս ցանցում ICMP ping-ը կարծես փակ է. relay-ները չենք կարող ստուգել",
+            Msg("check.relays.icmp_blocked"),
             data={"icmp_blocked": True},
         )
 
-    details = [f"{p.desc} ({p.code}) — {fmt_ms(rtt[p] or 0.0)}" for p in responding[:6]]
-    details.append(f"Պատասխանեց {len(responding)}/{len(pops)} relay")
+    details: list[str] = [f"{p.desc} ({p.code}) — {fmt_ms(rtt[p] or 0.0)}" for p in responding[:6]]
+    details.append(Msg("check.relays.responded", ok=len(responding), total=len(pops)))
 
     quality = parallel(measure_quality, responding[:QUALITY_POPS])
     for q in quality:
         avg = fmt_ms(q.avg_ms) if q.avg_ms is not None else "—"
         jit = fmt_ms(q.jitter_ms) if q.jitter_ms is not None else "—"
         details.append(
-            f"{q.pop.desc}: {q.sent} ping, կորուստ {q.loss_pct:.0f}%, միջինը {avg}, jitter {jit}"
+            Msg("check.relays.quality", pop=q.pop.desc, sent=q.sent, loss=q.loss_pct, avg=avg, jitter=jit)
         )
 
     total_sent = sum(q.sent for q in quality)
@@ -466,18 +568,18 @@ def check_relays(ctx: Context) -> CheckResult:
     data = {"loss": round(loss, 1), "best_ms": round(best_ms, 1), "jitter": round(jitter, 1)}
 
     if loss > LOSS_WARN_PCT:
-        return CheckResult("relays", Status.WARN, f"Packet loss {loss:.0f}%. կապն անկայուն է",
+        return CheckResult("relays", Status.WARN, Msg("check.relays.lossy", loss=loss),
                            details, latency_ms=best_ms, data=data | {"lossy": True})
     if best_ms > HIGH_PING_MS:
-        return CheckResult("relays", Status.WARN, f"Ping-ը բարձր է՝ {fmt_ms(best_ms)} ({best_name})",
+        return CheckResult("relays", Status.WARN, Msg("check.relays.high_ping", ms=fmt_ms(best_ms), pop=best_name),
                            details, latency_ms=best_ms, data=data | {"high_ping": True})
     if jitter > JITTER_WARN_MS:
-        return CheckResult("relays", Status.WARN, f"Ping-ը տատանվում է (jitter {fmt_ms(jitter)})",
+        return CheckResult("relays", Status.WARN, Msg("check.relays.jittery", ms=fmt_ms(jitter)),
                            details, latency_ms=best_ms, data=data | {"jittery": True})
     return CheckResult(
         "relays",
         Status.OK,
-        f"Լավագույնը՝ {best_name}, {fmt_ms(best_ms)}, կորուստ {loss:.0f}%",
+        Msg("check.relays.ok", pop=best_name, ms=fmt_ms(best_ms), loss=loss),
         details,
         latency_ms=best_ms,
         data=data,
@@ -523,12 +625,12 @@ def run_checks(
         if on_start:
             on_start(spec)
         if not ctx.internet_ok:
-            res = CheckResult(spec.key, Status.SKIP, "Բաց թողնվեց, քանի որ internet չկա")
+            res = CheckResult(spec.key, Status.SKIP, Msg("check.skipped_no_internet"))
         else:
             try:
                 res = spec.func(ctx)
             except Exception as exc:  # noqa: BLE001 - a bug in a check must not kill the run
-                res = CheckResult(spec.key, Status.SKIP, f"Ստուգման ներքին սխալ՝ {short_error(exc)}")
+                res = CheckResult(spec.key, Status.SKIP, Msg("check.internal_error", error=short_error(exc)))
         res.title = spec.title
         results[spec.key] = res
         if on_result:

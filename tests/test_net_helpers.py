@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import http.client
+import json
 import shutil
 import socket
 import ssl
@@ -34,6 +35,39 @@ def test_certificate_error_is_flagged(monkeypatch):
         checks.http_get_json("https://example.invalid/")
     assert info.value.cert_error
     assert info.value.status is None
+
+
+def _certificate_failure(monkeypatch, verify_message) -> checks.HttpFailure:
+    cert_error = ssl.SSLCertVerificationError(1, "certificate verify failed")
+    cert_error.verify_message = verify_message  # OpenSSL's reason, from whatever certificate was presented
+    monkeypatch.setattr(checks.urllib.request, "urlopen", _raise(urllib.error.URLError(cert_error)))
+    with pytest.raises(checks.HttpFailure) as info:
+        checks.http_get_json("https://example.invalid/")
+    return info.value
+
+
+@pytest.mark.parametrize(
+    ("verify_message", "expected"),
+    [
+        ("certificate has expired", "certificate has expired"),
+        ("certificate has expired\r\n[OK] Valve: fine", "certificate has expired [OK] Valve: fine"),
+        ("self-signed\x1b[2J certificate", "self-signed [2J certificate"),
+        ("x" * 200, "x" * 69 + "…"),
+    ],
+    ids=["plain", "line-break", "terminal-escape", "long"],
+)
+def test_certificate_reason_is_one_printable_line(monkeypatch, verify_message, expected):
+    failure = _certificate_failure(monkeypatch, verify_message)
+    assert failure.cert_error == expected
+    assert failure.cert_error.isprintable()
+    assert len(failure.cert_error.splitlines()) == 1
+
+
+@pytest.mark.parametrize("verify_message", ["\r\n", "\x00\x1b", "   ", "", None], ids=repr)
+def test_certificate_reason_without_printable_text_still_flags_the_certificate(monkeypatch, verify_message):
+    failure = _certificate_failure(monkeypatch, verify_message)
+    assert failure.cert_error == "certificate verify failed"  # truthy: the verdict still says "certificate"
+    assert failure.status is None
 
 
 def test_cut_off_handshake_is_not_a_certificate_error(monkeypatch):
@@ -84,10 +118,25 @@ def _answer(body: Callable[[int], bytes]):
     return lambda *a, **k: Response()
 
 
+DEEP_JSON = b"[" * 200_000  # far below MAX_BODY_BYTES, far deeper than the JSON parser's stack
+
+
+def test_deep_json_raises_recursion_error_in_the_parser():
+    # Why the "too-deep" case below matters: json.loads doesn't raise ValueError for this, it overflows.
+    assert len(DEEP_JSON) < checks.MAX_BODY_BYTES
+    with pytest.raises(RecursionError):
+        json.loads(DEEP_JSON)
+
+
 @pytest.mark.parametrize(
     ("body", "key"),
-    [(lambda n: b"x" * n, "error.too_big"), (lambda n: b"<html>Service Unavailable</html>", "error.not_json")],
-    ids=["too-big", "not-json"],
+    [
+        (lambda n: b"x" * n, "error.too_big"),
+        (lambda n: b"<html>Service Unavailable</html>", "error.not_json"),
+        (lambda n: DEEP_JSON, "error.not_json"),  # a RecursionError, not a crash of the check
+        (lambda n: b'{"a": ' * 100_000, "error.not_json"),
+    ],
+    ids=["too-big", "not-json", "too-deep", "too-deep-objects"],
 )
 def test_bad_answer_keeps_its_reason_as_a_msg(monkeypatch, body, key):
     monkeypatch.setattr(checks.urllib.request, "urlopen", _answer(body))

@@ -33,6 +33,38 @@ MESSAGES: dict[str, str] = {
     "check.steam_api.empty": "Steam-ը պատասխանեց, բայց login սերվերների ցուցակը դատարկ է",
     "check.steam_api.ok": "Steam Web API-ն պատասխանեց ({ms}, {count} login սերվեր)",
     "check.steam_api.data_centers": "Ամենամոտ data center-ները՝ {dcs}",
+    # Steam login (CM) servers; the "web" texts are used when the CM list could not be fetched.
+    "check.steam_cm.fallback": "Login սերվերների ցուցակը չստացվեց, ստուգվում են Steam-ի web սերվերները",
+    "check.steam_cm.fail": "Steam-ի login սերվերներից ոչ մեկին չհաջողվեց միանալ",
+    "check.steam_cm.web_fail": "Steam-ի web սերվերներից ոչ մեկին չհաջողվեց միանալ",
+    "check.steam_cm.ok": "Steam-ի login սերվերները հասանելի են ({ok}/{total}, մեդիան {ms})",
+    "check.steam_cm.web_ok": "Steam-ի web սերվերները հասանելի են ({ok}/{total}, մեդիան {ms})",
+    "check.steam_cm.partial": "Հասանելի է միայն {ok}/{total} սերվեր",
+    # Dota 2 Game Coordinator. {version} is Valve's version number.
+    "check.dota_gc.note": "Անուղղակի ստուգում է Web API-ի միջոցով. լրիվ վստահության համար նայիր steamstat.us",
+    "check.dota_gc.down": "Dota GC-ն չի պատասխանում ({error})",
+    "check.dota_gc.unknown": "Չհաջողվեց ստուգել ({error})",
+    "check.dota_gc.bad_answer": "Պատասխանը սպասված ձևով չէ. չենք կարող գնահատել",
+    "check.dota_gc.ok": "Dota GC-ն պատասխանում է ({ms})",
+    "check.dota_gc.ok_version": "Dota GC-ն պատասխանում է ({ms}, version {version})",
+    # Valve's game network (relays). {pop} is a relay site's name from Valve ("Frankfurt"); {loss} is a
+    # percentage, keep its ":.0f" (no decimals); {avg} and {jitter} are formatted like {ms}, or "—".
+    "check.relays.list_failed": "Չհաջողվեց ստանալ relay-ների ցուցակը ({error})",
+    "check.relays.empty": "Relay-ների ցուցակը դատարկ է",
+    "check.relays.routing": "Valve-ի relay-ները ping-ին չեն պատասխանում, թեև մնացած internet-ը պատասխանում է",
+    "check.relays.checked": "Ստուգված relay-ներ՝ {count}",
+    "check.relays.icmp_blocked": "Այս ցանցում ICMP ping-ը կարծես փակ է. relay-ները չենք կարող ստուգել",
+    "check.relays.responded": "Պատասխանեց {ok}/{total} relay",
+    "check.relays.quality": "{pop}: {sent} ping, կորուստ {loss:.0f}%, միջինը {avg}, jitter {jitter}",
+    "check.relays.lossy": "Packet loss {loss:.0f}%. կապն անկայուն է",
+    "check.relays.high_ping": "Ping-ը բարձր է՝ {ms} ({pop})",
+    "check.relays.jittery": "Ping-ը տատանվում է (jitter {ms})",
+    "check.relays.ok": "Լավագույնը՝ {pop}, {ms}, կորուստ {loss:.0f}%",
+    # The runner: a check after a failed internet check, and a check that crashed (a bug in the app).
+    "check.skipped_no_internet": "Բաց թողնվեց, քանի որ internet չկա",
+    "check.internal_error": "Ստուգման ներքին սխալ՝ {error}",
+    # Advice in the verdict (the rest moves here in WL-24).
+    "advice.relays_unchecked": "Relay-ների ping-ը չստուգվեց, packet loss-ը հայտնի չէ",
     # Short error words, shown in brackets after what failed.
     "error.timeout": "timeout",
     "error.refused": "կապը մերժվեց",

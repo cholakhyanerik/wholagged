@@ -35,12 +35,6 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-23 · Move the texts of checks 4–6 and the runner messages to i18n keys
-`chore` · `P1` · `S` · I18N · depends on: WL-20
-- [ ] Steam CM, Dota GC, relays; "skipped because there is no internet"; "internal error"
-- [ ] built with `Msg(...)` like checks 1–3 (`.claude/rules/i18n.md`); failed probes reuse `check.probe_failed`;
-      errors go in as `exc.message`, not `{exc}`
-
 ### WL-24 · Move the verdict texts (`verdict.py`) to i18n keys
 `chore` · `P1` · `S` · I18N · depends on: WL-20
 - [ ] headlines, explanations and advice; numbers stay placeholders (`{loss}`, `{ms}`)
@@ -167,6 +161,29 @@ Needed to separate Wi-Fi/router problems from provider problems.
 ### WL-54 · Reuse one ICMP handle per thread on Windows
 `chore` · `P3` · `XS` · NET · depends on: —
 - [ ] `IcmpCreateFile` once per worker thread instead of once per ping; same results
+
+### WL-98 · Never follow a redirect out of HTTPS
+`security` · `P2` · `XS` · NET · depends on: —
+Found in the WL-23 audit: `urlopen`'s default opener follows a 3xx from Valve's https URL to `http://` or
+`ftp://`, after which anyone on the path controls the JSON.
+- [ ] one module-level opener whose redirect handler refuses any target that isn't `https` (the 3xx then
+      becomes `HttpFailure` with its status); https → https redirects still work
+- [ ] unit tests for the handler; TLS verification and timeouts unchanged
+
+### WL-99 · Total deadline for each HTTP request and DNS lookup
+`security` · `P2` · `S` · NET · depends on: —
+Found in the WL-23 audit: `timeout=` applies to each socket call, so a middlebox trickling a segment every
+few seconds keeps `resp.read()` going far past `HTTP_TIMEOUT_S`, and `getaddrinfo` has no timeout at all.
+- [ ] `http_get_json` reads in chunks against a monotonic deadline and raises `HttpFailure(error.timeout)`
+- [ ] DNS lookups (`_resolve`, `tcp_probe`) give up after a bounded time without blocking the run
+- [ ] the run stays within 10–20 s with a trickling fake server; offline tests
+
+### WL-100 · Probe a Steam login server only at public addresses
+`security` · `P3` · `XS` · NET · depends on: WL-53
+Found in the WL-23 audit: `_host()` refuses `localhost` and numeric tricks, but a real DNS name can still
+resolve to 127.0.0.1 or a LAN address, where the Steam client's own ports would answer.
+- [ ] resolve each CM host once (with WL-53) and connect only to addresses that pass `_ipv4()`; a host with
+      none counts as unusable, like a malformed one
 
 ### WL-60 · Game model: Dota 2, CS2, Deadlock
 `feature` · `P2` · `S` · GAMES · depends on: WL-11

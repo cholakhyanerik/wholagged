@@ -41,6 +41,20 @@ The step-by-step recipe for a new check or verdict rule is the `add-check` skill
 ## Security of the network code (rule 9)
 - Never disable TLS verification.
 - Valve's responses are untrusted input: check types before use and cap their size (`MAX_BODY_BYTES`).
+  - Check every nested value, not only the top level. A list where a string was expected crashes
+    `set`/`dict`/dataclass hashing (`Pop`), and a check that crashes ends up as "internal error".
+  - A Valve text shown to the user goes through `_valve_text()` (short, printable, one line, else None).
+    A line break could fake a line in the report. An address goes through `_ipv4()` (strict, public,
+    unicast), a server host through `_host()` (that, or a public DNS name; no `localhost`).
+  - Anyone else's words (OS errors, `str(exc)`, a proxy's reason) go through `_clip()`: one printable line.
+  - Bad data from Valve must be skipped (SKIP or the web-server fallback), never blamed on anyone: an
+    address that can't be pinged looks like a routing problem, and a private one (the home router) like
+    a perfect relay.
+  - Bound the work on an answer (rule 3): stop a loop at what is shown (`SHOWN_DATA_CENTERS`), and treat
+    more than `MAX_POPS` relay sites as a bad answer instead of cutting the list.
+  - Parse numbers with `isascii() and isdigit()`: `"²".isdigit()` is true, but `int("²")` raises.
+  - `json.loads` raises `RecursionError` (not `ValueError`) for deep nesting: catch both.
+- Open hardening: no https → http redirects (WL-98), total deadlines (WL-99), public CM addresses (WL-100).
 - No `shell=True`; `subprocess` gets a fixed argv.
 - Ping accepts only a strict IPv4 address (`ipaddress`).
 - The User-Agent uses `APP_NAME`. The one literal app name is the fixed 32-byte ICMP payload in `icmp.py`.

@@ -3,6 +3,76 @@
 Decisions taken without asking ([CLAUDE.md](CLAUDE.md) rule 12), newest first.
 Each entry: the decision, then why. Revisit an entry by adding a new one; don't rewrite history.
 
+## 2026-11-27
+
+- **The Steam login (CM) check has separate keys for the login and the web servers (WL-23):**
+  `check.steam_cm.ok` / `.web_ok` and `.fail` / `.web_fail`. The old code glued the Armenian case endings
+  (`-ից`, `-ը`) onto one shared "Steam's login / web servers" word. That can't be translated: Russian and
+  English change the words around it differently. Four whole sentences cost the translator a little more
+  and read right in every language.
+- **Numbers that the text formats keep their format spec in the template (`{loss:.0f}%`)**, and the code
+  passes the raw number (WL-23). The rendered text is unchanged, and WL-32 re-renders from the number,
+  not from a string rounded in the worker thread. Times stay `fmt_ms()` strings (`{ms}`), as in checks 1–3.
+- **The GC note is built on every call (`_gc_note()`), not as the module constant `GC_NOTE` (WL-23).** A
+  `Msg` made at import would freeze the language of that moment. Nothing outside `check_dota_gc` used the
+  constant.
+- **`dota_gc` failures reuse one key, `check.dota_gc.down` ("… ({error})"), for both a 5xx answer and
+  `success = false` (WL-23).** Passing `success = false` as the error keeps that text exactly as before,
+  and the translator writes the sentence once.
+- **Bugs in reading Valve's answers and error texts were fixed in WL-23, not filed (rule 6).** The
+  `test-engineer`, `code-reviewer` and `security-auditor` passes found most of them. Every check now goes
+  through the same helpers: `_valve_text()` (a short, printable, one-line `str`, else None), `_ipv4()`
+  (a strict public unicast address, else None), `_host()` (that, or a public DNS name), `_gc_version()`
+  and `_clip()` (anyone else's words as one printable line).
+  - **The rule behind them:** bad data from Valve must be skipped (SKIP, or the web-server fallback),
+    never blamed on anyone, and never shown as sent.
+  - `parse_sdr_pops` trusted the types in the SDR config: a `desc` or `ipv4` that was a list made `Pop`
+    unhashable, and `relays: 5` raised `TypeError`. Either one crashed the relay check into "internal
+    error". Wrong-typed entries are now skipped, and a missing or unusable `desc` falls back to the site
+    code.
+  - A relay address that can't be pinged (`"1.2.3.4:27015"`) made every ping fail. With 1.1.1.1 still
+    answering, that read as `routing` and **blamed the provider for Valve's bad data**. A non-public one
+    can answer: 127.0.0.1 is the PC, and 192.168.1.1 or 10.0.0.1 is often the home router, which would
+    give a fake perfect ping and a wrong "network is fine". `_ipv4()` now takes only `is_global`,
+    non-multicast addresses. FakeNet's relays moved from 10.0.0.x to 155.133.226.x (Valve's own public
+    range) so the tests use addresses the app accepts.
+  - A CM host that can't be a server failed every probe while the API answered, which blamed the
+    provider. Examples: "cm host", "[2001:db8::1]", or "localhost" and "0x7f.0.0.1" (both the PC, where the
+    Steam client's own ports answer), or one-label names any LAN machine may answer. `_host()` takes a
+    strict public IPv4 address, or a name of two or more ASCII labels ending in a letters-only one, and
+    not `localhost` / `local`. A list with no usable host falls back to Steam's web servers, as an empty
+    list already did. IPv6 CM endpoints are not accepted: Valve's list has none, and the checks are
+    IPv4-only. A real name that resolves to a private address still gets through; resolving and filtering
+    every address would need its own change (WL-100).
+  - A CM port such as `"²"` passed `str.isdigit()` and then `int()` raised, crashing the login-server
+    check. Ports must now be ASCII digits in 1–65535.
+  - Valve's texts (relay site names, data centers, CM endpoints, the GC version) were shown as sent, and
+    so were error texts from the OS or a proxy (`short_error()` falls back to `str(exc)`, and a proxy's
+    "Tunnel connection failed: 403 …" reason is the proxy's own words). A line break there could fake a
+    line in the report, and an escape code would run in a terminal. Valve's texts must now pass
+    `_valve_text()`, or they are replaced (site code, `?`) or left out. Error texts are cleaned by
+    `_clip()`, every non-printable character becoming a space.
+  - A body nested deeper than the JSON parser's stack raised `RecursionError`, which isn't a
+    `ValueError`; it is now "the answer is not JSON".
+  - Work on Valve's answers is bounded (rule 3). The data-center list stops at the 5 it shows (it was
+    quadratic over every server). More than `MAX_POPS = 128` relay sites is treated as a bad answer
+    (SKIP), not cut: dict order could drop the nearest site and make the ping look high, which blames the
+    user. Valve lists a few dozen sites, and two ping rounds of 128 stay within the run's budget.
+  - **Limits:** 64 characters for Valve's names and 20 for the GC version (a number). Hostnames get the
+    DNS limit of 253. Checked against Valve's live answers on 2026-11-27: the longest relay site name is
+    exactly 40 characters (the first limit, 40, had no margin left), and the old and new parsers keep the
+    same 36 relay sites and the same 65 login-server targets. A name that is refused only shows the site
+    code instead.
+- **The verdict said "ICMP is blocked" whenever the relay check was skipped. It now says so only for
+  `icmp_blocked`, and gives a neutral "the relays weren't checked" line otherwise (WL-23).** The fix was
+  first planned for WL-24, but WL-23 made the case common: malformed relay lists now end as SKIP instead of
+  crashing. The new line is the key `advice.relays_unchecked`, so no new inline Armenian is added; WL-24
+  moves the rest of the advice.
+- **Two weaknesses older than WL-23 became cards instead of being fixed here: following an https → http
+  redirect (WL-98) and timeouts that are per socket call rather than a total deadline (WL-99).** They
+  are hardening of the HTTP client, not bugs in the code this card touched, and each needs its own tests.
+  WL-99 also covers DNS lookups, which have no timeout of their own.
+
 ## 2026-11-25
 
 - **Results carry key + params, as `i18n.Msg`: a `str` subclass that is rendered when it is made and

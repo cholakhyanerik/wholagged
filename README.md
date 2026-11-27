@@ -85,7 +85,9 @@ Troubleshooting:
 | 6 | Valve's game network | ICMP ping to Valve's SDR relays (from `GetSDRConfig`), then 10 pings to each of the 3 fastest | Ping, packet loss, jitter and routing problems |
 
 - No internet: the remaining checks are skipped.
-- The CM server list can't be fetched: check 4 tests Steam's web servers instead.
+- The CM server list can't be fetched or has no usable server: check 4 tests Steam's web servers instead.
+- Valve's data that doesn't look right (a malformed address, an odd name, a huge list) is skipped, and
+  never blamed on you or your provider.
 - A check crashes: it is marked as skipped, and the remaining checks still run.
 
 ## How the verdict is decided

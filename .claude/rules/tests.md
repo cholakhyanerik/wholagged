@@ -7,9 +7,16 @@ paths:
 
 - Offline only; the whole suite runs in about a second. Never touch the real network.
 - `tests/fakes.py::FakeNet` replaces `tcp_probe`, `_resolve`, `http_get_json`, `icmp.ping` and `time.sleep`.
-- Each `FakeNet` attribute is a knob that breaks one thing: `internet`, `dns`, `unresolved` (a set of
-  names), `tcp_ok`, `cert_ok`, `relays_ok`, `control_ok`, `loss_every`, `relay_extra_ms`, `http[url]`.
-  Add a knob instead of patching ad hoc.
+- Each `FakeNet` attribute is a knob that breaks one thing: `internet`, `dns`, `unresolved` and
+  `refused_hosts` (sets of names), `tcp_ok`, `cert_ok`, `relays_ok`, `control_ok`, `loss_every`,
+  `relay_extra_ms`, `relay_jitter_ms` (every 2nd relay ping slower), `http[url]` (a JSON answer, an int
+  HTTP status, or an exception raised as is to crash a check). Add a knob instead of patching ad hoc.
+- Relay pings are counted per IP, so `loss_every` and `relay_jitter_ms` give the same per-site lines on
+  every run although the relays are pinged in parallel. Control pings are never dropped or slowed;
+  pings to `127.x` always answer (0.1 ms), like a real PC. `net.pinged` records every ping (control
+  ones too), for "no ping was sent" asserts.
+- Fake relays sit at public `155.133.226.N`: `_ipv4` refuses private, loopback and other non-global
+  addresses, so a `10.x` relay would be dropped as unusable.
 - FakeNet's error words come from `checks.short_error()`, so they are `i18n.Msg` like the real ones.
 - Each verdict branch has a scenario in `test_scenarios.py`.
 - Helpers are tested in `test_parsing.py` and `test_net_helpers.py`.
@@ -26,3 +33,5 @@ paths:
 - pytest runs with `-p no:cacheprovider` (no `.pytest_cache`), so `--lf` is not available.
 - Tests import `fakes` because pytest's default `prepend` import mode puts `tests/` on `sys.path`;
   there is no `conftest.py`.
+- Write invisible characters as `chr(0x2028)` or `"\x85"`, never raw: an edit can turn a `\u` escape into
+  the raw character, and ruff catches only some of them (PLE2502).

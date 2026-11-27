@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 
+from .i18n import Msg
 from .models import CheckResult, Side, Status, Verdict
 
 HOTSPOT = (
@@ -165,7 +166,11 @@ def decide(results: dict[str, CheckResult]) -> Verdict:
     if status("dota_gc") == Status.SKIP:
         advice.insert(0, "GC-ն ուղղակիորեն ստուգել չհաջողվեց. " + STEAMSTAT)
     if status("relays") == Status.SKIP:
-        advice.append("Relay-ների ping-ը չստուգվեց (ICMP-ն փակ է), packet loss-ը հայտնի չէ")
+        # Only a blocked ICMP is the network's doing; a bad relay list or a failed download is not.
+        if flag("relays", "icmp_blocked"):
+            advice.append("Relay-ների ping-ը չստուգվեց (ICMP-ն փակ է), packet loss-ը հայտնի չէ")
+        else:
+            advice.append(Msg("advice.relays_unchecked"))
     return Verdict(
         Side.PC,
         "Ցանցը կարգին է, Valve-ն էլ պատասխանում է",

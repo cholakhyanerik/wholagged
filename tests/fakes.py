@@ -23,17 +23,24 @@ CM_LIST = {
 SDR = {
     "revision": 1,
     "pops": {
-        "sto": {"desc": "Stockholm", "relays": [{"ipv4": "10.0.0.1", "port_range": [27015, 27060]}]},
-        "vie": {"desc": "Vienna", "relays": [{"ipv4": "10.0.0.2", "port_range": [27015, 27060]}]},
-        "fra": {"desc": "Frankfurt", "relays": [{"ipv4": "10.0.0.3", "port_range": [27015, 27060]}]},
-        "dxb": {"desc": "Dubai", "relays": [{"ipv4": "10.0.0.4", "port_range": [27015, 27060]}]},
-        "sgp": {"desc": "Singapore", "relays": [{"ipv4": "10.0.0.5", "port_range": [27015, 27060]}]},
+        "sto": {"desc": "Stockholm", "relays": [{"ipv4": "155.133.226.1", "port_range": [27015, 27060]}]},
+        "vie": {"desc": "Vienna", "relays": [{"ipv4": "155.133.226.2", "port_range": [27015, 27060]}]},
+        "fra": {"desc": "Frankfurt", "relays": [{"ipv4": "155.133.226.3", "port_range": [27015, 27060]}]},
+        "dxb": {"desc": "Dubai", "relays": [{"ipv4": "155.133.226.4", "port_range": [27015, 27060]}]},
+        "sgp": {"desc": "Singapore", "relays": [{"ipv4": "155.133.226.5", "port_range": [27015, 27060]}]},
         "nocfg": {"desc": "No relays"},
     },
 }
 GC_OK = {"result": {"success": True, "deploy_version": 7001, "active_version": 7001}}
-RELAY_MS = {"10.0.0.1": 58.0, "10.0.0.2": 47.0, "10.0.0.3": 52.0, "10.0.0.4": 71.0, "10.0.0.5": 160.0}
+RELAY_MS = {
+    "155.133.226.1": 58.0,
+    "155.133.226.2": 47.0,
+    "155.133.226.3": 52.0,
+    "155.133.226.4": 71.0,
+    "155.133.226.5": 160.0,
+}
 CONTROL = {"1.1.1.1": 9.0, "8.8.8.8": 11.0}
+LOOPBACK_MS = 0.1
 
 
 # The error words the real helpers give: `short_error()` of the exception they would catch, so the fake
@@ -50,6 +57,10 @@ def _bad_certificate() -> str:
     return checks.short_error(ssl.SSLCertVerificationError(1, "certificate verify failed"))
 
 
+def _refused() -> str:
+    return checks.short_error(ConnectionRefusedError())
+
+
 class FakeNet:
     """Each attribute is a knob a test can turn to break one part of the network."""
 
@@ -57,6 +68,8 @@ class FakeNet:
         self.internet = True
         self.dns = True
         self.unresolved: set[str] = set()  # names that don't resolve while the rest of DNS works
+        self.refused_hosts: set[str] = set()  # names that resolve but refuse TCP (a firewall, a blocked route)
+        # url -> the JSON answer; an int is that HTTP status; an exception is raised as is (a bug in the check)
         self.http: dict[str, object] = {
             checks.CM_LIST_URL: CM_LIST,
             checks.SDR_CONFIG_URL: SDR,
@@ -66,9 +79,13 @@ class FakeNet:
         self.cert_ok = True  # False: HTTPS certificate check fails (clock, antivirus, captive portal)
         self.relays_ok = True
         self.control_ok = True
-        self.loss_every: int | None = None  # drop every Nth relay ping
+        self.loss_every: int | None = None  # drop every Nth ping to each relay
         self.relay_extra_ms = 0.0
-        self._count = 0
+        self.relay_jitter_ms = 0.0  # every 2nd ping to each relay is this much slower; control pings aren't
+        # Pings per relay IP. Counted per IP, not in total: the relays are pinged in parallel threads, and a
+        # shared counter would hand out the dropped or slow pings in whatever order the threads ran.
+        self._pings: dict[str, int] = {}
+        self.pinged: list[str] = []  # every ping, control ones too, for "no ping was sent" asserts
 
     def install(self, monkeypatch) -> FakeNet:
         monkeypatch.setattr(checks, "tcp_probe", self.tcp_probe)
@@ -85,6 +102,8 @@ class FakeNet:
             return 12.0, None
         if not self.dns or host in self.unresolved:
             return None, _no_such_name()
+        if host in self.refused_hosts:
+            return None, _refused()
         return (35.0, None) if self.tcp_ok else (None, _timeout())
 
     def resolve(self, name):
@@ -95,24 +114,34 @@ class FakeNet:
     def http_get_json(self, url, timeout=0):
         if not (self.internet and self.dns and self.tcp_ok):
             raise checks.HttpFailure(_timeout())
-        if urlsplit(url).hostname in self.unresolved:
+        host = urlsplit(url).hostname
+        if host in self.unresolved:
             raise checks.HttpFailure(_no_such_name())
+        if host in self.refused_hosts:
+            raise checks.HttpFailure(_refused())
         if not self.cert_ok:
             raise checks.HttpFailure(_bad_certificate(), cert_error="certificate has expired")
         value = self.http[url]
+        if isinstance(value, BaseException):
+            raise value
         if isinstance(value, int):
             raise checks.HttpFailure(f"HTTP {value}", status=value)
         return value, 120.0
 
     def ping(self, ip, timeout_ms=1000):
+        self.pinged.append(ip)  # list.append is atomic: safe from the ping threads
+        if ip.startswith("127."):
+            return LOOPBACK_MS  # the PC itself answers, whatever the network does
         if not self.internet:
             return None
         if ip in CONTROL:
             return CONTROL[ip] if self.control_ok else None
         if not self.relays_ok:
             return None
-        self._count += 1
-        if self.loss_every and self._count % self.loss_every == 0:
+        n = self._pings[ip] = self._pings.get(ip, 0) + 1  # one thread at a time pings a given relay
+        if self.loss_every and n % self.loss_every == 0:
             return None
         base = RELAY_MS.get(ip)
-        return None if base is None else base + self.relay_extra_ms
+        if base is None:
+            return None
+        return base + self.relay_extra_ms + (self.relay_jitter_ms if n % 2 == 0 else 0.0)

@@ -5,7 +5,6 @@ from __future__ import annotations
 import ast
 import copy
 import importlib
-import inspect
 import pickle
 import pkgutil
 import re
@@ -14,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from wholagged import checks, i18n, locales
+from wholagged import checks, i18n, icmp, locales, models
 from wholagged.i18n import Msg, render, t
 
 from fakes import FakeNet
@@ -255,6 +254,11 @@ def _placeholders(text: str) -> set[str]:
     return {name for _, name, _, _ in string.Formatter().parse(text) if name is not None}
 
 
+def _fields(text: str) -> set[tuple[str, str, str | None]]:
+    """Each field with its format spec and conversion: `{loss:.0f}` is ("loss", ".0f", None)."""
+    return {(name, spec, conv) for _, name, spec, conv in string.Formatter().parse(text) if name is not None}
+
+
 @pytest.mark.parametrize("lang", ["ru", "en"])
 def test_translations_use_the_same_placeholders_as_armenian(lang):
     # locales/__init__.py: placeholders must be the same in every language. parse() also rejects broken templates.
@@ -262,6 +266,15 @@ def test_translations_use_the_same_placeholders_as_armenian(lang):
     for key, text in _messages(lang).items():
         if key in source:
             assert _placeholders(text) == _placeholders(source[key]), key
+
+
+@pytest.mark.parametrize("lang", ["ru", "en"])
+def test_translations_keep_the_armenian_format_specs(lang):
+    # A translation that drops `:.0f` from `{loss:.0f}%` would show "26.666666666666668%".
+    source = _messages("hy")
+    for key, text in _messages(lang).items():
+        if key in source:
+            assert _fields(text) == _fields(source[key]), key
 
 
 # --- texts moved out of the code -----------------------------------------------------------------
@@ -345,23 +358,16 @@ def test_every_key_used_in_the_code_gets_exactly_its_placeholders():
     assert wrong == []
 
 
-@pytest.mark.parametrize(
-    "code",
-    [
-        checks.short_error,
-        checks.tcp_probe,
-        checks.HttpFailure,
-        checks.http_get_json,
-        checks._resolve,
-        checks.check_internet,
-        checks.check_dns,
-        checks.check_steam_api,
-        checks.CheckSpec,
-    ],
-    ids=lambda code: code.__name__,
-)
-def test_moved_code_has_no_inline_armenian(code):
-    assert [line.strip() for line in inspect.getsource(code).splitlines() if ARMENIAN.search(line)] == []
+# Modules whose user-facing texts have all moved to the catalogues: not one Armenian letter is left, not even
+# in a comment. Add a module when its move card is done (verdict.py: WL-24; report.py and __init__.py: WL-25;
+# gui.py: WL-26).
+MOVED_MODULES = [checks, icmp, models]
+
+
+@pytest.mark.parametrize("module", MOVED_MODULES, ids=lambda module: module.__name__)
+def test_moved_module_has_no_inline_armenian(module):
+    lines = Path(module.__file__).read_text(encoding="utf-8").splitlines()
+    assert [f"{n}: {line.strip()}" for n, line in enumerate(lines, 1) if ARMENIAN.search(line)] == []
 
 
 # --- Msg: a text that can be shown again in another language ------------------------------------
@@ -461,7 +467,7 @@ def test_copying_a_msg_never_looks_its_text_up_as_a_key(monkeypatch, duplicate):
 
 # --- a finished run, shown again after a language switch -----------------------------------------
 
-# Test English for every key a run of checks 1-3 uses, and the six titles. Each text differs from the Armenian
+# Test English for every key a run of the six checks and the runner uses. Each text differs from the Armenian
 # one, so a text that wasn't rendered again can't pass by accident.
 RUN_EN = {
     "check.internet.title": "Internet connection",
@@ -484,6 +490,31 @@ RUN_EN = {
     "check.steam_api.empty": "Steam answered, but the login server list is empty",
     "check.steam_api.ok": "Steam Web API answered ({ms}, {count} login servers)",
     "check.steam_api.data_centers": "Nearest data centers: {dcs}",
+    "check.steam_cm.fallback": "No login server list, so Steam's web servers are checked instead",
+    "check.steam_cm.fail": "Could not connect to any Steam login server",
+    "check.steam_cm.web_fail": "Could not connect to any Steam web server",
+    "check.steam_cm.ok": "Steam login servers reachable ({ok}/{total}, median {ms})",
+    "check.steam_cm.web_ok": "Steam web servers reachable ({ok}/{total}, median {ms})",
+    "check.steam_cm.partial": "Only {ok}/{total} servers reachable",
+    "check.dota_gc.note": "Checked indirectly through the Web API; see steamstat.us to be sure",
+    "check.dota_gc.down": "Dota GC is not answering ({error})",
+    "check.dota_gc.unknown": "Could not check ({error})",
+    "check.dota_gc.bad_answer": "Unexpected answer: can't judge",
+    "check.dota_gc.ok": "Dota GC answers ({ms})",
+    "check.dota_gc.ok_version": "Dota GC answers ({ms}, version {version})",
+    "check.relays.list_failed": "Could not get the relay list ({error})",
+    "check.relays.empty": "The relay list is empty",
+    "check.relays.routing": "Valve's relays don't answer ping, though the rest of the internet does",
+    "check.relays.checked": "Relays checked: {count}",
+    "check.relays.icmp_blocked": "ICMP ping looks blocked on this network, so the relays can't be checked",
+    "check.relays.responded": "Relays that answered: {ok}/{total}",
+    "check.relays.quality": "{pop}: {sent} pings, {loss:.0f}% loss, average {avg}, jitter {jitter}",
+    "check.relays.lossy": "{loss:.0f}% packet loss: the connection is unstable",
+    "check.relays.high_ping": "High ping: {ms} ({pop})",
+    "check.relays.jittery": "Unsteady ping (jitter {ms})",
+    "check.relays.ok": "Best: {pop}, {ms}, {loss:.0f}% loss",
+    "check.skipped_no_internet": "Skipped: no internet",
+    "check.internal_error": "Internal error in the check: {error}",
     "error.timeout": "timed out",
     "error.refused": "connection refused",
     "error.reset": "connection reset",
@@ -513,6 +544,40 @@ STEAM_API_OK = [
     "Steam Web API answered (120 ms, 5 login servers)",
     "Nearest data centers: fra1, sto1, vie1",
 ]
+CM_LOGIN = [  # pick_cm_targets() of fakes.CM_LIST: the four websockets servers
+    "ext1-fra1.steamserver.net:27019 [fra1]",
+    "ext2-fra1.steamserver.net:27019 [fra1]",
+    "ext1-sto1.steamserver.net:27019 [sto1]",
+    "ext1-vie1.steamserver.net:443 [vie1]",
+]
+CM_WEB = ["store.steampowered.com:443 [web]", "steamcommunity.com:443 [web]", "api.steampowered.com:443 [web]"]
+STEAM_CM_OK = [
+    "Steam login servers",
+    "Steam login servers reachable (4/4, median 35 ms)",
+    *[f"{target} — 35 ms" for target in CM_LOGIN],
+]
+GC_NOTE = RUN_EN["check.dota_gc.note"]
+DOTA_GC_OK = ["Dota 2 Game Coordinator status", "Dota GC answers (120 ms, version 7001)", GC_NOTE]
+RELAY_SITES = [  # fakes.RELAY_MS, fastest first
+    "Vienna (vie) — 47 ms",
+    "Frankfurt (fra) — 52 ms",
+    "Stockholm (sto) — 58 ms",
+    "Dubai (dxb) — 71 ms",
+    "Singapore (sgp) — 160 ms",
+]
+RELAYS_OK = [
+    "Valve game network",
+    "Best: Vienna, 47 ms, 0% loss",
+    *RELAY_SITES,
+    "Relays that answered: 5/5",
+    "Vienna: 10 pings, 0% loss, average 47 ms, jitter <1 ms",
+    "Frankfurt: 10 pings, 0% loss, average 52 ms, jitter <1 ms",
+    "Stockholm: 10 pings, 0% loss, average 58 ms, jitter <1 ms",
+]
+
+
+def _skipped(title):
+    return [title, "Skipped: no internet"]
 
 
 def _set(name, value):
@@ -523,8 +588,26 @@ def _answer(url, value):
     return lambda net: net.http.update({url: value})
 
 
+def _all(*breaks):
+    def apply(net):
+        for one in breaks:
+            one(net)
+
+    return apply
+
+
 RERUN_CASES = {
-    "all-ok": (lambda net: None, {"internet": INTERNET_OK, "dns": DNS_OK, "steam_api": STEAM_API_OK}),
+    "all-ok": (
+        lambda net: None,
+        {
+            "internet": INTERNET_OK,
+            "dns": DNS_OK,
+            "steam_api": STEAM_API_OK,
+            "steam_cm": STEAM_CM_OK,
+            "dota_gc": DOTA_GC_OK,
+            "relays": RELAYS_OK,
+        },
+    ),
     "no-internet": (
         _set("internet", False),
         {
@@ -534,7 +617,12 @@ RERUN_CASES = {
                 "Cloudflare (1.1.1.1:443) — failed (timed out)",
                 "Google (8.8.8.8:443) — failed (timed out)",
                 "Quad9 (9.9.9.9:443) — failed (timed out)",
-            ]
+            ],
+            "dns": _skipped("Name lookup (DNS)"),
+            "steam_api": _skipped("Steam Web API reachability"),
+            "steam_cm": _skipped("Steam login servers"),
+            "dota_gc": _skipped("Dota 2 Game Coordinator status"),
+            "relays": _skipped("Valve game network"),
         },
     ),
     "dns-broken": (
@@ -593,6 +681,146 @@ RERUN_CASES = {
         _answer(checks.CM_LIST_URL, {"response": {"serverlist": []}}),
         {"steam_api": ["Steam Web API reachability", "Steam answered, but the login server list is empty"]},
     ),
+    # 4. Steam login servers
+    "valve-unreachable": (
+        _set("tcp_ok", False),
+        {
+            "steam_cm": [
+                "Steam login servers",
+                "Could not connect to any Steam web server",
+                "No login server list, so Steam's web servers are checked instead",
+                *[f"{target} — failed (timed out)" for target in CM_WEB],
+            ],
+            "dota_gc": ["Dota 2 Game Coordinator status", "Could not check (timed out)", GC_NOTE],
+            "relays": ["Valve game network", "Could not get the relay list (timed out)"],
+        },
+    ),
+    "login-list-unusable": (
+        _answer(checks.CM_LIST_URL, {"response": {"serverlist": [{"endpoint": "no-port", "dc": "fra1"}]}}),
+        {
+            "steam_cm": [
+                "Steam login servers",
+                "Steam web servers reachable (3/3, median 35 ms)",
+                "No login server list, so Steam's web servers are checked instead",
+                *[f"{target} — 35 ms" for target in CM_WEB],
+            ]
+        },
+    ),
+    "login-servers-partly-refused": (
+        _set("refused_hosts", {"ext1-fra1.steamserver.net", "ext2-fra1.steamserver.net", "ext1-sto1.steamserver.net"}),
+        {
+            "steam_cm": [
+                "Steam login servers",
+                "Only 1/4 servers reachable",
+                *[f"{target} — failed (connection refused)" for target in CM_LOGIN[:3]],
+                f"{CM_LOGIN[3]} — 35 ms",
+            ]
+        },
+    ),
+    "login-servers-all-refused": (
+        _set("refused_hosts", {target.split(":")[0] for target in CM_LOGIN}),
+        {
+            "steam_cm": [
+                "Steam login servers",
+                "Could not connect to any Steam login server",
+                *[f"{target} — failed (connection refused)" for target in CM_LOGIN],
+            ]
+        },
+    ),
+    # 5. Dota 2 Game Coordinator
+    "gc-without-version": (
+        _answer(checks.GC_VERSION_URL, {"result": {"success": True}}),
+        {"dota_gc": ["Dota 2 Game Coordinator status", "Dota GC answers (120 ms)", GC_NOTE]},
+    ),
+    "gc-503": (
+        _answer(checks.GC_VERSION_URL, 503),
+        {"dota_gc": ["Dota 2 Game Coordinator status", "Dota GC is not answering (HTTP 503)", GC_NOTE]},
+    ),
+    "gc-success-false": (
+        _answer(checks.GC_VERSION_URL, {"result": {"success": False}}),
+        {"dota_gc": ["Dota 2 Game Coordinator status", "Dota GC is not answering (success = false)", GC_NOTE]},
+    ),
+    "gc-404": (
+        _answer(checks.GC_VERSION_URL, 404),
+        {"dota_gc": ["Dota 2 Game Coordinator status", "Could not check (HTTP 404)", GC_NOTE]},
+    ),
+    "gc-bad-answer": (
+        _answer(checks.GC_VERSION_URL, {"result": ["success"]}),
+        {"dota_gc": ["Dota 2 Game Coordinator status", "Unexpected answer: can't judge", GC_NOTE]},
+    ),
+    # 6. Valve's game network
+    "relays-lossy": (
+        _set("loss_every", 4),  # the 4th and 8th of each relay's 10 quality pings
+        {
+            "relays": [
+                "Valve game network",
+                "20% packet loss: the connection is unstable",
+                *RELAY_SITES,
+                "Relays that answered: 5/5",
+                "Vienna: 10 pings, 20% loss, average 47 ms, jitter <1 ms",
+                "Frankfurt: 10 pings, 20% loss, average 52 ms, jitter <1 ms",
+                "Stockholm: 10 pings, 20% loss, average 58 ms, jitter <1 ms",
+            ]
+        },
+    ),
+    "relays-high-ping": (
+        _set("relay_extra_ms", 140.0),
+        {
+            "relays": [
+                "Valve game network",
+                "High ping: 187 ms (Vienna)",
+                "Vienna (vie) — 187 ms",
+                "Frankfurt (fra) — 192 ms",
+                "Stockholm (sto) — 198 ms",
+                "Dubai (dxb) — 211 ms",
+                "Singapore (sgp) — 300 ms",
+                "Relays that answered: 5/5",
+                "Vienna: 10 pings, 0% loss, average 187 ms, jitter <1 ms",
+                "Frankfurt: 10 pings, 0% loss, average 192 ms, jitter <1 ms",
+                "Stockholm: 10 pings, 0% loss, average 198 ms, jitter <1 ms",
+            ]
+        },
+    ),
+    "relays-jittery": (
+        _set("relay_jitter_ms", 40.0),  # the first ping to each relay is the plain one
+        {
+            "relays": [
+                "Valve game network",
+                "Unsteady ping (jitter 40 ms)",
+                *RELAY_SITES,
+                "Relays that answered: 5/5",
+                "Vienna: 10 pings, 0% loss, average 67 ms, jitter 40 ms",
+                "Frankfurt: 10 pings, 0% loss, average 72 ms, jitter 40 ms",
+                "Stockholm: 10 pings, 0% loss, average 78 ms, jitter 40 ms",
+            ]
+        },
+    ),
+    "relays-silent": (
+        _set("relays_ok", False),
+        {
+            "relays": [
+                "Valve game network",
+                "Valve's relays don't answer ping, though the rest of the internet does",
+                "Relays checked: 5",
+            ]
+        },
+    ),
+    "icmp-blocked": (
+        _all(_set("relays_ok", False), _set("control_ok", False)),
+        {"relays": ["Valve game network", "ICMP ping looks blocked on this network, so the relays can't be checked"]},
+    ),
+    "relay-list-empty": (
+        _answer(checks.SDR_CONFIG_URL, {"revision": 2, "pops": {}}),
+        {"relays": ["Valve game network", "The relay list is empty"]},
+    ),
+    # The runner: a check that crashes. The error word is a Msg too, so it is rendered again.
+    "check-crashes": (
+        _answer(checks.GC_VERSION_URL, ConnectionResetError()),
+        {
+            "dota_gc": ["Dota 2 Game Coordinator status", "Internal error in the check: connection reset"],
+            "relays": RELAYS_OK,  # the run goes on
+        },
+    ),
 }
 
 
@@ -610,6 +838,7 @@ def test_test_english_uses_the_armenian_keys_and_placeholders():
     assert RUN_EN.keys() <= hy.keys()
     for key, text in RUN_EN.items():
         assert _placeholders(text) == _placeholders(hy[key]), key
+        assert _fields(text) == _fields(hy[key]), key  # `{loss:.0f}` keeps its spec
         assert text != hy[key], key
 
 
@@ -651,8 +880,26 @@ def test_every_result_title_is_shown_again_in_the_new_language(net, monkeypatch)
         (_set("dns", False), "steam_api", "error.timeout"),
         (_set("unresolved", {"api.steampowered.com"}), "steam_api", "error.dns"),
         (_set("cert_ok", False), "steam_api", "error.ssl"),
+        (_set("refused_hosts", {"api.steampowered.com"}), "steam_api", "error.refused"),
+        (_set("tcp_ok", False), "steam_cm", "error.timeout"),
+        (_set("refused_hosts", {"ext1-fra1.steamserver.net"}), "steam_cm", "error.refused"),
+        (_set("unresolved", {"ext1-sto1.steamserver.net"}), "steam_cm", "error.dns"),
+        (_set("tcp_ok", False), "dota_gc", "error.timeout"),
+        (_set("tcp_ok", False), "relays", "error.timeout"),
     ],
-    ids=["probe-timeout", "dns-name", "api-timeout", "api-name", "api-certificate"],
+    ids=[
+        "probe-timeout",
+        "dns-name",
+        "api-timeout",
+        "api-name",
+        "api-certificate",
+        "api-refused",
+        "cm-fallback-timeout",
+        "cm-refused",
+        "cm-name",
+        "gc-timeout",
+        "relay-list-timeout",
+    ],
 )
 def test_fake_network_gives_msg_error_words_like_the_real_helpers(net, breaks, check, key):
     breaks(net)
@@ -661,3 +908,84 @@ def test_fake_network_gives_msg_error_words_like_the_real_helpers(net, breaks, c
     word = failed.params["error"]
     assert isinstance(word, Msg)
     assert word.key == key
+
+
+@pytest.mark.parametrize(
+    ("breaks", "check", "summary", "error"),
+    [
+        (_set("tcp_ok", False), "dota_gc", "check.dota_gc.unknown", "error.timeout"),
+        (_set("tcp_ok", False), "relays", "check.relays.list_failed", "error.timeout"),
+        (_set("refused_hosts", {"api.steampowered.com"}), "dota_gc", "check.dota_gc.unknown", "error.refused"),
+        (_set("refused_hosts", {"api.steampowered.com"}), "relays", "check.relays.list_failed", "error.refused"),
+        (_set("cert_ok", False), "dota_gc", "check.dota_gc.unknown", "error.ssl"),
+        (_set("cert_ok", False), "relays", "check.relays.list_failed", "error.ssl"),
+    ],
+    ids=["gc-timeout", "relays-timeout", "gc-refused", "relays-refused", "gc-certificate", "relays-certificate"],
+)
+def test_http_failure_word_reaches_the_summary_as_a_msg_not_flattened_by_str(net, breaks, check, summary, error):
+    # `HttpFailure.message`, not `str(exc)`: a str would be the Armenian word forever.
+    breaks(net)
+    res = checks.run_checks()[check]
+    assert res.summary.key == summary
+    word = res.summary.params["error"]
+    assert type(word) is Msg
+    assert (word.key, word.params) == (error, {})
+
+
+@pytest.mark.parametrize(
+    ("answer", "summary", "error"),
+    [(503, "check.dota_gc.down", "HTTP 503"), (404, "check.dota_gc.unknown", "HTTP 404")],
+    ids=["503", "404"],
+)
+def test_http_status_in_a_gc_summary_is_plain_text(net, answer, summary, error):
+    net.http[checks.GC_VERSION_URL] = answer
+    res = checks.run_checks()["dota_gc"]
+    assert res.summary.key == summary
+    assert res.summary.params["error"] == error
+    assert type(res.summary.params["error"]) is str  # no words to translate: no key
+
+
+@pytest.mark.parametrize(
+    ("breaks", "failed", "error"),
+    [
+        (_set("tcp_ok", False), 3, "error.timeout"),  # the web fallback: no login server list
+        (_set("refused_hosts", {"ext1-fra1.steamserver.net", "ext1-vie1.steamserver.net"}), 2, "error.refused"),
+        (_set("unresolved", {"ext2-fra1.steamserver.net"}), 1, "error.dns"),
+    ],
+    ids=["fallback-timeout", "refused", "name"],
+)
+def test_every_steam_server_probe_failure_is_a_msg_with_a_msg_error_word(net, breaks, failed, error):
+    breaks(net)
+    res = checks.run_checks()["steam_cm"]
+    probes = [d for d in res.details if isinstance(d, Msg) and d.key == "check.probe_failed"]
+    assert len(probes) == failed
+    for probe in probes:
+        assert type(probe.params["error"]) is Msg
+        assert probe.params["error"].key == error
+    assert all(d.endswith(" ms") for d in res.details if type(d) is str)  # plain text only for "host — 35 ms"
+
+
+@pytest.mark.parametrize(
+    "exc",
+    [
+        RuntimeError("bug"),
+        KeyError("result"),
+        ValueError(),
+        ConnectionResetError(),
+        TimeoutError("timed out"),
+        OSError(113, "No route to host"),
+    ],
+    ids=lambda exc: type(exc).__name__,
+)
+def test_internal_error_carries_short_error_of_the_exception(net, exc):
+    net.http[checks.GC_VERSION_URL] = exc  # an exception the check doesn't expect escapes it
+    results = checks.run_checks()
+    res = results["dota_gc"]
+    assert res.status == models.Status.SKIP
+    assert res.summary.key == "check.internal_error"
+    word, expected = res.summary.params["error"], checks.short_error(exc)
+    assert word == expected
+    assert type(word) is type(expected)  # a Msg for the errors we have words for, else the system's own text
+    if isinstance(expected, Msg):
+        assert (word.key, word.params) == (expected.key, expected.params)
+    assert results["relays"].status == models.Status.OK  # the run went on
