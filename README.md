@@ -3,6 +3,7 @@
 # wholagged
 
 [![CI](https://github.com/cholakhyanerik/wholagged/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/cholakhyanerik/wholagged/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/wholagged?logo=pypi&logoColor=white)](https://pypi.org/project/wholagged/)
 [![Python 3.15+](https://img.shields.io/badge/python-3.15%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows&logoColor=white)](#requirements)
 [![GUI: PySide6](https://img.shields.io/badge/GUI-PySide6-41CD52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
@@ -40,11 +41,41 @@ It runs on Windows; macOS and Linux support is in progress.
 
 - Windows 10 or 11 (for macOS and Linux, see [Platform support](#platform-support))
 - [uv](https://docs.astral.sh/uv/) by Astral. **uv is required:**
+  - install it on Windows with `winget install --id=astral-sh.uv -e`, then open a new terminal; or see
+    [uv's install guide](https://docs.astral.sh/uv/getting-started/installation/);
   - the project is managed only with uv (`pyproject.toml` + `uv.lock`);
   - there is no `requirements.txt`, and `pip install` is not supported;
   - uv downloads Python 3.15 for you if you don't have it.
 
 ## Getting started
+
+### From PyPI (quickest)
+
+wholagged is on [PyPI](https://pypi.org/project/wholagged/), so you don't need to clone anything.
+Run it once, without installing:
+
+```powershell
+uvx wholagged                 # opens the window
+uvx wholagged --cli           # runs in the terminal, no window
+```
+
+Or install it as a command:
+
+```powershell
+uv tool install wholagged     # installs the wholagged command
+wholagged                     # opens the window
+wholagged --cli               # runs in the terminal, no window
+uv tool upgrade wholagged     # updates to the newest version
+```
+
+- uvx keeps the version it downloaded first: `uvx wholagged@latest` checks for a newer one.
+- `uv tool install` also installs the old `dota-netcheck` command.
+- With uvx, the old name needs `--from wholagged`: `uvx --from wholagged dota-netcheck`. Without it, uvx
+  looks up the name dota-netcheck on PyPI, and that package isn't this project's.
+
+### From source
+
+For contributors, or to run code that isn't released yet:
 
 ```powershell
 git clone https://github.com/cholakhyanerik/wholagged.git
@@ -68,8 +99,9 @@ git pull
 uv sync
 ```
 
-Troubleshooting:
+### Troubleshooting
 
+- `wholagged` isn't found after `uv tool install`: run `uv tool update-shell` once, then open a new terminal.
 - The old `dota-netcheck` command says "Failed to spawn" after you update a clone older than v0.2.2
   (the rename to wholagged): run `uv sync --reinstall-package wholagged` once. The `wholagged` command works either way.
 
@@ -152,7 +184,7 @@ These come from the PySide6 wheels in `uv.lock`:
 
 ## Project structure
 
-```
+```text
 src/wholagged/
   __init__.py   entry point (GUI by default, --cli for the terminal)
   checks.py     the six network checks (standard library only)
@@ -168,6 +200,7 @@ tests/
   test_scenarios.py   end-to-end scenarios: break one thing, expect one verdict
   test_parsing.py     parsing of Valve's API responses
   test_net_helpers.py HTTP error handling, the ping command, version sync
+  test_docs.py        README install commands are on a reviewed list
   test_i18n.py        translation lookup, placeholders and fallbacks
   test_claude_hooks.py the guard hook used by Claude Code in this repo
   test_claude_md.py   keeps CLAUDE.md short and its rules files valid

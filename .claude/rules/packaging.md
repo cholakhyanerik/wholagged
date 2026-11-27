@@ -27,8 +27,17 @@ paths:
   page its links: the README's relative links don't work there.
 - `wholagged` is on PyPI, so the name is ours; its publisher is `release.yml` + environment `pypi`, with no
   API token. To publish: `gh release create vX.Y.Z --verify-tag` on a task's tag. A tag alone uploads nothing.
-- Docs may say `uv tool install wholagged` / `uvx wholagged`; the alias only as
+  Release notes show only commands that are in `ALLOWED` in `tests/test_docs.py`; nothing checks them.
+- The READMEs install with `uvx wholagged` / `uv tool install wholagged`; the alias only as
   `uvx --from wholagged dota-netcheck` until `dota-netcheck` is reserved too (WL-102).
+  `tests/test_docs.py` keeps README commands to its reviewed lists (`.claude/rules/docs.md`).
+- The PyPI page shows the README of the newest upload: README-only changes reach it with the next release.
+- `uvx` and `uv tool install` ignore `uv.lock`: players get the newest dependencies that `pyproject.toml`
+  allows (WL-104). uv 0.13 picks or downloads a Python that fits `requires-python` by itself.
+- uvx reuses the version it cached first; `uvx wholagged@latest` checks for a newer one.
+- `uv tool install` puts the commands in uv's tool bin folder; when it isn't on PATH, uv warns and
+  `uv tool update-shell` adds it. To try installs without touching the system, set `UV_TOOL_DIR` and
+  `UV_TOOL_BIN_DIR` to a scratch folder.
 
 ## Pitfalls
 - After renaming the distribution or a script, `uv run` (inexact sync) installs the new one next to the old

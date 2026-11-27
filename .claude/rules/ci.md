@@ -11,8 +11,9 @@ Every change under `.github/` follows the `ci-workflow` skill (budget rules, tem
 - `.github/workflows/ci.yml`: `uv sync --locked` and pytest on `ubuntu-latest` + `windows-latest`;
   ruff on Linux only.
 - Triggers: code pushes to `main` and PRs. The `paths` list: `src`, `tests`, `.claude/hooks`,
-  `pyproject.toml`, `uv.lock`, `.python-version`, workflows.
-- Docs-only commits and tag pushes don't run it; a task's version bump does.
+  `pyproject.toml`, `uv.lock`, `.python-version`, workflows, and `README*.md` (`tests/test_docs.py`
+  checks the install commands players copy, so a README-only PR or web edit is tested too).
+- Other docs-only commits and tag pushes don't run it; a task's version bump does.
 - After a push, check the run once: `gh run list --workflow ci.yml --limit 1`.
 - `.github/workflows/release.yml`: on `release: published`, checks that the tag is `v<version>`, builds
   offline with uv's bundled backend (`uv build --no-sources --offline`, after `uv python install`) and

@@ -14,7 +14,7 @@ paths:
 - The guard also checks commands nested in `uv run`, `bash -c`, `powershell -Command` and `cmd /c`.
 - Documents and spreadsheets (pdf, docx, xlsx, csv) are not committed unless listed in
   `.claude/hooks/allowed-documents.txt`.
-- `stop_check.py` runs the tests when code, `CLAUDE.md` or `.claude/rules/` changed.
+- `stop_check.py` runs the tests when code, `CLAUDE.md`, `.claude/rules/` or a README changed.
 - `session_start.py` reports CLAUDE.md growing past ~200 lines.
 
 ## Agents and skills

@@ -4,6 +4,28 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.3.10] - 2026-11-27
+
+### Added
+- The README now shows the quickest way in: `uvx wholagged` runs the app straight from PyPI, and
+  `uv tool install wholagged` installs it as a command (`uv tool upgrade wholagged` updates it). You only
+  need to clone the repo to work on the code. uv fetches Python 3.15 by itself if your PC has an older
+  one. The README also shows:
+  - how to install uv on Windows;
+  - that uvx keeps the version it downloaded first, and `uvx wholagged@latest` checks for a newer one;
+  - what to do if the command isn't found after installing.
+
+  It also has a PyPI badge. The Armenian README has the same changes. (WL-103)
+
+### Security
+- The README shows the old name only as `uvx --from wholagged dota-netcheck`. Without `--from wholagged`,
+  uvx would look up `dota-netcheck` on PyPI, a name this project doesn't own yet, so it could run anyone's
+  package. (WL-103)
+- For contributors: the commands in the READMEs are now on a reviewed list in `tests/test_docs.py`.
+  Every line of a command block, and every inline command that installs or downloads something (uvx,
+  uv tool, pip, winget, a clone, …), must be on it word for word, or the tests fail. CI and the Stop hook
+  now also run the tests when only a README changes. (WL-103)
+
 ## [0.3.9] - 2026-11-27
 
 ### Added
@@ -233,6 +255,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.3.10]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.9...v0.3.10
 [0.3.9]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.8...v0.3.9
 [0.3.8]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.7...v0.3.8
 [0.3.7]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.6...v0.3.7

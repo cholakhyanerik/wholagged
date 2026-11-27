@@ -5,6 +5,39 @@ Each entry: the decision, then why. Revisit an entry by adding a new one; don't 
 
 ## 2026-11-27
 
+- **No PyPI release for WL-103 (WL-103).** Only the READMEs changed, and the package already on PyPI
+  (0.3.8) works as documented. Checked in scratch folders: `uv tool install wholagged` installs both
+  commands, `uv tool upgrade` works, and `uvx --from wholagged dota-netcheck --cli` runs the checks. The
+  PyPI page shows the README of the newest upload, so the next code release takes these steps there.
+- **The README installs uv with `winget` on Windows (WL-103).** It is one of the installers in uv's own
+  docs, and players already have it on Windows 10/11. It doesn't pipe a downloaded script into
+  PowerShell. Other platforms get a link to uv's install guide.
+- **PyPI comes first in Getting started, and the clone is "From source" (WL-103).** Players only want to
+  run the app. Contributors still find the clone steps and the dev commands right below.
+- **README commands are on reviewed lists, in `tests/test_docs.py` (WL-103).** Until WL-102 reserves
+  `dota-netcheck`, a command that fetches that name could run someone else's package.
+  - Two review rounds shaped it. Parsing `uvx` arguments let `--with=`, `&&` chains, `pipx` and `git+`
+    URLs through. A list of fetch commands still let `uv run -w` and `gh repo clone` through.
+  - So every line of a code block must be listed word for word (`ALLOWED` fetches, `HARMLESS` doesn't).
+    Only a block marked `text` is exempt. Inline code is checked against the fetch-command list, since
+    prose spans name things like `uv.lock`.
+  - Markdown is read the way GitHub renders it: inside `>` quotes, inline code wrapped across lines,
+    CommonMark fence closing. A lone backtick fails the test.
+  - Prose and indented blocks aren't read, so the READMEs say what not to type in words, never as code.
+- **CI and the Stop hook also run on README-only changes (WL-103).** Otherwise the guard only runs on the
+  next code push, and a README-only PR or web edit could publish a bad command first. Every task commit
+  bumps `pyproject.toml` and runs CI anyway, so this adds runs only for README-only edits.
+- **No `--python=3.15` step in the READMEs (WL-103).** The review asked whether `uvx wholagged` fails when
+  an older Python is found first; uv's tool docs say tools use "the first it finds". Tested with uv 0.13
+  and only a managed 3.14: uv logs "Refining interpreter with: Python >=3.15" and downloads 3.15 itself.
+- **The README mentions `uvx wholagged@latest` (WL-103).** uv's docs say uvx reuses the version it cached
+  first, so a player who never adds `@latest` would keep an old verdict logic.
+- **No upper bound on PySide6 for PyPI installs yet (WL-103).** `uvx` and `uv tool install` ignore
+  `uv.lock`, so players get the newest Qt. A cap changes how `update-deps` works, so it is its own card
+  (WL-104).
+- **WL-102 is now P1 (WL-103).** The READMEs now lead with uvx, so a squatted `dota-netcheck` is a more
+  likely mistake. It needs the owner's PyPI login once.
+
 - **The first PyPI upload is v0.3.8, released as it was tagged (WL-101).** It is the first tag whose
   commit has `release.yml`, it passed CI, and a release of an existing tag needs no new version. The name
   was free until then, so the sooner the better. Installing it from PyPI in a clean environment worked:

@@ -35,20 +35,24 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-103 · Install from PyPI in the READMEs
-`docs` · `P2` · `XS` · BRAND · depends on: —
-`wholagged` is on PyPI since WL-101, so players can install it without cloning the repo.
-- [ ] README.md: `uv tool install wholagged` (then `wholagged`) and `uvx wholagged` as the quickest way in,
-      next to the from-source steps; a PyPI badge; README.hy.md mirrors it (`translator`)
-- [ ] the alias only as `uvx --from wholagged dota-netcheck`, never `uvx dota-netcheck` (WL-102)
-
 ### WL-102 · Reserve `dota-netcheck` on PyPI as an alias package
-`security` · `P3` · `XS` · BRAND · depends on: —
-Found in the WL-15 audit: the README documents `dota-netcheck` as a command, so a user may type
-`uvx dota-netcheck`, which installs whatever is registered under that name.
+`security` · `P1` · `XS` · BRAND · depends on: —
+Found in the WL-15 audit: the README documents `dota-netcheck` as a command, so a user may run the old
+name through uvx without `--from wholagged`, which installs whatever is registered under that name. The
+READMEs now lead with uvx (WL-103), so do this before the next release.
 - [ ] a minimal `dota-netcheck` package that depends on `wholagged` and exposes the same entry point,
       published by a second pending publisher (same workflow and environment)
 - [ ] the owner adds that pending publisher on pypi.org (their login, like WL-101), then a release uploads it
+- [ ] then `ALLOWED` in `tests/test_docs.py` may also list the old name without `--from wholagged`, and
+      the READMEs (en/hy) may drop the "needs `--from wholagged`" bullet
+
+### WL-104 · Keep PyPI installs on a tested Qt
+`security` · `P2` · `XS` · QUALITY · depends on: —
+Found in the WL-103 audit: `uvx` and `uv tool install` ignore `uv.lock`, so players get the newest
+`pyside6-essentials` / `shiboken6` on PyPI before CI or `uv audit` has seen them.
+- [ ] decide: an upper bound (e.g. `<6.13`, raised on purpose in `update-deps`) or no bound; log it in
+      DECISIONS
+- [ ] if bounded: `update-deps` raises it together with the lock, and `.claude/rules/packaging.md` says so
 
 ---
 
@@ -248,6 +252,8 @@ resolve to 127.0.0.1 or a LAN address, where the Steam client's own ports would 
 `docs` · `P1` · `S` · STORE · depends on: —
 - [ ] static page in AM/RU/EN ("the app collects no data") on Cloudflare (Workers static assets),
       security headers set; URL ready for the Store listing
+- [ ] any install command on the site's pages goes through the same reviewed list as the READMEs
+      (`tests/test_docs.py`, WL-103 audit)
 
 ### WL-85 · Store listing texts and screenshots in AM/RU/EN
 `docs` · `P1` · `S` · STORE · depends on: WL-35, WL-32

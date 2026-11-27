@@ -18,6 +18,13 @@ paths:
 - History ("since v0.x", "in WL-n") goes to CHANGELOG and git, not into READMEs or CLAUDE.md.
   A version a user needs in order to act (for example in troubleshooting) is not history.
 - Keep the README checks table in sync with `CHECKS`, and the verdict list with `verdict.py`.
+- Getting started puts PyPI first (`uvx`, `uv tool install`) and the clone under "From source".
+- Every line of a code block must be in `ALLOWED` (fetches something) or `HARMLESS` in
+  `tests/test_docs.py`, word for word; so must any inline command that installs or downloads. Add one
+  only after checking what it fetches. The old name only as `uvx --from wholagged dota-netcheck`.
+- Tag command blocks `powershell`; tag blocks that aren't commands (the project structure) `text`.
+- Show commands only as fenced or inline code: prose and indented blocks aren't read. Never put a
+  command not to type in code: say it in words.
 
 ## Files
 - CHANGELOG: Keep a Changelog, entries written for users, each ending with the task id; update the

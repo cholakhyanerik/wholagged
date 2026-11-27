@@ -3,6 +3,7 @@
 # wholagged
 
 [![CI](https://github.com/cholakhyanerik/wholagged/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/cholakhyanerik/wholagged/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/wholagged?logo=pypi&logoColor=white)](https://pypi.org/project/wholagged/)
 [![Python 3.15+](https://img.shields.io/badge/python-3.15%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows&logoColor=white)](#պահանջներ)
 [![GUI: PySide6](https://img.shields.io/badge/GUI-PySide6-41CD52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
@@ -36,11 +37,41 @@ Tool-ն աշխատում է Windows-ում, իսկ macOS-ի և Linux-ի աջակ
 
 - Windows 10 կամ 11 (macOS-ի և Linux-ի համար տես [Պլատֆորմների աջակցություն](#պլատֆորմների-աջակցություն))
 - Astral-ի [uv](https://docs.astral.sh/uv/)-ն։ **uv-ն պարտադիր է.**
+  - Windows-ում տեղադրիր այն `winget install --id=astral-sh.uv -e` հրամանով, հետո բաց արա նոր terminal,
+    կամ տես [uv-ի տեղադրման ուղեցույցը](https://docs.astral.sh/uv/getting-started/installation/).
   - նախագիծը կառավարվում է միայն uv-ով (`pyproject.toml` + `uv.lock`).
   - `requirements.txt` չկա, և `pip install`-ը չի աջակցվում.
   - եթե Python 3.15 չունես, uv-ն ինքը կներբեռնի այն։
 
 ## Գործարկում
+
+### PyPI-ից (ամենաարագ ձևը)
+
+wholagged-ը հասանելի է [PyPI](https://pypi.org/project/wholagged/)-ում, այնպես որ ոչինչ clone անելու կարիք չկա։
+Գործարկիր մեկ անգամ՝ առանց տեղադրելու.
+
+```powershell
+uvx wholagged                 # բացում է պատուհանը
+uvx wholagged --cli           # terminal-ում, առանց պատուհանի
+```
+
+Կամ տեղադրիր այն որպես հրաման.
+
+```powershell
+uv tool install wholagged     # տեղադրում է wholagged հրամանը
+wholagged                     # բացում է պատուհանը
+wholagged --cli               # terminal-ում, առանց պատուհանի
+uv tool upgrade wholagged     # թարմացնում է մինչև վերջին տարբերակը
+```
+
+- uvx-ը շարունակում է օգտագործել առաջին անգամ ներբեռնած տարբերակը. `uvx wholagged@latest`-ը ստուգում է, թե կա՞ ավելի նորը։
+- `uv tool install`-ը տեղադրում է նաև հին `dota-netcheck` հրամանը։
+- uvx-ով հին անվան համար պետք է ավելացնել `--from wholagged`՝ `uvx --from wholagged dota-netcheck`։ Առանց դրա uvx-ը
+  PyPI-ում փնտրում է dota-netcheck անունով package, և դա այս նախագծի package-ը չէ։
+
+### Source code-ից
+
+Սա մասնակիցների համար է, կամ եթե ուզում ես գործարկել դեռ չթողարկված կոդ.
 
 ```powershell
 git clone https://github.com/cholakhyanerik/wholagged.git
@@ -64,8 +95,9 @@ git pull
 uv sync
 ```
 
-Խնդիրների լուծում.
+### Խնդիրների լուծում
 
+- Եթե `uv tool install`-ից հետո `wholagged` հրամանը չի գտնվում, մեկ անգամ գործարկիր `uv tool update-shell`, հետո բաց արա նոր terminal։
 - Եթե clone-ն արել ես v0.2.2-ից առաջ, երբ նախագիծը դեռ wholagged չէր կոչվում, և թարմացնելուց հետո հին `dota-netcheck` հրամանը
   գրում է «Failed to spawn», մեկ անգամ գործարկիր `uv sync --reinstall-package wholagged`։ `wholagged` հրամանն աշխատում է ամեն դեպքում։
 
@@ -148,7 +180,7 @@ uv sync
 
 ## Կառուցվածք
 
-```
+```text
 src/wholagged/
   __init__.py   մուտքի կետը (լռելյայն՝ պատուհան, --cli՝ terminal)
   checks.py     վեց ստուգումները (միայն standard library)
@@ -164,6 +196,7 @@ tests/
   test_scenarios.py   end-to-end սցենարներ. կոտրիր մի բան, սպասիր մեկ եզրակացություն
   test_parsing.py     Valve-ի API պատասխանների parsing
   test_net_helpers.py HTTP սխալների մշակում, ping հրամանը, version-ի համաժամեցում
+  test_docs.py        ստուգում է, որ README-ների տեղադրման հրամանները հաստատված ցուցակում են
   test_i18n.py        թարգմանությունների որոնում, placeholder-ներ և fallback-ներ
   test_claude_hooks.py Claude Code-ի guard hook-ը այս repo-ում
   test_claude_md.py   ստուգում է, որ CLAUDE.md-ն կարճ է, իսկ կանոնների ֆայլերը՝ ճիշտ կազմված

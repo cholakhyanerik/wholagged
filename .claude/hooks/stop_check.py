@@ -1,8 +1,8 @@
 """Stop hook: don't end a turn with broken code or unshipped work (CLAUDE.md rules 4, 7, 8, 17).
 
-1. If Python code, pyproject.toml, uv.lock, CLAUDE.md or .claude/rules/ changed, or a file was deleted
-   or renamed (a rules-file glob may now match nothing): run the tests and ruff.
-   tests/test_claude_md.py checks CLAUDE.md and .claude/rules/.
+1. If Python code, pyproject.toml, uv.lock, CLAUDE.md, .claude/rules/ or a README changed, or a file was
+   deleted or renamed (a rules-file glob may now match nothing): run the tests and ruff.
+   tests/test_claude_md.py checks CLAUDE.md and .claude/rules/; tests/test_docs.py the READMEs' commands.
    On failure Claude is sent back (exit code 2) with the output.
 2. If the tree is dirty or commits are unpushed: remind Claude once to finish
    the task with the finish-task skill, or to say why it stops mid-task.
@@ -18,7 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CODE_FILES = (".py", "pyproject.toml", "uv.lock")
-TESTED_DOCS = ("CLAUDE.md", ".claude/rules/")  # rule 17: size and path scoping are tested
+TESTED_DOCS = ("CLAUDE.md", ".claude/rules/", "README")  # rule 17 limits; README install commands
 
 
 def run(*args: str, timeout: float = 300) -> tuple[int, str]:

@@ -168,4 +168,4 @@ uv run --no-project python .claude/skills/cleanup/cleanup.py   # remove junk
 | hook | `session_start.py` | SessionStart: Python, deps, uv_build, leftovers, last CI run, CLAUDE.md size, next tasks |
 | hook | `guard.py` | PreToolUse: blocks non-uv Python tooling, lost-work git commands, force pushes, dangerous deletes, running downloads, secrets and private data; asks before private data goes to an external tool |
 | hook | `post_edit_lint.py` | PostToolUse: ruff on every edited `.py` file |
-| hook | `stop_check.py` | Stop: tests + ruff if code, CLAUDE.md or rules changed; reminds to ship unshipped work |
+| hook | `stop_check.py` | Stop: tests + ruff if code, CLAUDE.md, rules or a README changed; reminds to ship unshipped work |

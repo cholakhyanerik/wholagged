@@ -12,6 +12,7 @@ on:
       - "uv.lock"
       - ".python-version"
       - ".github/workflows/**"
+      - "README*.md" # tests/test_docs.py checks the commands players copy from them
   pull_request:
     paths: *code-paths
   workflow_dispatch:
