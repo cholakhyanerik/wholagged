@@ -65,9 +65,8 @@ uv tool upgrade wholagged     # թարմացնում է մինչև վերջին 
 ```
 
 - uvx-ը շարունակում է օգտագործել առաջին անգամ ներբեռնած տարբերակը. `uvx wholagged@latest`-ը ստուգում է, թե կա՞ ավելի նորը։
-- `uv tool install`-ը տեղադրում է նաև հին `dota-netcheck` հրամանը։
-- uvx-ով հին անվան համար պետք է ավելացնել `--from wholagged`՝ `uvx --from wholagged dota-netcheck`։ Առանց դրա uvx-ը
-  PyPI-ում փնտրում է dota-netcheck անունով package, և դա այս նախագծի package-ը չէ։
+- Հին անունը շարունակում է աշխատել. `uvx dota-netcheck`-ը գործարկում է նույն app-ը, իսկ `uv tool install`-ը տեղադրում է նաև
+  `dota-netcheck` հրամանը։
 
 ### Source code-ից
 

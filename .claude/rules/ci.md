@@ -20,7 +20,7 @@ Every change under `.github/` follows the `ci-workflow` skill (budget rules, tem
   wholagged and `alias/dota-netcheck` offline with uv's bundled backend (`uv build --no-sources --offline`,
   after `uv python install`), checks that `dist` holds exactly both at that version, and uploads with
   `uv publish --trusted-publishing always --check-url …`: wholagged first, then dota-netcheck in its own
-  step, which PyPI refuses until the owner adds that project's pending publisher (WL-105). `--check-url`
+  step, never `continue-on-error`: a refused upload of the old name turns the run red. `--check-url`
   skips files already uploaded, so a failed publish job can be re-run ("Re-run failed jobs") while its
   artifact lasts (3 days); after that, publish a new release. A manual run only builds:
   `gh workflow run release.yml` is the dry run. A task's tag never publishes; only a published release does.

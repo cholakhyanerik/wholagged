@@ -5,6 +5,28 @@ Each entry: the decision, then why. Revisit an entry by adding a new one; don't 
 
 ## 2026-11-28
 
+- **v0.3.11 (WL-102's tag) was released right after the owner added the pending publisher (WL-105).** A
+  pending publisher doesn't reserve a name; only the first upload does. Both uploads passed, PyPI's
+  `ownership` for `dota-netcheck` lists only the owner's account (as for wholagged), and
+  `uvx dota-netcheck --cli` from PyPI in a scratch tool folder ran the checks on wholagged 0.3.11.
+- **The READMEs show `uvx dota-netcheck`; `uv tool install dota-netcheck` stays off the list (WL-105).** The
+  tool install would conflict with `uv tool install wholagged` (two uv tools can't share a command), and
+  `uv tool install wholagged` already installs the old command. `uvx --from wholagged dota-netcheck` left
+  the list, since no README uses it any more.
+- **The guard's lookalike tests use the typo `dota-netchek` instead of the old name (WL-105).** The old name
+  is allowed now; a typo of it is exactly what anyone may still register, so each disguise (case, `.exe`,
+  no-break space, path, chains) is still proven to be caught.
+- **The README command check keeps a program's path and cuts `# comment` per command (WL-105).** The
+  WL-105 audit found that `\\host\share\uvx.exe dota-netcheck` passed as `uvx dota-netcheck`, and that
+  `uvx wholagged # && …` passed although cmd.exe and zsh would run the chain. Both were there since WL-103;
+  rule 6 fixes them now. No README needs a path, so none changed.
+- **Never delete either name on PyPI (WL-105).** A deleted project's name can be registered again by anyone,
+  and the READMEs and cached uvx installs point at both names. `.claude/rules/packaging.md` says so.
+- **0.3.12 is released to PyPI although only docs and tests changed (WL-105).** wholagged's PyPI page (the
+  0.3.11 README) says the `dota-netcheck` package "isn't this project's". That is now false, and it
+  contradicts the alias's own page from the same owner, so a player could take the real alias for a
+  squatter. One release run fixes it, and both packages stay at the same version.
+
 - **WL-102 is split: this repo's side is done, and the first upload is WL-105 (WL-102).** PyPI accepts
   `dota-netcheck` only after the owner adds its pending publisher (their login; there is no API for it),
   and the README change is only safe once the name is ours. Same split as WL-15 / WL-101.

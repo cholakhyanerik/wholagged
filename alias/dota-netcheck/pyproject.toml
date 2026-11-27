@@ -3,7 +3,7 @@
 # release.yml uploads it with every wholagged release, at the same version (tests/test_alias.py).
 [project]
 name = "dota-netcheck"
-version = "0.3.11"
+version = "0.3.12"
 description = "The old name of wholagged: installs wholagged and keeps the dota-netcheck command working."
 readme = "README.md"
 license = "PolyForm-Noncommercial-1.0.0"

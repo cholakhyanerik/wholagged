@@ -4,6 +4,16 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.3.12] - 2026-11-28
+
+### Security
+- `dota-netcheck`, the old name, now belongs to this project on PyPI too: version 0.3.11 uploaded it as a
+  package that only installs wholagged. `uvx dota-netcheck` runs the same app, and the READMEs now show it
+  without `--from wholagged`. (WL-105)
+- For contributors: the check of the READMEs' commands no longer accepts an allowed command run from a
+  path or a network share (`\\host\share\uvx.exe …`), or a second command hidden after a `#`, which
+  cmd.exe and zsh don't read as a comment. (WL-105)
+
 ## [0.3.11] - 2026-11-28
 
 ### Security
@@ -265,6 +275,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.3.12]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.11...v0.3.12
 [0.3.11]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.10...v0.3.11
 [0.3.10]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.9...v0.3.10
 [0.3.9]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.8...v0.3.9

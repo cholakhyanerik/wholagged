@@ -35,23 +35,6 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-105 · First upload of `dota-netcheck`, then let the READMEs use the old name
-`security` · `P1` · `XS` · BRAND · depends on: WL-102
-`release.yml` builds and uploads the `dota-netcheck` package (WL-102), but PyPI accepts it only after the
-owner adds a pending publisher (their login, like WL-101). Until then a release uploads wholagged and its
-last step fails.
-- [ ] the owner adds the pending publisher on https://pypi.org/manage/account/publishing/: PyPI project
-      `dota-netcheck`, owner `cholakhyanerik`, repository `wholagged`, workflow `release.yml`, environment `pypi`
-- [ ] the release follows the same day: a pending publisher doesn't reserve the name, only the first upload
-      does. `gh release create vX.Y.Z --verify-tag` on a task's tag; both packages are on PyPI, and
-      `uvx dota-netcheck --cli` from a scratch tool folder runs the checks
-- [ ] `https://pypi.org/pypi/dota-netcheck/json` lists the same owner account as wholagged's (`ownership`)
-      and no one else; if someone else took the name, the READMEs keep `--from wholagged`
-- [ ] `ALLOWED` in `tests/test_docs.py` lists the old name without `--from wholagged` (uvx only: two uv
-      tools can't share the `dota-netcheck` command); the READMEs (en/hy) drop the "needs
-      `--from wholagged`" bullet; `release.yml`'s "Refused until" comment, `.claude/rules/packaging.md`
-      and `ci.md` no longer say it isn't uploaded
-
 ### WL-104 · Keep PyPI installs on a tested Qt
 `security` · `P2` · `XS` · QUALITY · depends on: —
 Found in the WL-103 audit: `uvx` and `uv tool install` ignore `uv.lock`, so players get the newest

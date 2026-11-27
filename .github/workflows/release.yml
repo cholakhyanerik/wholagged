@@ -89,9 +89,9 @@ jobs:
           version: latest-known
           require-checksums: true
           enable-cache: false
-      # wholagged first: while PyPI refuses the old name, wholagged's files still go up. --check-url skips files
+      # wholagged first: if PyPI ever refuses the old name, wholagged's files are already up. --check-url skips files
       # PyPI already has with the same bytes, so re-running this job after a failed second step works.
       - run: uv publish --trusted-publishing always --check-url https://pypi.org/simple/ dist/wholagged-*
-      # Refused until the owner adds dota-netcheck's pending publisher on PyPI (WL-105). Never continue-on-error:
-      # a name someone else registered must turn the run red.
+      # PyPI trusts this workflow + `pypi` for dota-netcheck too (WL-105). Never continue-on-error: a refused upload
+      # of the old name must turn the run red.
       - run: uv publish --trusted-publishing always --check-url https://pypi.org/simple/ dist/dota_netcheck-*

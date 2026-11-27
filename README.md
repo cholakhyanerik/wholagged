@@ -69,9 +69,8 @@ uv tool upgrade wholagged     # updates to the newest version
 ```
 
 - uvx keeps the version it downloaded first: `uvx wholagged@latest` checks for a newer one.
-- `uv tool install` also installs the old `dota-netcheck` command.
-- With uvx, the old name needs `--from wholagged`: `uvx --from wholagged dota-netcheck`. Without it, uvx
-  looks up the name dota-netcheck on PyPI, and that package isn't this project's.
+- The old name still works: `uvx dota-netcheck` runs the same app, and `uv tool install` also installs the
+  `dota-netcheck` command.
 
 ### From source
 
