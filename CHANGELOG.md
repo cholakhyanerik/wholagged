@@ -4,6 +4,15 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.3.7] - 2026-11-27
+
+### Changed
+- The window's buttons, row states, verdict chips, subtitle and "Details" toggles now come from the
+  translation catalogue, like the checks, the verdict and the report before them. Every text the app
+  shows is now ready to be translated. Everything reads exactly as before. (WL-26)
+- For contributors: the tests now fail on any Armenian letter left in the app's code (outside the
+  catalogues), and they find new modules by themselves. (WL-26)
+
 ## [0.3.6] - 2026-11-27
 
 ### Changed
@@ -207,6 +216,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.3.7]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.3...v0.3.4

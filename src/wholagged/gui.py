@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 
 from . import APP_NAME, __version__
 from .checks import CHECKS, CheckSpec, run_checks
+from .i18n import t
 from .models import CheckResult, Side, Status, Verdict
 from .report import build_report
 from .verdict import decide
@@ -43,18 +44,13 @@ STATUS_COLORS = {
     Status.FAIL: "#f85149",
     Status.SKIP: "#6e7681",
 }
-STATUS_WORDS = {
-    Status.OK: "Կարգին է",
-    Status.WARN: "Ուշադրություն",
-    Status.FAIL: "Չի աշխատում",
-    Status.SKIP: "Բաց թողնվեց",
-}
-SIDE_STYLE = {
-    Side.YOU: ("#f85149", "ՔՈ ԿՈՂՄԻՑ"),
-    Side.ISP: ("#d29922", "PROVIDER / ROUTE"),
-    Side.VALVE: ("#a371f7", "VALVE-Ի ԿՈՂՄԻՑ"),
-    Side.PC: ("#3fb950", "ՑԱՆՑԸ ԿԱՐԳԻՆ Է"),
-    Side.UNCLEAR: ("#d29922", "VALVE ԿԱՄ PROVIDER"),
+# The words are `status.<status>` and `side.<side>.chip` in the catalogues.
+SIDE_COLORS = {
+    Side.YOU: "#f85149",
+    Side.ISP: "#d29922",
+    Side.VALVE: "#a371f7",
+    Side.PC: "#3fb950",
+    Side.UNCLEAR: "#d29922",
 }
 
 STYLE = f"""
@@ -90,6 +86,10 @@ QProgressBar {{
 }}
 QProgressBar::chunk {{ background: {ACCENT}; border-radius: 3px; }}
 """
+
+
+def _details_label(is_open: bool) -> str:
+    return f"{t('gui.details')} {'▾' if is_open else '▸'}"
 
 
 def _dot(color: str) -> str:
@@ -128,7 +128,7 @@ class CheckRow(QFrame):
         top.addWidget(self.state)
         outer.addLayout(top)
 
-        self.toggle = QPushButton("Մանրամասներ ▸")
+        self.toggle = QPushButton(_details_label(False))
         self.toggle.setObjectName("link")
         self.toggle.setCursor(Qt.CursorShape.PointingHandCursor)
         self.toggle.clicked.connect(self._toggle_details)
@@ -159,18 +159,18 @@ class CheckRow(QFrame):
 
     def set_running(self) -> None:
         self.dot.setStyleSheet(_dot(RUNNING))
-        self.state.setText("Ստուգվում է…")
+        self.state.setText(t("status.running"))
         self.state.setStyleSheet(f"color: {RUNNING};")
 
     def set_result(self, res: CheckResult) -> None:
         color = STATUS_COLORS[res.status]
         self.dot.setStyleSheet(_dot(color))
         self.summary.setText(res.summary)
-        self.state.setText(STATUS_WORDS[res.status])
+        self.state.setText(t(f"status.{res.status}"))
         self.state.setStyleSheet(f"color: {color}; font-weight: 600;")
         if res.details:
             self.details.setText("\n".join(res.details))
-            self.toggle.setText("Մանրամասներ ▸")
+            self.toggle.setText(_details_label(False))
             self.toggle.show()
             # Open the details of problems right away.
             if res.status in (Status.WARN, Status.FAIL):
@@ -179,7 +179,7 @@ class CheckRow(QFrame):
     def _toggle_details(self) -> None:
         visible = not self.details.isVisible()
         self.details.setVisible(visible)
-        self.toggle.setText("Մանրամասներ ▾" if visible else "Մանրամասներ ▸")
+        self.toggle.setText(_details_label(visible))
 
 
 class VerdictCard(QFrame):
@@ -198,7 +198,7 @@ class VerdictCard(QFrame):
         self.explanation = QLabel()
         self.explanation.setTextFormat(Qt.TextFormat.PlainText)
         self.explanation.setWordWrap(True)
-        self.advice_title = QLabel("Ինչ անել")
+        self.advice_title = QLabel(t("report.advice"))
         self.advice_title.setObjectName("rowTitle")
         self.advice = QLabel()
         self.advice.setWordWrap(True)
@@ -208,11 +208,11 @@ class VerdictCard(QFrame):
         self.hide()
 
     def show_verdict(self, verdict: Verdict) -> None:
-        color, label = SIDE_STYLE[verdict.side]
+        color = SIDE_COLORS[verdict.side]
         self.setStyleSheet(
             f"QFrame#card {{ background: {CARD}; border: 2px solid {color}; border-radius: 10px; }}"
         )
-        self.chip.setText(label)
+        self.chip.setText(t(f"side.{verdict.side}.chip"))
         self.chip.setStyleSheet(
             f"color: {BG}; background: {color}; border-radius: 4px; padding: 3px 9px;"
             " font-size: 8.5pt; font-weight: 700;"
@@ -257,7 +257,7 @@ class MainWindow(QMainWindow):
 
         title = QLabel(APP_NAME)
         title.setObjectName("title")
-        subtitle = QLabel("Ստուգում է Dota 2-ի կապը՝ խնդիրը քո internet-ի՞ց է, provider-ի՞ց, թե՞ Valve-ի սերվերներից")
+        subtitle = QLabel(t("app.subtitle"))
         subtitle.setObjectName("subtitle")
         subtitle.setWordWrap(True)
         lay.addWidget(title)
@@ -265,12 +265,12 @@ class MainWindow(QMainWindow):
         lay.addSpacing(6)
 
         run_row = QHBoxLayout()
-        self.run_btn = QPushButton("Սկսել ստուգումը")
+        self.run_btn = QPushButton(t("gui.run"))
         self.run_btn.setObjectName("primary")
         self.run_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.run_btn.clicked.connect(self.start)
         run_row.addWidget(self.run_btn)
-        self.status_lbl = QLabel("Մոտ 10–20 վայրկյան")
+        self.status_lbl = QLabel(t("gui.duration"))
         self.status_lbl.setObjectName("muted")
         run_row.addWidget(self.status_lbl, 1)
         lay.addLayout(run_row)
@@ -292,12 +292,12 @@ class MainWindow(QMainWindow):
 
         footer = QHBoxLayout()
         footer.setSpacing(8)
-        self.copy_btn = QPushButton("Պատճենել report-ը")
+        self.copy_btn = QPushButton(t("gui.copy_report"))
         self.copy_btn.setEnabled(False)
         self.copy_btn.clicked.connect(self.copy_report)
         steamstat_btn = QPushButton("steamstat.us")
         steamstat_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(STEAMSTAT_URL)))
-        isdown_btn = QPushButton("Ուրիշների բողոքները")
+        isdown_btn = QPushButton(t("gui.outage_reports"))
         isdown_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(ISDOWN_URL)))
         for b in (self.copy_btn, steamstat_btn, isdown_btn):
             b.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -327,7 +327,7 @@ class MainWindow(QMainWindow):
             row.set_pending()
         self.progress.setValue(0)
         self.run_btn.setEnabled(False)
-        self.run_btn.setText("Ստուգվում է…")
+        self.run_btn.setText(t("gui.running"))
         self.status_lbl.setText("")
 
         self.worker = CheckWorker(self)
@@ -352,13 +352,13 @@ class MainWindow(QMainWindow):
         self.verdict_card.show_verdict(verdict)
         self.copy_btn.setEnabled(True)
         self.run_btn.setEnabled(True)
-        self.run_btn.setText("Նորից ստուգել")
-        self.status_lbl.setText("Պատրաստ է")
+        self.run_btn.setText(t("gui.run_again"))
+        self.status_lbl.setText(t("gui.ready"))
 
     def copy_report(self) -> None:
         QGuiApplication.clipboard().setText(build_report(self.results, self.verdict))
-        self.copy_btn.setText("Պատճենվեց ✓")
-        QTimer.singleShot(1600, lambda: self.copy_btn.setText("Պատճենել report-ը"))
+        self.copy_btn.setText(f"{t('gui.copied')} ✓")
+        QTimer.singleShot(1600, lambda: self.copy_btn.setText(t("gui.copy_report")))
 
     def closeEvent(self, event: QCloseEvent) -> None:
         if self.worker and self.worker.isRunning():

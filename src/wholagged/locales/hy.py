@@ -167,6 +167,29 @@ MESSAGES: dict[str, str] = {
     "side.valve": "Valve-ի սերվերները",
     "side.pc": "Համակարգիչը / Steam client-ը",
     "side.unclear": "Valve-ը կամ provider-ը (տես խորհուրդները)",
+    # The window's short chip above the verdict, written in capitals as a badge.
+    "side.you.chip": "ՔՈ ԿՈՂՄԻՑ",
+    "side.isp.chip": "PROVIDER / ROUTE",
+    "side.valve.chip": "VALVE-Ի ԿՈՂՄԻՑ",
+    "side.pc.chip": "ՑԱՆՑԸ ԿԱՐԳԻՆ Է",
+    "side.unclear.chip": "VALVE ԿԱՄ PROVIDER",
+    # The window: a check row's state (`models.Status`, and status.running while the check runs).
+    "status.ok": "Կարգին է",
+    "status.warn": "Ուշադրություն",
+    "status.fail": "Չի աշխատում",
+    "status.skip": "Բաց թողնվեց",
+    "status.running": "Ստուգվում է…",
+    # The window's buttons and the line next to the main button. The code adds the ▸ / ▾ after gui.details
+    # and the ✓ after gui.copied; steamstat.us is a name and has no key.
+    "gui.run": "Սկսել ստուգումը",
+    "gui.run_again": "Նորից ստուգել",
+    "gui.running": "Ստուգվում է…",
+    "gui.duration": "Մոտ 10–20 վայրկյան",
+    "gui.ready": "Պատրաստ է",
+    "gui.details": "Մանրամասներ",
+    "gui.copy_report": "Պատճենել report-ը",
+    "gui.copied": "Պատճենվեց",
+    "gui.outage_reports": "Ուրիշների բողոքները",
     # Labels of the copied report and the --cli output; the code adds ": " and the value after each.
     # report.verdict is written in capitals, as a heading.
     "report.time": "Ժամանակ",

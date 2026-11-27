@@ -15,7 +15,13 @@ paths:
 - Text from Valve is shown as plain text (`Qt.TextFormat.PlainText`).
 - Rich text only for our own strings, escaped with `_html`.
 - Opened URLs are constants.
-- Labels go through `t()` (`.claude/rules/i18n.md`); don't add new inline strings.
+- Labels go through `t()` (`.claude/rules/i18n.md`); don't add new inline strings. Status words and
+  chips are `t(f"status.{status}")` / `t(f"side.{side}.chip")`; their colours stay in `STATUS_COLORS` /
+  `SIDE_COLORS`. Arrows and ✓ are code (`_details_label()`), not part of a text.
+- Every `t()` text set on a widget is a plain `str`: the static labels, and also a row's state word, the
+  chip and the Details toggle, set per result. A language switch (WL-32) must call `t()` again from
+  `res.status` / `verdict.side` / `details.isVisible()`; only result and verdict texts are `Msg` for
+  `i18n.render()`.
 
 ## Design (reuse it, don't invent new styles)
 - Dark theme: background `#111317`, card `#1a1d23`, raised `#21252c`, border `#2b3038`, text `#e9e7e4`,

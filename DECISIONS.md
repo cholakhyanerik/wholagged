@@ -5,6 +5,20 @@ Each entry: the decision, then why. Revisit an entry by adding a new one; don't 
 
 ## 2026-11-27
 
+- **The window's row states are `status.<status>` (plus `status.running`), its other texts `gui.<what>`
+  (WL-26).** `status.*` mirrors `side.*`: one key per enum member, read as `t(f"status.{status}")`. Because
+  the key scan can't see a key built at run time, a test checks the catalogue has one for every member.
+  The row's "Checking…" and the button's "Checking…" are two keys (`status.running`, `gui.running`). They
+  read the same in Armenian, but Russian words them differently ("Проверяется…" / "Проверяю…").
+- **The ▸ / ▾ of "Details" and the ✓ of "Copied" stay in code, not in the texts (WL-26).** They are
+  layout, like the report's ": ", and one `gui.details` key then serves both states of the toggle.
+- **The window's "What to do" reuses `report.advice` (WL-26),** as the card suggested: it was the same word
+  in the window and in the report, and one key keeps them in step.
+- **The Armenian-letter test scans every module of the package, not a hand-kept list (WL-26).** All move
+  cards are done, so a list could only fall behind. A new module is checked without anyone adding it.
+  The scan reads files as text: importing `gui.py` would need Qt's system libraries on the Linux runner
+  (the GUI smoke test is WL-92).
+
 - **The report's keys are the labels only ("Ժամանակ", "Ում կողմից"); the code adds ": " and the value
   (WL-25).** People send the report to their provider, so its layout must not change with a translation
   (rule 4). A whole-line template such as "Time: {time}" would let a translator move or drop the

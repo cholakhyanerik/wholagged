@@ -19,7 +19,7 @@ from types import SimpleNamespace
 import pytest
 
 import wholagged
-from wholagged import checks, i18n, icmp, locales, models, report, verdict
+from wholagged import checks, i18n, locales, models, report, verdict
 from wholagged.i18n import Msg, render, t
 from wholagged.models import Side, Status
 
@@ -325,23 +325,37 @@ def test_nested_spec_without_its_value_keeps_the_field_even_for_strftime_values(
     assert t("k", day=datetime.date(2026, 11, 22), pop="fra") == "{day:{w}} / fra"
 
 
+PACKAGE_ROOT = Path(i18n.__file__).parent
+
+
+def _package_modules() -> list[Path]:
+    """Every `.py` file of the app, sub-packages included, except the catalogues in `locales/`.
+
+    Read from disk as text, never imported: gui.py needs PySide6 (and Qt's system libraries on a CI runner).
+    """
+    paths = sorted(PACKAGE_ROOT.rglob("*.py"))
+    return [path for path in paths if "locales" not in path.relative_to(PACKAGE_ROOT).parts]
+
+
+def _module_id(path: Path) -> str:
+    return path.relative_to(PACKAGE_ROOT).as_posix()
+
+
 def _literal_key_calls() -> list[tuple[str, str, ast.Call]]:
     """Every `t("...")` / `Msg("...")` call with a literal key in the app's code: (where, key, call).
 
     The AST, not a regex over the text: a docstring example such as i18n's `t("relay.ping", ms=42)` is no call.
+    A key built at run time (`t(f"status.{status}")`) is no literal either: a test per enum covers those.
     """
-    root = Path(i18n.__file__).parent
     calls = []
-    for path in sorted(root.rglob("*.py")):
-        if "locales" in path.relative_to(root).parts:
-            continue
+    for path in _package_modules():
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"), filename=str(path))):
             if not (isinstance(node, ast.Call) and node.args):
                 continue
             name = node.func.id if isinstance(node.func, ast.Name) else getattr(node.func, "attr", None)
             first = node.args[0]
             if name in ("t", "Msg") and isinstance(first, ast.Constant) and isinstance(first.value, str):
-                calls.append((f"{path.relative_to(root).as_posix()}:{node.lineno}", first.value, node))
+                calls.append((f"{_module_id(path)}:{node.lineno}", first.value, node))
     return calls
 
 
@@ -365,20 +379,28 @@ def test_every_key_used_in_the_code_gets_exactly_its_placeholders():
     assert wrong == []
 
 
-# Modules whose user-facing texts have all moved to the catalogues: not one Armenian letter is left, not even
-# in a comment. Add a module when its move card is done (gui.py: WL-26). `wholagged` is the package's __init__.py.
-MOVED_MODULES = [checks, icmp, models, verdict, report, wholagged]
-
-
-@pytest.mark.parametrize("module", MOVED_MODULES, ids=lambda module: module.__name__)
-def test_moved_module_has_no_inline_armenian(module):
-    lines = Path(module.__file__).read_text(encoding="utf-8").splitlines()
+# Every user-facing text of the app has moved to the catalogues (WL-21 … WL-26): not one Armenian letter is left
+# in a module outside `locales/`, not even in a comment. The scan finds the modules on disk, so a new one is
+# checked without being listed here.
+@pytest.mark.parametrize("path", _package_modules(), ids=_module_id)
+def test_package_module_has_no_inline_armenian(path):
+    lines = path.read_text(encoding="utf-8").splitlines()
     assert [f"{n}: {line.strip()}" for n, line in enumerate(lines, 1) if ARMENIAN.search(line)] == []
+
+
+def test_armenian_scan_covers_every_module_of_the_package_and_no_catalogue():
+    # An empty scan would pass silently: pytest only skips a test whose parameter list is empty.
+    assert PACKAGE_ROOT == Path(wholagged.__file__).parent  # the package the tests import, not another copy
+    scanned = {_module_id(path) for path in _package_modules()}
+    expected = {"__init__.py", "checks.py", "gui.py", "i18n.py", "icmp.py", "models.py", "report.py", "verdict.py"}
+    assert expected <= scanned
+    assert [name for name in scanned if name.startswith("locales/")] == []
 
 
 def test_armenian_scan_reads_the_package_init_and_skips_the_layout_punctuation():
     assert Path(wholagged.__file__).name == "__init__.py"  # the package itself: run_cli() lives in this file
     assert not ARMENIAN.search(f"{wholagged.APP_NAME} 0.3.6 · Dota 2 — [ ! ] → «» …")  # product line, CLI banner
+    assert not ARMENIAN.search("▸ ▾ ✓")  # what gui.py adds after the window's words
     assert ARMENIAN.search("Ա") and ARMENIAN.search("և")  # both ends of the range are still found
 
 
@@ -1437,9 +1459,11 @@ def test_report_marks_are_unchanged_for_every_status():
     assert set(REPORT_MARKS) == set(Status)
 
 
-def test_every_side_has_its_key_in_the_armenian_catalogue():
+def test_every_side_has_its_name_and_its_chip_in_the_armenian_catalogue():
+    # side.<side> is the long name (report, CLI); side.<side>.chip is the window's badge, read as t(f"…{side}.chip").
     assert report.SIDE_KEYS == {side: f"side.{side}" for side in Side}
-    assert {key for key in _messages("hy") if key.startswith("side.")} == set(report.SIDE_KEYS.values())
+    chips = {f"side.{side}.chip" for side in Side}
+    assert {key for key in _messages("hy") if key.startswith("side.")} == set(report.SIDE_KEYS.values()) | chips
 
 
 @pytest.mark.parametrize("side", list(Side), ids=str)
@@ -1466,8 +1490,12 @@ def test_side_label_is_read_in_the_language_shown_at_the_moment(monkeypatch):
 
 
 def test_every_report_and_cli_key_has_test_english():
-    keys = {key for key in _messages("hy") if key.startswith(("side.", "report.", "cli."))}
+    # The side chips are window-only (tested with the window's texts below): the report and the CLI never show them.
+    hy = _messages("hy")
+    chips = {f"side.{side}.chip" for side in Side}
+    keys = {key for key in hy if key.startswith(("side.", "report.", "cli.")) and key not in chips}
     assert {"report.time", "report.system", "report.verdict", "report.side", "report.advice", "cli.checking"} <= keys
+    assert set(report.SIDE_KEYS.values()) <= keys  # only the chips are left out, never a side's long name
     assert keys <= RUN_EN.keys()
 
 
@@ -1576,3 +1604,73 @@ def test_armenian_report_keeps_its_exact_layout(net, monkeypatch):
     ]
     assert report.build_report(results, made) == "\n".join(header + rows + verdict_block)
     assert report.build_report(results, None) == "\n".join(header + rows)  # copied before the verdict is in
+
+
+# --- the window: its words are keys, the ▸ / ▾ and the ✓ are code -------------------------------
+# Read from the catalogues only: importing gui.py needs PySide6 and Qt's system libraries (the window is WL-92).
+
+CHIP_KEYS = [f"side.{side}.chip" for side in Side]
+STATUS_KEYS = [*(f"status.{status}" for status in Status), "status.running"]
+WINDOW_MARKS = ("▸", "▾", "✓")  # gui.py adds " ▸" / " ▾" after gui.details and " ✓" after gui.copied
+WORDS = re.compile(r"[A-Za-zԱ-և]{2,}")
+
+# What the window showed before its texts moved to the catalogue (WL-26), copied from the old gui.py: in Armenian
+# it must look exactly the same (rule 4). The old labels also had the " ▸" / " ▾" and " ✓" the code adds now.
+WINDOW_HY = {
+    "side.you.chip": "ՔՈ ԿՈՂՄԻՑ",
+    "side.isp.chip": "PROVIDER / ROUTE",
+    "side.valve.chip": "VALVE-Ի ԿՈՂՄԻՑ",
+    "side.pc.chip": "ՑԱՆՑԸ ԿԱՐԳԻՆ Է",
+    "side.unclear.chip": "VALVE ԿԱՄ PROVIDER",
+    "status.ok": "Կարգին է",
+    "status.warn": "Ուշադրություն",
+    "status.fail": "Չի աշխատում",
+    "status.skip": "Բաց թողնվեց",
+    "status.running": "Ստուգվում է…",
+    "gui.run": "Սկսել ստուգումը",
+    "gui.run_again": "Նորից ստուգել",
+    "gui.running": "Ստուգվում է…",
+    "gui.duration": "Մոտ 10–20 վայրկյան",
+    "gui.ready": "Պատրաստ է",
+    "gui.details": "Մանրամասներ",
+    "gui.copy_report": "Պատճենել report-ը",
+    "gui.copied": "Պատճենվեց",
+    "gui.outage_reports": "Ուրիշների բողոքները",
+    "app.subtitle": "Ստուգում է Dota 2-ի կապը՝ խնդիրը քո internet-ի՞ց է, provider-ի՞ց, թե՞ Valve-ի սերվերներից",
+    "report.advice": "Ինչ անել",  # the window's title above the advice, shared with the report
+}
+
+
+def _is_window_key(key: str) -> bool:
+    """A text only the window shows: a button or a label (gui.), a row's state (status.) or the verdict's chip."""
+    return key.startswith(("gui.", "status.")) or (key.startswith("side.") and key.endswith(".chip"))
+
+
+def test_every_status_and_the_running_state_have_their_word_in_the_armenian_catalogue():
+    # gui.py reads t(f"status.{res.status}"), a key built at run time: the literal key scan above never sees it.
+    expected = {f"status.{status}" for status in Status} | {"status.running"}
+    assert {key for key in _messages("hy") if key.startswith("status.")} == expected
+
+
+@pytest.mark.parametrize("key", CHIP_KEYS + STATUS_KEYS)
+def test_chip_and_status_texts_are_one_line_of_words(key):
+    text = _messages("hy")[key]
+    assert WORDS.search(text), repr(text)
+    assert text == text.strip(), repr(text)
+    assert len(text.splitlines()) == 1, repr(text)
+
+
+def test_window_shows_the_same_armenian_words_as_before():
+    i18n.set_language("hy")
+    assert {key: t(key) for key in WINDOW_HY} == WINDOW_HY
+    assert {*CHIP_KEYS, *STATUS_KEYS} <= WINDOW_HY.keys()  # every chip and every row state is pinned
+
+
+@pytest.mark.parametrize("lang", i18n.LANGUAGES)
+def test_window_texts_carry_no_layout(lang):
+    # A text that brought its own ▸ / ▾ / ✓ would show it twice, and a space or a line break would shift the label.
+    # ru and en may not have these keys yet (WL-27 / WL-28 translate them): then there is nothing to check there.
+    texts = {key: text for key, text in _messages(lang).items() if _is_window_key(key)}
+    assert lang != "hy" or {*CHIP_KEYS, *STATUS_KEYS, "gui.details", "gui.copied"} <= texts.keys()  # the scan works
+    assert [key for key, text in texts.items() if any(mark in text for mark in WINDOW_MARKS)] == []
+    assert [key for key, text in texts.items() if text != text.strip() or len(text.splitlines()) != 1] == []

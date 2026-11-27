@@ -35,14 +35,6 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-26 · Move the GUI texts to i18n keys
-`chore` · `P1` · `XS` · I18N · depends on: WL-20
-- [ ] buttons, status words, side chips, subtitle, "details" toggles
-- [ ] the subtitle uses the existing `app.subtitle` key (already in all three catalogues since WL-20)
-- [ ] side chips are `side.<side>.chip` (`side.<side>` is the report's long name, WL-25); the "What to do"
-      title can reuse `report.advice`
-- [ ] `gui` joins `MOVED_MODULES` in `tests/test_i18n.py`; then every move card is done
-
 ### WL-15 · Reserve `wholagged` on PyPI with Trusted Publishing
 `security` · `P2` · `XS` · BRAND · depends on: WL-12
 Found in the WL-11 audit: once any doc says `uvx wholagged` or `uv tool install wholagged`, someone else could
@@ -102,6 +94,8 @@ approval, and SHA pinning is a convention, not enforced.
 - [ ] a result or verdict that arrives after a switch, made in the old language mid-run, is shown through
       `i18n.render()` too (WL-22 review)
 - [ ] the advice (rich text) is rendered first and escaped after: `_html(render(a))` (WL-24 review)
+- [ ] row state words, the chip and the Details toggle are plain `t()` strings, not `Msg`: set them again
+      from `res.status` / `verdict.side` / the toggle's state (WL-26 review)
 
 ### WL-33 · Remember the chosen language
 `ux` · `P2` · `XS` · I18N · depends on: WL-32
@@ -262,6 +256,8 @@ resolve to 127.0.0.1 or a LAN address, where the Steam client's own ports would 
 `test` · `P2` · `XS` · QUALITY · depends on: —
 - [ ] `QT_QPA_PLATFORM=offscreen`, builds `MainWindow`, runs a check against `FakeNet`, sees the verdict card
 - [ ] asserts `windowTitle()` and the `title` label equal `APP_NAME` (WL-10 checked this only by hand)
+- [ ] asserts the Armenian row states, the "Details ▸ / ▾" toggle, the chips and "Պատճենվեց ✓": the code
+      adds the ▸ / ▾ / ✓, and only the words are tested so far (WL-26)
 - [ ] passes in CI: on `ubuntu-latest` Qt needs `libegl1` and `libxkbcommon0` (install them in `ci.yml`, or
       skip the test cleanly when Qt can't load)
 

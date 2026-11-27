@@ -22,8 +22,10 @@ paths:
 - Helpers are tested in `test_parsing.py` and `test_net_helpers.py`.
 - `test_i18n.py` covers `t()` and `Msg` (lookup, fallbacks, placeholders, rendering a finished run and
   its verdict again) and checks that every catalogue uses the same placeholders as `hy`. It also scans `src/` (with `ast`) so
-  every `t("…")` / `Msg("…")` key is in `hy.py` with the right params. Its autouse fixture restores the
-  language and the catalogue cache: tests that switch the language belong there.
+  every `t("…")` / `Msg("…")` key is in `hy.py` with the right params, and fails on any Armenian letter in a
+  package module outside `locales/`. The window's texts are tested from the catalogue (`WINDOW_HY` pins the
+  Armenian words), never by importing `gui.py`: on the Linux runner Qt needs system libraries (WL-92).
+  Its autouse fixture restores the language and the catalogue cache: tests that switch the language belong there.
 - `test_claude_hooks.py` tests the guard hook; `test_claude_md.py` checks CLAUDE.md and `.claude/rules/`.
 - Don't weaken an assertion to make a change pass: a failing old test means old behaviour broke.
 - The Windows CI job runs the same tests. FakeNet replaces `icmp.ping`, so the ctypes ping isn't covered
