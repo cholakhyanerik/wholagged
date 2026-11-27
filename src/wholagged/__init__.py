@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 
-__version__ = "0.3.10"
+__version__ = "0.3.11"
 APP_NAME = "wholagged"  # the product name shown in the window, the CLI and the report
 
 

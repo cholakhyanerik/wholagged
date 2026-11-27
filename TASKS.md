@@ -35,16 +35,22 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-102 · Reserve `dota-netcheck` on PyPI as an alias package
-`security` · `P1` · `XS` · BRAND · depends on: —
-Found in the WL-15 audit: the README documents `dota-netcheck` as a command, so a user may run the old
-name through uvx without `--from wholagged`, which installs whatever is registered under that name. The
-READMEs now lead with uvx (WL-103), so do this before the next release.
-- [ ] a minimal `dota-netcheck` package that depends on `wholagged` and exposes the same entry point,
-      published by a second pending publisher (same workflow and environment)
-- [ ] the owner adds that pending publisher on pypi.org (their login, like WL-101), then a release uploads it
-- [ ] then `ALLOWED` in `tests/test_docs.py` may also list the old name without `--from wholagged`, and
-      the READMEs (en/hy) may drop the "needs `--from wholagged`" bullet
+### WL-105 · First upload of `dota-netcheck`, then let the READMEs use the old name
+`security` · `P1` · `XS` · BRAND · depends on: WL-102
+`release.yml` builds and uploads the `dota-netcheck` package (WL-102), but PyPI accepts it only after the
+owner adds a pending publisher (their login, like WL-101). Until then a release uploads wholagged and its
+last step fails.
+- [ ] the owner adds the pending publisher on https://pypi.org/manage/account/publishing/: PyPI project
+      `dota-netcheck`, owner `cholakhyanerik`, repository `wholagged`, workflow `release.yml`, environment `pypi`
+- [ ] the release follows the same day: a pending publisher doesn't reserve the name, only the first upload
+      does. `gh release create vX.Y.Z --verify-tag` on a task's tag; both packages are on PyPI, and
+      `uvx dota-netcheck --cli` from a scratch tool folder runs the checks
+- [ ] `https://pypi.org/pypi/dota-netcheck/json` lists the same owner account as wholagged's (`ownership`)
+      and no one else; if someone else took the name, the READMEs keep `--from wholagged`
+- [ ] `ALLOWED` in `tests/test_docs.py` lists the old name without `--from wholagged` (uvx only: two uv
+      tools can't share the `dota-netcheck` command); the READMEs (en/hy) drop the "needs
+      `--from wholagged`" bullet; `release.yml`'s "Refused until" comment, `.claude/rules/packaging.md`
+      and `ci.md` no longer say it isn't uploaded
 
 ### WL-104 · Keep PyPI installs on a tested Qt
 `security` · `P2` · `XS` · QUALITY · depends on: —

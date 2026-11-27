@@ -11,13 +11,18 @@ Every change under `.github/` follows the `ci-workflow` skill (budget rules, tem
 - `.github/workflows/ci.yml`: `uv sync --locked` and pytest on `ubuntu-latest` + `windows-latest`;
   ruff on Linux only.
 - Triggers: code pushes to `main` and PRs. The `paths` list: `src`, `tests`, `.claude/hooks`,
-  `pyproject.toml`, `uv.lock`, `.python-version`, workflows, and `README*.md` (`tests/test_docs.py`
-  checks the install commands players copy, so a README-only PR or web edit is tested too).
+  `pyproject.toml`, `uv.lock`, `.python-version`, workflows, `README*.md` (`tests/test_docs.py`
+  checks the install commands players copy, so a README-only PR or web edit is tested too), `alias/**`
+  (the `dota-netcheck` package, `tests/test_alias.py`) and `LICENSE` (the alias ships a copy).
 - Other docs-only commits and tag pushes don't run it; a task's version bump does.
 - After a push, check the run once: `gh run list --workflow ci.yml --limit 1`.
 - `.github/workflows/release.yml`: on `release: published`, checks that the tag is `v<version>`, builds
-  offline with uv's bundled backend (`uv build --no-sources --offline`, after `uv python install`) and
-  uploads to PyPI with `uv publish --trusted-publishing always`. A manual run only builds:
+  wholagged and `alias/dota-netcheck` offline with uv's bundled backend (`uv build --no-sources --offline`,
+  after `uv python install`), checks that `dist` holds exactly both at that version, and uploads with
+  `uv publish --trusted-publishing always --check-url …`: wholagged first, then dota-netcheck in its own
+  step, which PyPI refuses until the owner adds that project's pending publisher (WL-105). `--check-url`
+  skips files already uploaded, so a failed publish job can be re-run ("Re-run failed jobs") while its
+  artifact lasts (3 days); after that, publish a new release. A manual run only builds:
   `gh workflow run release.yml` is the dry run. A task's tag never publishes; only a published release does.
 
 ## Budget
@@ -29,10 +34,10 @@ Every change under `.github/` follows the `ci-workflow` skill (budget rules, tem
 ## Security
 - Least-privilege `permissions`, SHA-pinned actions, `persist-credentials: false`.
 - On GitHub: secret scanning, push protection and Dependabot alerts are enabled.
-- PyPI: Trusted Publishing (OIDC) only, never a token. PyPI trusts `release.yml` + the `pypi` environment,
-  which only tags `v*` may deploy to. `id-token: write` is on the publish job alone, which runs no checkout
-  or build: it uploads the build job's artifact. Renaming `release.yml` or the environment breaks publishing
-  until the PyPI publisher is changed too.
+- PyPI: Trusted Publishing (OIDC) only, never a token. PyPI trusts `release.yml` + the `pypi` environment
+  (one publisher for both projects), which only tags `v*` may deploy to. `id-token: write` is on the
+  publish job alone, which runs no checkout or build: it uploads the build job's artifact. Renaming
+  `release.yml` or the environment breaks publishing until the PyPI publisher is changed too.
 
 ## Pitfalls
 - Local `actionlint` via `uvx` is refused by the auto-mode classifier; the first CI run validates a workflow.

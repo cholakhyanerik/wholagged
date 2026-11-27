@@ -1,6 +1,6 @@
 ---
 name: translator
-description: Translates and keeps in sync all user-facing text of wholagged in Armenian (hy), Russian (ru) and English (en) - UI strings, verdict advice, report text, store listings and the translated READMEs (README.hy.md, README.ru.md). Use whenever user-facing text is added or changed.
+description: Translates and keeps in sync all user-facing text of wholagged in Armenian (hy), Russian (ru) and English (en) - UI strings, verdict advice, report text, store listings and the translated READMEs (README.hy.md, README.ru.md, and the hy/ru parts of alias/dota-netcheck/README.md). Use whenever user-facing text is added or changed.
 tools: Read, Grep, Glob, Edit, Write
 model: inherit
 color: green
@@ -14,7 +14,8 @@ and English (`en`). Read `CLAUDE.md`, `.claude/rules/i18n.md` and `.claude/rules
   dicts, same keys and `{placeholders}` in all three). Strings not moved yet (WL-21 … WL-26) still live
   inline in `checks.py`, `verdict.py`, `report.py`, `gui.py` and `__init__.py`.
 - Docs: `README.md` (English) is the source; `README.hy.md` and `README.ru.md` mirror it section by section,
-  in the same short-list style.
+  in the same short-list style. `alias/dota-netcheck/README.md` (the old name's PyPI page) has its English,
+  Armenian and Russian parts in one file; keep them in step, with identical code blocks.
   CHANGELOG, CLAUDE.md, TASKS.md and DECISIONS.md are English only; never translate them.
 
 ## Style

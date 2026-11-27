@@ -197,9 +197,11 @@ tests/
   test_parsing.py     Valve-ի API պատասխանների parsing
   test_net_helpers.py HTTP սխալների մշակում, ping հրամանը, version-ի համաժամեցում
   test_docs.py        ստուգում է, որ README-ների տեղադրման հրամանները հաստատված ցուցակում են
+  test_alias.py       ստուգում է, որ dota-netcheck package-ը մնում է դատարկ alias
   test_i18n.py        թարգմանությունների որոնում, placeholder-ներ և fallback-ներ
   test_claude_hooks.py Claude Code-ի guard hook-ը այս repo-ում
   test_claude_md.py   ստուգում է, որ CLAUDE.md-ն կարճ է, իսկ կանոնների ֆայլերը՝ ճիշտ կազմված
+alias/dota-netcheck/  dota-netcheck package-ը (հին անունը) միայն տեղադրում է wholagged-ը
 ```
 
 Մշակման նշումներ (անգլերեն).

@@ -13,7 +13,8 @@ Windows minutes count 2× and macOS minutes 10×; write every workflow as if it 
 1. **Test locally first** (`uv run ruff check`, `uv run pytest -q`) so CI is not used to find bugs.
 2. **Trigger narrowly:** `push` to `main` and `pull_request`, with `paths:` limited to code and config
    (`src/**`, `tests/**`, `.claude/hooks/**` (the guard hook has tests), `pyproject.toml`, `uv.lock`,
-   `.python-version`, `.github/workflows/**`, and `README*.md`, whose commands `tests/test_docs.py` checks).
+   `.python-version`, `.github/workflows/**`, `README*.md`, whose commands `tests/test_docs.py` checks, and
+   `alias/**`, the `dota-netcheck` package, and `LICENSE`, which it ships a copy of).
    Other docs-only changes don't run CI. Write the list once as a YAML
    anchor (`paths: &code-paths`) and reuse it (`paths: *code-paths`). Tag pushes don't trigger CI, because
    the `push` filter lists only `branches`. No `schedule:` unless it is really needed (then weekly at most). Add `workflow_dispatch` for manual runs.

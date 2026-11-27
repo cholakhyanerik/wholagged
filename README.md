@@ -201,9 +201,11 @@ tests/
   test_parsing.py     parsing of Valve's API responses
   test_net_helpers.py HTTP error handling, the ping command, version sync
   test_docs.py        README install commands are on a reviewed list
+  test_alias.py       the dota-netcheck package stays an empty alias
   test_i18n.py        translation lookup, placeholders and fallbacks
   test_claude_hooks.py the guard hook used by Claude Code in this repo
   test_claude_md.py   keeps CLAUDE.md short and its rules files valid
+alias/dota-netcheck/  the dota-netcheck package (the old name): only installs wholagged
 ```
 
 Development notes:

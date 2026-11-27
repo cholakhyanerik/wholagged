@@ -3,6 +3,49 @@
 Decisions taken without asking ([CLAUDE.md](CLAUDE.md) rule 12), newest first.
 Each entry: the decision, then why. Revisit an entry by adding a new one; don't rewrite history.
 
+## 2026-11-28
+
+- **WL-102 is split: this repo's side is done, and the first upload is WL-105 (WL-102).** PyPI accepts
+  `dota-netcheck` only after the owner adds its pending publisher (their login; there is no API for it),
+  and the README change is only safe once the name is ours. Same split as WL-15 / WL-101.
+- **No release in WL-102 (WL-102).** Without the pending publisher, a release would upload wholagged
+  0.3.11, which only gains docs and tooling, and then fail on the alias. WL-105 releases once the owner has
+  done their step. `gh workflow run release.yml` (the dry run) checks the new build steps on CI.
+- **The alias is a standalone project in `alias/dota-netcheck/`, not a uv workspace member (WL-102).** A
+  member would go into `uv.lock`, and its `wholagged` dependency would need a workspace source, which the
+  release's `--no-sources` build drops. Standalone, it builds with the same offline backend, and there is no
+  lock, venv or extra package in the dev environment.
+- **Its version is always wholagged's, and every release uploads both (WL-102).** PyPI refuses a version it
+  already has. Rebuilt files aren't byte-identical once uv changes (the wheel names its generator), so
+  `uv publish --check-url` couldn't skip them either. Same version: no special case in the workflow, and
+  one check covers both. Its `version` line is set by hand: `uv version --project` there would create a
+  lock and a venv.
+- **It depends on `wholagged>=0.3.11`, not `==` (WL-102).** Users of the old name then always get the newest
+  wholagged, even after a release where the alias upload failed, and the pin isn't one more number to edit
+  in every task.
+- **Its command is `wholagged:main`, the same entry point as wholagged's own `dota-netcheck` (WL-102).** Both
+  packages then write an identical file. Checked with scratch builds: `uv tool install dota-netcheck` and
+  `uvx dota-netcheck --cli` installed and ran it with no warning. The alias has its own script because
+  `uv tool install` refuses a package that has no executables itself.
+- **The module is a docstring only, and a test keeps it so (WL-102).** uv_build needs a module. With no code
+  in it, there is nothing in the alias to review or keep in sync.
+- **The alias ships its own copy of `LICENSE` (WL-102).** `license-files` can't point outside the project
+  folder, and the license asks that copies come with its terms. A test keeps the copy identical.
+- **Upload wholagged first, then the alias in its own step, with no `continue-on-error` (WL-102).** While
+  PyPI refuses the old name, wholagged's files still go up, and a name someone else took first turns the run
+  red. Both steps get the same token scope: PyPI's token covers every project of the shared publisher, so the
+  split orders the uploads but can't narrow them. Both use `--check-url`, so re-running the job after the
+  second step failed skips the files already uploaded (same artifact, same bytes) instead of stopping.
+- **The alias README tells old-tool users to uninstall first (WL-102).** Two uv tools can't own one
+  command, so `uv tool install wholagged` fails while the `dota-netcheck` tool is installed (reproduced in a
+  scratch tool folder). `uv tool uninstall dota-netcheck` fetches nothing, so it is in `HARMLESS`.
+- **The alias has wholagged's `source-exclude` too, and no other `[tool]` table (WL-102).** Defence in depth
+  like wholagged's (rule 9); `tests/test_alias.py` pins the table, so a build-backend option that ships more
+  can't be added unnoticed.
+- **Its README (the PyPI page) has English, Armenian and Russian in one file (WL-102).** PyPI shows a single
+  README, and rule 14 asks for all three. `tests/test_docs.py` reads it like the repo's READMEs. No
+  in-page language links: PyPI renders no heading anchors.
+
 ## 2026-11-27
 
 - **No PyPI release for WL-103 (WL-103).** Only the READMEs changed, and the package already on PyPI

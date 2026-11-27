@@ -13,7 +13,7 @@ uv only. Never pip, venv or bare `python` (the guard hook blocks them).
 2. If the system one is newer, first check that every dependency supports it: try
    `uv lock --upgrade --python X.Y` on a scratch copy of the tree, or check that PyPI has wheels
    (PySide6 / shiboken6 are the usual blockers).
-3. If supported: `uv python pin X.Y`, set `requires-python = ">=X.Y"` in `pyproject.toml`, `uv lock`,
+3. If supported: `uv python pin X.Y`, set `requires-python = ">=X.Y"` in `pyproject.toml` and `alias/dota-netcheck/pyproject.toml`, `uv lock`,
    `uv sync`, then update the Python badge and text in `README.md`, `README.hy.md` (and `README.ru.md`),
    and the Python version in `.github/workflows/*` if it is set there. ruff takes its target version from
    `requires-python`, so nothing else to change there.
@@ -32,7 +32,8 @@ uv only. Never pip, venv or bare `python` (the guard hook blocks them).
 
 ## 3. Build backend and tools
 - `uv --version`. `[build-system] requires` must be `uv_build>=<uv version>,<next minor>`
-  (for example uv 0.13.9 → `uv_build>=0.13.9,<0.14.0`). This is the one table that is edited by hand.
+  (for example uv 0.13.9 → `uv_build>=0.13.9,<0.14.0`). This is the one table that is edited by hand, in
+  `pyproject.toml` and in `alias/dota-netcheck/pyproject.toml` alike (`tests/test_alias.py`).
 - GitHub Actions (when workflows exist): bump each pinned action to its latest release SHA,
   for example `gh api repos/actions/checkout/releases/latest --jq .tag_name` and then
   `gh api repos/actions/checkout/commits/<tag> --jq .sha`. Keep the `# vX.Y.Z` comment next to the SHA.

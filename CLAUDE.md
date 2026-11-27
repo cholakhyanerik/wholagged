@@ -33,6 +33,7 @@ src/wholagged/
                Msg (a str that keeps key + params, for results and verdicts) and render() to show it again
   locales/     hy.py (source), ru.py, en.py: one MESSAGES dict each
 tests/         offline tests; fakes.py (FakeNet) replaces the network
+alias/dota-netcheck/  the package for the old name: no code, only installs wholagged; release.yml builds both
 .claude/       agents/, skills/, hooks/, rules/, settings.json (Claude Code tooling, see below)
 .github/       workflows/ci.yml (lint + tests), release.yml (PyPI, Trusted Publishing, on release: published)
 TASKS.md · CHANGELOG.md · DECISIONS.md · README.md + README.hy.md (README.ru.md planned)
@@ -57,7 +58,7 @@ uv run pytest -q                     # all tests, offline, ~1 s
 uv run ruff check                    # lint (default rules + security rules)
 uv add <pkg> / uv add --dev <pkg>    # dependencies: never hand-edit the lists in pyproject.toml
 uv tree --outdated --depth 1         # what is behind;  uv audit  # known vulnerabilities
-uv version --bump patch|minor        # then set the same __version__ in src/wholagged/__init__.py
+uv version --bump patch|minor        # then the same __version__ (__init__.py) and alias version
 uv run --no-project python .claude/skills/cleanup/cleanup.py   # remove junk
 ```
 
@@ -146,7 +147,7 @@ uv run --no-project python .claude/skills/cleanup/cleanup.py   # remove junk
 | `gui.md` | `gui.py` | threads, design tokens, UX principles, smoke test |
 | `i18n.md` | `src/wholagged/**/*.py`, `test_i18n.py` | `t()`, adding keys, tone and terms |
 | `python.md` | `**/*.py`, `pyproject.toml` | Python 3.15 style, ruff |
-| `packaging.md` | `pyproject.toml`, `uv.lock`, `.python-version`, `__init__.py` | version, names, uv pitfalls |
+| `packaging.md` | `pyproject.toml`, `uv.lock`, `.python-version`, `__init__.py`, `alias/**` | version, names, PyPI, the alias package, uv pitfalls |
 | `tests.md` | `tests/**` | FakeNet, scenarios, pytest pitfalls |
 | `ci.md` | `.github/**` | what CI runs, budget, security |
 | `claude-tooling.md` | `.claude/**`, `CLAUDE.md`, hook tests | hooks, agents, rules-file format |

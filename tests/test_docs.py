@@ -1,6 +1,6 @@
 """The READMEs: the commands a player may copy are on a reviewed list (WL-103).
 
-Only `wholagged` is ours on PyPI. `dota-netcheck` isn't registered yet (WL-102): anyone could take the name,
+Only `wholagged` is ours on PyPI. `dota-netcheck` isn't uploaded yet (WL-105): anyone could take the name,
 and the old name run through uvx without `--from wholagged` would then run their code on a player's PC.
 A typo in a winget id, a clone URL, an extra `--with` or an index URL is the same risk. So:
 - every line of a code block (``` or ~~~, also inside `>` quotes) must be in ALLOWED or HARMLESS, word
@@ -13,12 +13,14 @@ Prose and indented code blocks aren't read: show commands only as fenced or inli
 from __future__ import annotations
 
 import re
+import tomllib
 from pathlib import Path
 
 import pytest
 
 ROOT = Path(__file__).parents[1]
-READMES = sorted(ROOT.glob("README*.md"))
+# The repo's READMEs, and the dota-netcheck package's, which is its PyPI page (WL-102).
+READMES = sorted(ROOT.glob("README*.md")) + sorted(ROOT.glob("alias/*/README*.md"))
 
 # Commands that install or download something. Lower case, one space between words, no comment.
 ALLOWED = frozenset({
@@ -43,6 +45,7 @@ HARMLESS = frozenset({
     "git pull",
     "uv sync",
     "uv sync --reinstall-package wholagged",
+    "uv tool uninstall dota-netcheck",  # the alias README: two uv tools can't own the same command
     "uv run wholagged",
     "uv run wholagged --cli",
     "uv run pytest",
@@ -126,19 +129,29 @@ def _used(markdown: str) -> set[str]:
 
 
 def test_both_readmes_are_checked():
-    assert {"README.md", "README.hy.md"} <= {readme.name for readme in READMES}
+    checked = {readme.relative_to(ROOT).as_posix() for readme in READMES}
+    assert {"README.md", "README.hy.md", "alias/dota-netcheck/README.md"} <= checked
 
 
-@pytest.mark.parametrize("readme", READMES, ids=lambda readme: readme.name)
+@pytest.mark.parametrize("pyproject", ["pyproject.toml", "alias/dota-netcheck/pyproject.toml"])
+def test_pypi_pages_are_checked_readmes(pyproject):
+    """PyPI shows the file `readme` names; inline text or another file would bypass the checks here."""
+    path = ROOT / pyproject
+    readme = tomllib.loads(path.read_text(encoding="utf-8"))["project"]["readme"]
+    assert readme == "README.md" and path.parent / readme in READMES
+
+
+@pytest.mark.parametrize("readme", READMES, ids=lambda readme: readme.relative_to(ROOT).as_posix())
 def test_readme_commands_are_on_the_reviewed_list(readme):
     text = readme.read_text(encoding="utf-8")
     assert {"uvx wholagged", "uv tool install wholagged"} <= _used(text), "the install steps weren't found"
-    bad = [f"{readme.name}:{number}: {command}" for number, command in _unknown(text)]
+    name = readme.relative_to(ROOT).as_posix()
+    bad = [f"{name}:{number}: {command}" for number, command in _unknown(text)]
     assert not bad, "README commands that aren't in ALLOWED or HARMLESS (check what each fetches):\n" + "\n".join(bad)
 
 
 def test_every_listed_command_is_still_used():
-    """A list entry no README needs any more would stay allowed silently (WL-102 will drop the alias)."""
+    """A list entry no README needs any more would stay allowed silently (WL-105 will drop `--from wholagged`)."""
     used = set().union(*(_used(readme.read_text(encoding="utf-8")) for readme in READMES))
     assert not KNOWN - used
 

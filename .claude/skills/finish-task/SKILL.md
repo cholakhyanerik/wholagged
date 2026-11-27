@@ -21,7 +21,8 @@ translated READMEs).
    acceptance criteria). Re-order To Do by priority. Bugs you found were already fixed, not filed.
 4. **Version.** Bump with uv: `uv version --bump minor` for a new feature, `uv version --bump patch` for
    anything else (fix, docs, tooling, dependencies). Then set the same value in
-   `src/wholagged/__init__.py` (`__version__`); `tests/test_net_helpers.py` checks they match.
+   `src/wholagged/__init__.py` (`__version__`) and in `alias/dota-netcheck/pyproject.toml` (`version`, by
+   hand); `tests/test_net_helpers.py` and `tests/test_alias.py` check they match.
 5. **CHANGELOG.md.** Add a section `## [x.y.z] - YYYY-MM-DD` at the top with `Added` / `Changed` /
    `Fixed` / `Security` / `Dependencies` entries written for users, each ending with the task id
    (`(WL-12)`). Update the compare links at the bottom.

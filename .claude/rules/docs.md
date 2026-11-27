@@ -1,6 +1,7 @@
 ---
 paths:
   - "README*.md"
+  - "alias/*/README.md"
   - "CHANGELOG.md"
   - "TASKS.md"
   - "DECISIONS.md"
@@ -11,6 +12,8 @@ paths:
 ## Languages
 - `README.md` (English) is the source. `README.hy.md` (and `README.ru.md`, WL-35) mirror it in every
   change (the `translator` subagent).
+- `alias/dota-netcheck/README.md` (its PyPI page) holds en, hy and ru in one file: change all three
+  together (the `translator` subagent). PyPI renders no heading anchors, so no in-page language links.
 - `CLAUDE.md`, `CHANGELOG.md`, `TASKS.md`, `DECISIONS.md` and everything in `.claude/` are English only.
 
 ## Style

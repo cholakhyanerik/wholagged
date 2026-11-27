@@ -1,0 +1,38 @@
+# dota-netcheck is the old name of wholagged. This package holds the name on PyPI (WL-102), so `uvx dota-netcheck`
+# can't fetch someone else's code: it installs wholagged and the old command, nothing more.
+# release.yml uploads it with every wholagged release, at the same version (tests/test_alias.py).
+[project]
+name = "dota-netcheck"
+version = "0.3.11"
+description = "The old name of wholagged: installs wholagged and keeps the dota-netcheck command working."
+readme = "README.md"
+license = "PolyForm-Noncommercial-1.0.0"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Erik" }
+]
+requires-python = ">=3.15"
+dependencies = [
+    "wholagged>=0.3.11",
+]
+
+[project.urls]
+Homepage = "https://github.com/cholakhyanerik/wholagged"
+Issues = "https://github.com/cholakhyanerik/wholagged/issues"
+Changelog = "https://github.com/cholakhyanerik/wholagged/blob/main/CHANGELOG.md"
+
+[project.scripts]
+# The same entry point as wholagged's own alias, so both packages write the same file.
+dota-netcheck = "wholagged:main"
+
+[build-system]
+requires = ["uv_build>=0.13.9,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+# The same list as wholagged's (tests/test_alias.py): uv_build ignores .gitignore, so never ship secrets or junk.
+source-exclude = [
+    "**/.env*", "**/.dev.vars", "**/.pypirc", "**/.npmrc", "**/.netrc",  # the secret files .gitignore lists
+    "**/*.pem", "**/*.key", "**/*.pfx", "**/*.p12", "**/id_rsa*", "**/id_ed25519*", "**/id_ecdsa*",
+    "**/*.tmp", "**/*.log", "**/*.bak", "**/*.orig", "**/*.rej",
+]

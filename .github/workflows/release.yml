@@ -1,5 +1,6 @@
-# Publishes wholagged to PyPI with Trusted Publishing (OIDC: PyPI trusts this file and the `pypi` environment,
-# so no token is stored anywhere) when a GitHub release is published. A manual run only builds, as a dry run.
+# Publishes wholagged, and dota-netcheck (its old name, alias/dota-netcheck), to PyPI with Trusted Publishing
+# (OIDC: PyPI trusts this file and the `pypi` environment, so no token is stored anywhere) when a GitHub release
+# is published. A manual run only builds, as a dry run.
 # Kept cheap and locked down on purpose: see the ci-workflow skill.
 name: Release
 
@@ -42,6 +43,24 @@ jobs:
       # Offline: only uv's bundled uv_build may build. If uv ever outgrows the [build-system] range, this fails
       # instead of quietly downloading a build backend into the job whose output ships to users.
       - run: uv build --no-sources --offline
+      # dota-netcheck, the old name: a package that only installs wholagged, so nobody else can take the name.
+      - run: uv build --no-sources --offline alias/dota-netcheck --out-dir dist
+      - name: dist holds both packages at the package version
+        run: |
+          version="$(uv version --short --frozen)"
+          for file in "wholagged-$version.tar.gz" "wholagged-$version-py3-none-any.whl" \
+                      "dota_netcheck-$version.tar.gz" "dota_netcheck-$version-py3-none-any.whl"; do
+            if [ ! -f "dist/$file" ]; then
+              echo "::error::dist/$file is missing: both pyproject files must have version $version"
+              exit 1
+            fi
+          done
+          # Without -A: uv writes a .gitignore into dist, and upload-artifact leaves hidden files out
+          if [ "$(ls dist | wc -l)" -ne 4 ]; then
+            echo "::error::dist holds more than the four expected files:"
+            ls dist
+            exit 1
+          fi
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist
@@ -70,4 +89,9 @@ jobs:
           version: latest-known
           require-checksums: true
           enable-cache: false
-      - run: uv publish --trusted-publishing always dist/*
+      # wholagged first: while PyPI refuses the old name, wholagged's files still go up. --check-url skips files
+      # PyPI already has with the same bytes, so re-running this job after a failed second step works.
+      - run: uv publish --trusted-publishing always --check-url https://pypi.org/simple/ dist/wholagged-*
+      # Refused until the owner adds dota-netcheck's pending publisher on PyPI (WL-105). Never continue-on-error:
+      # a name someone else registered must turn the run red.
+      - run: uv publish --trusted-publishing always --check-url https://pypi.org/simple/ dist/dota_netcheck-*

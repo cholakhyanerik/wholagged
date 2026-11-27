@@ -28,8 +28,11 @@ paths:
   Its autouse fixture restores the language and the catalogue cache: tests that switch the language belong there.
 - `test_claude_hooks.py` tests the guard hook; `test_claude_md.py` checks CLAUDE.md and `.claude/rules/`.
 - `test_docs.py` keeps README commands to its reviewed lists (`ALLOWED`, `HARMLESS`); every list entry
-  must still be used. Add a lookalike that should be caught to `BAD` (checked in five Markdown forms)
-  rather than loosening `FETCHES` or the Markdown reader.
+  must still be used. It reads the `dota-netcheck` package's README too (its PyPI page). Add a lookalike
+  that should be caught to `BAD` (checked in five Markdown forms) rather than loosening `FETCHES` or the
+  Markdown reader.
+- `test_alias.py` keeps `alias/dota-netcheck/` a no-code package at wholagged's version, with the same
+  metadata, `[build-system]` and `LICENSE`.
 - Don't weaken an assertion to make a change pass: a failing old test means old behaviour broke.
 - The Windows CI job runs the same tests. FakeNet replaces `icmp.ping`, so the ctypes ping isn't covered
   yet (WL-95).
