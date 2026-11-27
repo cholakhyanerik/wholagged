@@ -34,7 +34,7 @@ src/wholagged/
   locales/     hy.py (source), ru.py, en.py: one MESSAGES dict each
 tests/         offline tests; fakes.py (FakeNet) replaces the network
 .claude/       agents/, skills/, hooks/, rules/, settings.json (Claude Code tooling, see below)
-.github/       workflows/ci.yml (lint + tests)
+.github/       workflows/ci.yml (lint + tests), release.yml (PyPI, Trusted Publishing, on release: published)
 TASKS.md · CHANGELOG.md · DECISIONS.md · README.md + README.hy.md (README.ru.md planned)
 ```
 

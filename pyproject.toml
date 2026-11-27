@@ -1,6 +1,6 @@
 [project]
 name = "wholagged"
-version = "0.3.7"
+version = "0.3.8"
 description = "wholagged: is it your internet, your provider or Valve's servers? A network check for Dota 2."
 readme = "README.md"
 license = "PolyForm-Noncommercial-1.0.0"
@@ -12,6 +12,11 @@ requires-python = ">=3.15"
 dependencies = [
     "pyside6-essentials>=6.12.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/cholakhyanerik/wholagged"
+Issues = "https://github.com/cholakhyanerik/wholagged/issues"
+Changelog = "https://github.com/cholakhyanerik/wholagged/blob/main/CHANGELOG.md"
 
 [project.scripts]
 wholagged = "wholagged:main"

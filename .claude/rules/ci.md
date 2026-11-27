@@ -14,6 +14,10 @@ Every change under `.github/` follows the `ci-workflow` skill (budget rules, tem
   `pyproject.toml`, `uv.lock`, `.python-version`, workflows.
 - Docs-only commits and tag pushes don't run it; a task's version bump does.
 - After a push, check the run once: `gh run list --workflow ci.yml --limit 1`.
+- `.github/workflows/release.yml`: on `release: published`, checks that the tag is `v<version>`, builds
+  offline with uv's bundled backend (`uv build --no-sources --offline`, after `uv python install`) and
+  uploads to PyPI with `uv publish --trusted-publishing always`. A manual run only builds:
+  `gh workflow run release.yml` is the dry run. A task's tag never publishes; only a published release does.
 
 ## Budget
 - Narrow `paths`, `concurrency` cancel-in-progress, `timeout-minutes: 10`.
@@ -24,6 +28,10 @@ Every change under `.github/` follows the `ci-workflow` skill (budget rules, tem
 ## Security
 - Least-privilege `permissions`, SHA-pinned actions, `persist-credentials: false`.
 - On GitHub: secret scanning, push protection and Dependabot alerts are enabled.
+- PyPI: Trusted Publishing (OIDC) only, never a token. PyPI trusts `release.yml` + the `pypi` environment,
+  which only tags `v*` may deploy to. `id-token: write` is on the publish job alone, which runs no checkout
+  or build: it uploads the build job's artifact. Renaming `release.yml` or the environment breaks publishing
+  until the PyPI publisher is changed too.
 
 ## Pitfalls
 - Local `actionlint` via `uvx` is refused by the auto-mode classifier; the first CI run validates a workflow.

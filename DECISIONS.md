@@ -5,6 +5,30 @@ Each entry: the decision, then why. Revisit an entry by adding a new one; don't 
 
 ## 2026-11-27
 
+- **WL-15 is split: this repo's side is done, and the first upload is WL-101 (WL-15).** PyPI's docs say a
+  pending publisher "does not create a project or reserve a project's name until it is actually used to
+  publish", and someone else registering the name first invalidates it. So only a first release reserves
+  `wholagged`. Adding the pending publisher needs the owner's PyPI login (there is no API for it). That
+  is the one step no session can do, and WL-101 lists the exact form values. Both names were still free on
+  PyPI on this date.
+- **Build and publish are two jobs, and only publish has `id-token: write` (WL-15).** The OIDC permission
+  never reaches the checkout or the build. The publish job uploads the build job's artifact, which
+  download-artifact checks by digest. `uv publish --trusted-publishing always` fails rather than fall back to
+  a token. The build runs `--offline`, so only uv's bundled `uv_build` can build, and nothing is fetched
+  while it does.
+- **`uv publish`, not `pypa/gh-action-pypi-publish` (WL-15).** uv is already in every job, and it saves one
+  more third-party action to pin and trust. The PyPA action would also make PEP 740 attestations; that can
+  be added later if verified provenance on PyPI is wanted.
+- **`workflow_dispatch` on `release.yml` only builds (WL-15).** It is the dry run that validates the
+  workflow and the package. The publish job runs only for `release: published`, and the `pypi`
+  environment accepts only `v*` tags.
+- **No required reviewers on the `pypi` environment (WL-15).** The owner works alone, and publishing a
+  release already needs write access. A reviewer gate would turn every release into a manual step for the
+  owner (rule 12). WL-5 hardens who may create `v*` tags instead.
+- **`dota-netcheck` isn't reserved in WL-15 (WL-15).** No doc ever told users to install it from PyPI
+  (checked across git history). Reserving it needs a second, alias package, so it is its own card
+  (WL-102) after the first release.
+
 - **The window's row states are `status.<status>` (plus `status.running`), its other texts `gui.<what>`
   (WL-26).** `status.*` mirrors `side.*`: one key per enum member, read as `t(f"status.{status}")`. Because
   the key scan can't see a key built at run time, a test checks the catalogue has one for every member.
