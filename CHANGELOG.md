@@ -4,6 +4,13 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.3.5] - 2026-11-27
+
+### Changed
+- The verdict's headline, explanation and advice now come from the translation catalogue. A verdict
+  remembers which texts it is made of, so it can later be shown again in another language without
+  running the checks again. Everything reads exactly as before. (WL-24)
+
 ## [0.3.4] - 2026-11-27
 
 ### Changed
@@ -191,6 +198,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.3.5]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.1...v0.3.2

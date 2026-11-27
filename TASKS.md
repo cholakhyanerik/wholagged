@@ -35,11 +35,6 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-24 · Move the verdict texts (`verdict.py`) to i18n keys
-`chore` · `P1` · `S` · I18N · depends on: WL-20
-- [ ] headlines, explanations and advice; numbers stay placeholders (`{loss}`, `{ms}`)
-- [ ] `Verdict` texts are `Msg` (made in the worker thread), so WL-32 can switch a shown verdict
-
 ### WL-25 · Move the report and CLI texts to i18n keys
 `chore` · `P1` · `XS` · I18N · depends on: WL-20
 - [ ] `report.py` (labels, side names) and `__init__.py` (banner, headings)
@@ -107,6 +102,7 @@ approval, and SHA pinning is a convention, not enforced.
       run's rows and verdict with `i18n.render()` (results are `Msg`, DECISIONS 2026-11-25)
 - [ ] a result or verdict that arrives after a switch, made in the old language mid-run, is shown through
       `i18n.render()` too (WL-22 review)
+- [ ] the advice (rich text) is rendered first and escaped after: `_html(render(a))` (WL-24 review)
 
 ### WL-33 · Remember the chosen language
 `ux` · `P2` · `XS` · I18N · depends on: WL-32

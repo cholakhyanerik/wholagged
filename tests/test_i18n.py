@@ -9,12 +9,16 @@ import pickle
 import pkgutil
 import re
 import string
+import sys
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
 
-from wholagged import checks, i18n, icmp, locales, models
+from wholagged import checks, i18n, icmp, locales, models, verdict
 from wholagged.i18n import Msg, render, t
+from wholagged.models import Side
 
 from fakes import FakeNet
 
@@ -359,9 +363,8 @@ def test_every_key_used_in_the_code_gets_exactly_its_placeholders():
 
 
 # Modules whose user-facing texts have all moved to the catalogues: not one Armenian letter is left, not even
-# in a comment. Add a module when its move card is done (verdict.py: WL-24; report.py and __init__.py: WL-25;
-# gui.py: WL-26).
-MOVED_MODULES = [checks, icmp, models]
+# in a comment. Add a module when its move card is done (report.py and __init__.py: WL-25; gui.py: WL-26).
+MOVED_MODULES = [checks, icmp, models, verdict]
 
 
 @pytest.mark.parametrize("module", MOVED_MODULES, ids=lambda module: module.__name__)
@@ -467,8 +470,8 @@ def test_copying_a_msg_never_looks_its_text_up_as_a_key(monkeypatch, duplicate):
 
 # --- a finished run, shown again after a language switch -----------------------------------------
 
-# Test English for every key a run of the six checks and the runner uses. Each text differs from the Armenian
-# one, so a text that wasn't rendered again can't pass by accident.
+# Test English for every key a run of the six checks, the runner and the verdict uses. Each text differs from the
+# Armenian one, so a text that wasn't rendered again can't pass by accident.
 RUN_EN = {
     "check.internet.title": "Internet connection",
     "check.dns.title": "Name lookup (DNS)",
@@ -522,6 +525,65 @@ RUN_EN = {
     "error.ssl": "TLS error",
     "error.too_big": "answer too big",
     "error.not_json": "answer is not JSON",
+    # The verdict: `verdict.decide()` of a finished run.
+    "verdict.no_internet.headline": "It's your internet",
+    "verdict.no_internet.explanation": "Your PC can't reach any outside server, not just Valve's.",
+    "verdict.dns.headline": "It's DNS",
+    "verdict.dns.explanation": "The internet works, but Steam's names don't resolve, so Dota can't find Valve's servers.",
+    "verdict.cert.headline": "HTTPS certificate checks fail",
+    "verdict.cert.explanation": "The internet works, but the certificate check stops a secure (HTTPS) connection to Steam.",
+    "verdict.valve.headline": "Most likely it's Valve's side",
+    "verdict.valve.explanation": "You reach Valve's servers, but Valve answers with an error or the Dota GC is silent.",
+    "verdict.unreachable.headline": "You can't reach Valve's servers",
+    "verdict.unreachable.explanation": "The internet works, but no Steam server could be reached.",
+    "verdict.partial.headline": "Some of Valve's servers are closed to you",
+    "verdict.partial.explanation": "Some Steam servers answer and some don't: a firewall, a VPN or the provider's routing.",
+    "verdict.routing.headline": "The route to Valve's game network is broken",
+    "verdict.routing.explanation": "Steam and the internet answer, but Valve's relays don't answer ping.",
+    "verdict.lossy.headline": "Connected, but unstable (packet loss)",
+    "verdict.lossy.explanation": "Packet loss {loss:.0f}% on the way to Valve's relays: that is the lag and the disconnects.",
+    "verdict.high_ping.headline": "Connected, but the ping is high",
+    "verdict.high_ping.explanation": "Ping to Valve's nearest relay is {ms}: playable, but you'll feel the lag.",
+    "verdict.jittery.headline": "Connected, but the ping jumps around",
+    "verdict.jittery.explanation": "Jitter is {jitter}: in a game that feels like rubber-banding.",
+    "verdict.pc.headline": "The network is fine, and Valve answers too",
+    "verdict.pc.explanation": "Everything answers: if Dota still searches for the GC, look at the PC or the Steam client.",
+    "advice.hotspot": "Hotspot test: connect to your phone's mobile internet and check again",
+    "advice.steamstat": "Open steamstat.us and look at the Dota 2 Game Coordinator line",
+    "advice.report_to_isp": 'Press "Copy report" and send it to your provider\'s support',
+    "advice.router_power_cycle": "Switch the router off for 30 seconds and back on",
+    "advice.wifi_try_cable": "On Wi-Fi, try a cable or sit closer to the router",
+    "advice.call_isp": "Still down after the router restart? Call your provider",
+    "advice.dns_change": "Change DNS to 1.1.1.1 and 8.8.8.8",
+    "advice.dns_flush": "In cmd, run: ipconfig /flushdns",
+    "advice.dns_vpn_adblock": "Turn off a VPN or an ad-blocking DNS (AdGuard, Pi-hole)",
+    "advice.cert_clock": "Check the PC's time, date and time zone",
+    "advice.cert_antivirus": "Turn off the antivirus's HTTPS scanning for a moment and check again",
+    "advice.cert_captive_portal": "On hotel or café Wi-Fi, open a browser and sign in on the network's page",
+    "advice.cert_macos_python": 'Python from python.org? Run "Install Certificates.command"',
+    "advice.steamstat_wait": "{steamstat}; red there too? Just wait",
+    "advice.valve_recovers": "Valve usually fixes it within minutes to an hour",
+    "advice.after_patch": "This often happens in the first hour after a patch",
+    "advice.steamstat_all_red": "{steamstat}; all red? Then it's Valve",
+    "advice.if_green_hotspot": "Green there? {hotspot}",
+    "advice.vpn_firewall_off": "Turn off the VPN and, for a moment, the antivirus firewall",
+    "advice.firewall_allow": "Allow steam.exe and dota2.exe in Windows Firewall",
+    "advice.vpn_proxy_off": "Turn off the VPN / proxy",
+    "advice.gaming_vpn": "A gaming VPN (route optimizer) can get around a bad route",
+    "advice.use_cable": "Use a cable instead of Wi-Fi",
+    "advice.close_downloads_torrents": "Close downloads, torrents and streams",
+    "advice.close_downloads": "Close downloads and streams",
+    "advice.restart_router": "Restart the router",
+    "advice.report_if_loss_on_cable": "Packets lost on a cable too? {report_to_isp}",
+    "advice.nearest_region": "Pick the nearest region in Dota's matchmaking",
+    "advice.network_hog": "Check that nobody else is loading the network",
+    "advice.steam_restart": "Quit Steam completely (Steam → Exit) and start it again",
+    "advice.verify_files": "Steam → Dota 2 → Properties → Installed Files → Verify integrity of game files",
+    "advice.clear_launch_options": "Dota 2 → Properties → clear the Launch options",
+    "advice.vpn_off": "Turn off the VPN if it's on",
+    "advice.gc_unchecked": "The GC couldn't be checked directly: {steamstat}",
+    "advice.relays_icmp_blocked": "Relay ping wasn't checked (ICMP is blocked): packet loss unknown",
+    "advice.relays_unchecked": "Relay ping wasn't checked: packet loss unknown",
 }
 
 # [title, summary, *details] of a check, as shown after the switch.
@@ -989,3 +1051,313 @@ def test_internal_error_carries_short_error_of_the_exception(net, exc):
     if isinstance(expected, Msg):
         assert (word.key, word.params) == (expected.key, expected.params)
     assert results["relays"].status == models.Status.OK  # the run went on
+
+
+# --- a finished verdict, shown again after a language switch -------------------------------------
+
+STEAMSTAT_EN = RUN_EN["advice.steamstat"]
+HOTSPOT_EN = RUN_EN["advice.hotspot"]
+REPORT_EN = RUN_EN["advice.report_to_isp"]
+PC_ADVICE = [
+    "advice.steam_restart",
+    "advice.verify_files",
+    "advice.clear_launch_options",
+    "advice.firewall_allow",
+    "advice.vpn_off",
+]
+PC_ADVICE_EN = [
+    "Quit Steam completely (Steam → Exit) and start it again",
+    "Steam → Dota 2 → Properties → Installed Files → Verify integrity of game files",
+    "Dota 2 → Properties → clear the Launch options",
+    "Allow steam.exe and dota2.exe in Windows Firewall",
+    "Turn off the VPN if it's on",
+]
+PC_EN = [
+    "The network is fine, and Valve answers too",
+    "Everything answers: if Dota still searches for the GC, look at the PC or the Steam client.",
+]
+CERT_ADVICE = ["advice.cert_clock", "advice.cert_antivirus", "advice.cert_captive_portal"]
+CERT_EN = [
+    "HTTPS certificate checks fail",
+    "The internet works, but the certificate check stops a secure (HTTPS) connection to Steam.",
+    "Check the PC's time, date and time zone",
+    "Turn off the antivirus's HTTPS scanning for a moment and check again",
+    "On hotel or café Wi-Fi, open a browser and sign in on the network's page",
+]
+VALVE_ADVICE = ["advice.steamstat_wait", "advice.valve_recovers", "advice.after_patch"]
+VALVE_EN = [
+    "Most likely it's Valve's side",
+    "You reach Valve's servers, but Valve answers with an error or the Dota GC is silent.",
+    f"{STEAMSTAT_EN}; red there too? Just wait",
+    "Valve usually fixes it within minutes to an hour",
+    "This often happens in the first hour after a patch",
+]
+# A nested phrase, by the name of its param in the advice that uses it.
+NESTED = {"steamstat": "advice.steamstat", "hotspot": "advice.hotspot", "report_to_isp": "advice.report_to_isp"}
+
+
+@dataclass(frozen=True)
+class VerdictCase:
+    breaks: Callable[[FakeNet], None]
+    side: Side
+    rule: str  # the verdict.<rule>.* keys of the branch
+    advice: list[str]  # the advice keys, in order
+    english: list[str]  # headline, explanation and advice, rendered again with RUN_EN
+    params: dict[str, object] = field(default_factory=dict)  # the explanation's: loss a raw float, times fmt_ms()
+    platform: str = "win32"  # sys.platform while decide() runs; on macOS the cert verdict has one more tip
+
+
+VERDICT_CASES = {
+    "no-internet": VerdictCase(
+        _set("internet", False),
+        Side.YOU,
+        "no_internet",
+        ["advice.router_power_cycle", "advice.wifi_try_cable", "advice.call_isp"],
+        [
+            "It's your internet",
+            "Your PC can't reach any outside server, not just Valve's.",
+            "Switch the router off for 30 seconds and back on",
+            "On Wi-Fi, try a cable or sit closer to the router",
+            "Still down after the router restart? Call your provider",
+        ],
+    ),
+    "dns-broken": VerdictCase(
+        _set("dns", False),
+        Side.YOU,
+        "dns",
+        ["advice.dns_change", "advice.dns_flush", "advice.dns_vpn_adblock"],
+        [
+            "It's DNS",
+            "The internet works, but Steam's names don't resolve, so Dota can't find Valve's servers.",
+            "Change DNS to 1.1.1.1 and 8.8.8.8",
+            "In cmd, run: ipconfig /flushdns",
+            "Turn off a VPN or an ad-blocking DNS (AdGuard, Pi-hole)",
+        ],
+    ),
+    "bad-certificate": VerdictCase(_set("cert_ok", False), Side.YOU, "cert", CERT_ADVICE, CERT_EN),
+    "bad-certificate-on-macos": VerdictCase(
+        _set("cert_ok", False),
+        Side.YOU,
+        "cert",
+        [*CERT_ADVICE, "advice.cert_macos_python"],
+        [*CERT_EN, 'Python from python.org? Run "Install Certificates.command"'],
+        platform="darwin",
+    ),
+    "valve-503": VerdictCase(_answer(checks.CM_LIST_URL, 503), Side.VALVE, "valve", VALVE_ADVICE, VALVE_EN),
+    "gc-down": VerdictCase(
+        _answer(checks.GC_VERSION_URL, {"result": {"success": False}}), Side.VALVE, "valve", VALVE_ADVICE, VALVE_EN
+    ),
+    "valve-unreachable": VerdictCase(
+        _set("tcp_ok", False),
+        Side.UNCLEAR,
+        "unreachable",
+        ["advice.steamstat_all_red", "advice.if_green_hotspot", "advice.vpn_firewall_off"],
+        [
+            "You can't reach Valve's servers",
+            "The internet works, but no Steam server could be reached.",
+            f"{STEAMSTAT_EN}; all red? Then it's Valve",
+            f"Green there? {HOTSPOT_EN}",
+            "Turn off the VPN and, for a moment, the antivirus firewall",
+        ],
+    ),
+    "login-servers-partly-refused": VerdictCase(
+        _set("refused_hosts", {"ext1-fra1.steamserver.net", "ext2-fra1.steamserver.net", "ext1-sto1.steamserver.net"}),
+        Side.ISP,
+        "partial",
+        ["advice.firewall_allow", "advice.vpn_proxy_off", "advice.hotspot", "advice.report_to_isp"],
+        [
+            "Some of Valve's servers are closed to you",
+            "Some Steam servers answer and some don't: a firewall, a VPN or the provider's routing.",
+            "Allow steam.exe and dota2.exe in Windows Firewall",
+            "Turn off the VPN / proxy",
+            HOTSPOT_EN,
+            REPORT_EN,
+        ],
+    ),
+    "relays-silent": VerdictCase(
+        _set("relays_ok", False),
+        Side.ISP,
+        "routing",
+        ["advice.hotspot", "advice.report_to_isp", "advice.gaming_vpn"],
+        [
+            "The route to Valve's game network is broken",
+            "Steam and the internet answer, but Valve's relays don't answer ping.",
+            HOTSPOT_EN,
+            REPORT_EN,
+            "A gaming VPN (route optimizer) can get around a bad route",
+        ],
+    ),
+    "relays-lossy": VerdictCase(
+        _set("loss_every", 4),
+        Side.YOU,
+        "lossy",
+        ["advice.use_cable", "advice.close_downloads_torrents", "advice.restart_router", "advice.report_if_loss_on_cable"],
+        [
+            "Connected, but unstable (packet loss)",
+            "Packet loss 20% on the way to Valve's relays: that is the lag and the disconnects.",  # 20.0, no ".0"
+            "Use a cable instead of Wi-Fi",
+            "Close downloads, torrents and streams",
+            "Restart the router",
+            f"Packets lost on a cable too? {REPORT_EN}",
+        ],
+        params={"loss": 20.0},
+    ),
+    "relays-high-ping": VerdictCase(
+        _set("relay_extra_ms", 140.0),
+        Side.YOU,
+        "high_ping",
+        ["advice.nearest_region", "advice.network_hog", "advice.report_to_isp"],
+        [
+            "Connected, but the ping is high",
+            "Ping to Valve's nearest relay is 187 ms: playable, but you'll feel the lag.",
+            "Pick the nearest region in Dota's matchmaking",
+            "Check that nobody else is loading the network",
+            REPORT_EN,
+        ],
+        params={"ms": "187 ms"},
+    ),
+    "relays-jittery": VerdictCase(
+        _set("relay_jitter_ms", 40.0),
+        Side.YOU,
+        "jittery",
+        ["advice.use_cable", "advice.close_downloads", "advice.restart_router"],
+        [
+            "Connected, but the ping jumps around",
+            "Jitter is 40 ms: in a game that feels like rubber-banding.",
+            "Use a cable instead of Wi-Fi",
+            "Close downloads and streams",
+            "Restart the router",
+        ],
+        params={"jitter": "40 ms"},
+    ),
+    "all-ok": VerdictCase(lambda net: None, Side.PC, "pc", PC_ADVICE, [*PC_EN, *PC_ADVICE_EN]),
+    "gc-unchecked": VerdictCase(
+        _answer(checks.GC_VERSION_URL, 404),
+        Side.PC,
+        "pc",
+        ["advice.gc_unchecked", *PC_ADVICE],
+        [*PC_EN, f"The GC couldn't be checked directly: {STEAMSTAT_EN}", *PC_ADVICE_EN],
+    ),
+    "icmp-blocked": VerdictCase(
+        _all(_set("relays_ok", False), _set("control_ok", False)),
+        Side.PC,
+        "pc",
+        [*PC_ADVICE, "advice.relays_icmp_blocked"],
+        [*PC_EN, *PC_ADVICE_EN, "Relay ping wasn't checked (ICMP is blocked): packet loss unknown"],
+    ),
+    "relay-list-empty": VerdictCase(
+        _answer(checks.SDR_CONFIG_URL, {"revision": 2, "pops": {}}),
+        Side.PC,
+        "pc",
+        [*PC_ADVICE, "advice.relays_unchecked"],
+        [*PC_EN, *PC_ADVICE_EN, "Relay ping wasn't checked: packet loss unknown"],
+    ),
+    "gc-and-relays-unchecked": VerdictCase(
+        _all(_answer(checks.GC_VERSION_URL, 404), _answer(checks.SDR_CONFIG_URL, 503)),
+        Side.PC,
+        "pc",
+        ["advice.gc_unchecked", *PC_ADVICE, "advice.relays_unchecked"],
+        [
+            *PC_EN,
+            f"The GC couldn't be checked directly: {STEAMSTAT_EN}",
+            *PC_ADVICE_EN,
+            "Relay ping wasn't checked: packet loss unknown",
+        ],
+    ),
+}
+
+
+def _run(net, case: VerdictCase) -> dict[str, models.CheckResult]:
+    """The checks with the case's break, in the current language."""
+    case.breaks(net)
+    return checks.run_checks()
+
+
+def _decide(monkeypatch, case: VerdictCase, results: dict[str, models.CheckResult]) -> models.Verdict:
+    with monkeypatch.context() as patch:  # only decide() sees the case's platform; the checks run on the real one
+        patch.setattr(sys, "platform", case.platform)
+        return verdict.decide(results)
+
+
+def _verdict_texts(made: models.Verdict) -> list[str]:
+    return [made.headline, made.explanation, *made.advice]
+
+
+def test_verdict_cases_cover_every_rule_and_every_piece_of_advice():
+    hy = _messages("hy")
+    rules = {key.split(".")[1] for key in hy if key.startswith("verdict.")}
+    assert len(rules) == 11
+    assert {case.rule for case in VERDICT_CASES.values()} == rules
+    given = {key for case in VERDICT_CASES.values() for key in case.advice}
+    assert given | set(NESTED.values()) == {key for key in hy if key.startswith("advice.")}
+    assert {key for key in hy if key.startswith(("verdict.", "advice."))} <= RUN_EN.keys()  # test English for all
+
+
+@pytest.mark.parametrize("case", VERDICT_CASES.values(), ids=VERDICT_CASES.keys())
+def test_every_verdict_text_is_a_msg_with_the_key_of_its_rule(net, monkeypatch, case):
+    made = _decide(monkeypatch, case, _run(net, case))
+    hy = _messages("hy")
+    assert made.side == case.side
+    texts = _verdict_texts(made)
+    assert [type(text) for text in texts] == [Msg] * len(texts)
+    assert made.headline.key == f"verdict.{case.rule}.headline"
+    assert made.explanation.key == f"verdict.{case.rule}.explanation"
+    assert made.headline.params == {}
+    assert str(made.headline) == hy[made.headline.key]
+    assert made.explanation.params == case.params
+    for name, value in made.explanation.params.items():  # loss raw for `{loss:.0f}`; times are fmt_ms() text
+        assert type(value) is (float if name == "loss" else str), name
+    assert [tip.key for tip in made.advice] == case.advice
+    for tip in made.advice:
+        for name, phrase in tip.params.items():  # a phrase inside the advice is a Msg, never glued on with `+`
+            assert type(phrase) is Msg, (tip.key, name)
+            assert (phrase.key, phrase.params) == (NESTED[name], {}), (tip.key, name)
+            assert phrase in tip
+        if not tip.params:
+            assert str(tip) == hy[tip.key]
+
+
+@pytest.mark.parametrize("case", VERDICT_CASES.values(), ids=VERDICT_CASES.keys())
+def test_finished_verdict_is_shown_again_in_the_new_language(net, monkeypatch, case):
+    made = _decide(monkeypatch, case, _run(net, case))  # in Armenian, like a verdict shown before the switch
+    texts = _verdict_texts(made)
+    snapshot = [str(text) for text in texts]
+    assert ARMENIAN.search(snapshot[0]) and ARMENIAN.search(snapshot[1])
+
+    _use(monkeypatch, "en", RUN_EN)
+    assert [render(text) for text in texts] == case.english
+    assert [str(text) for text in texts] == snapshot  # the verdict itself keeps the text of its run
+
+    i18n.set_language("hy")
+    assert [render(text) for text in texts] == snapshot  # and back, word for word
+
+
+@pytest.mark.parametrize("case", VERDICT_CASES.values(), ids=VERDICT_CASES.keys())
+def test_verdict_made_after_a_switch_is_in_the_new_language_without_render(net, monkeypatch, case):
+    # The shared phrases (steamstat, hotspot, report_to_isp) are made in decide(). Made once at import, they would
+    # stay Armenian inside English advice; render() would hide that, so this reads the plain text.
+    results = _run(net, case)  # the checks ran in Armenian
+    _use(monkeypatch, "en", RUN_EN)
+    made = _decide(monkeypatch, case, results)
+    assert [str(text) for text in _verdict_texts(made)] == case.english
+
+
+@pytest.mark.parametrize(
+    ("breaks", "params", "english"),
+    [
+        (_set("loss_every", 4), {"loss": 20.0}, "Packet loss 20% on the way to Valve's relays"),  # `{loss:.0f}`
+        (_set("relay_extra_ms", 140.4), {"ms": "187 ms"}, "Ping to Valve's nearest relay is 187 ms:"),  # 187.4
+        (_set("relay_jitter_ms", 40.6), {"jitter": "41 ms"}, "Jitter is 41 ms:"),  # fmt_ms(40.6)
+    ],
+    ids=["loss", "ping", "jitter"],
+)
+def test_verdict_numbers_have_no_decimals_in_any_language(net, monkeypatch, breaks, params, english):
+    breaks(net)
+    made = verdict.decide(checks.run_checks())
+    assert made.explanation.params == params  # loss raw for the template's `:.0f`; times are fmt_ms() text
+    assert [type(value) for value in made.explanation.params.values()] == [type(value) for value in params.values()]
+    assert not re.search(r"\d[.,]\d", made.explanation)
+    _use(monkeypatch, "en", RUN_EN)
+    text = render(made.explanation)
+    assert text.startswith(english)
+    assert not re.search(r"\d[.,]\d", text)

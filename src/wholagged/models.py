@@ -36,6 +36,7 @@ class Side(StrEnum):
 
 @dataclass
 class Verdict:
+    # headline, explanation and advice are `i18n.Msg` made by `verdict.decide()`, like CheckResult's texts.
     side: Side
     headline: str
     explanation: str

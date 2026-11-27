@@ -5,6 +5,29 @@ Each entry: the decision, then why. Revisit an entry by adding a new one; don't 
 
 ## 2026-11-27
 
+- **Advice keys are named by what the advice says (`advice.use_cable`), not by the verdict that gives it
+  (WL-24).** Five pieces of advice appear in more than one verdict (cable, router restart, firewall,
+  hotspot, the report for the provider). One key each keeps them worded the same everywhere, and the
+  translator writes each one once. For WL-40's per-platform advice, one small helper that picks the
+  platform's key replaces the shared key, instead of five copies of a string to change.
+- **Advice that differs by even a word keeps its own key (WL-24)** ("download-ները, torrent-ները,
+  stream-ները" versus "download-ները և stream-ները", or "Անջատիր VPN-ը / proxy-ն" versus "…, եթե միացված
+  է"), so every text stays exactly as it was. A move card changes no wording.
+- **The three phrases used inside other advice (steamstat, hotspot, the report for the provider) are
+  nested `Msg` params, made once at the top of `decide()` (WL-24).** They used to be module constants glued
+  on with `+`. A constant `Msg` would freeze the language at import, and `+` would flatten the result to
+  plain text in one language. With a template such as "{steamstat}. If it's red there too, just wait",
+  a translator can also move or re-punctuate the phrase.
+- **The verdict's numbers follow the check results' convention (WL-24): the loss percentage goes in raw
+  with `{loss:.0f}` in the template, and times go in as `fmt_ms()` strings (`{ms}`, `{jitter}`).** The
+  first version passed times raw as `{ms:.0f} ms`; the review caught that `{ms}` would then mean "a
+  number" in the verdict and "a formatted time" in the check results, and a translator following the
+  catalogue notes would drop the " ms". The output is the same either way: both verdicts need more than
+  1 ms, so `fmt_ms()` never takes its "<1 ms" branch.
+- **The placeholder for a nested phrase is named after its key: `{steamstat}`, `{hotspot}`,
+  `{report_to_isp}` (WL-24).** Renamed from `{report}` before the ru and en catalogues exist, when it
+  costs one line.
+
 - **The Steam login (CM) check has separate keys for the login and the web servers (WL-23):**
   `check.steam_cm.ok` / `.web_ok` and `.fail` / `.web_fail`. The old code glued the Armenian case endings
   (`-ից`, `-ը`) onto one shared "Steam's login / web servers" word. That can't be translated: Russian and

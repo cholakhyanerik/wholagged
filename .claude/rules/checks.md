@@ -37,6 +37,10 @@ The step-by-step recipe for a new check or verdict rule is the `add-check` skill
 - `decide()` rules run top to bottom; the first match wins.
 - Keep the numbered rule comments in order and the README "How the verdict is decided" list in sync.
 - Each verdict has a side, a headline, an explanation and 3–5 advice items the user can do now.
+- Its texts are `Msg` made in `decide()` (the worker thread), so WL-32 can show a verdict again in another
+  language (`add-check` has the key scheme). The phrases used inside other advice (`steamstat`, `hotspot`,
+  `report_to_isp`) are built at the top of `decide()`, not at import.
+- Advice is shown as rich text (`gui.py` escapes it with `_html()`): never put Valve's text into advice.
 
 ## Security of the network code (rule 9)
 - Never disable TLS verification.

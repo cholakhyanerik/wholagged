@@ -20,8 +20,8 @@ paths:
 - FakeNet's error words come from `checks.short_error()`, so they are `i18n.Msg` like the real ones.
 - Each verdict branch has a scenario in `test_scenarios.py`.
 - Helpers are tested in `test_parsing.py` and `test_net_helpers.py`.
-- `test_i18n.py` covers `t()` and `Msg` (lookup, fallbacks, placeholders, rendering a finished run again)
-  and checks that every catalogue uses the same placeholders as `hy`. It also scans `src/` (with `ast`) so
+- `test_i18n.py` covers `t()` and `Msg` (lookup, fallbacks, placeholders, rendering a finished run and
+  its verdict again) and checks that every catalogue uses the same placeholders as `hy`. It also scans `src/` (with `ast`) so
   every `t("…")` / `Msg("…")` key is in `hy.py` with the right params. Its autouse fixture restores the
   language and the catalogue cache: tests that switch the language belong there.
 - `test_claude_hooks.py` tests the guard hook; `test_claude_md.py` checks CLAUDE.md and `.claude/rules/`.

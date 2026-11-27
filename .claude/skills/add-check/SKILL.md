@@ -25,6 +25,10 @@ description: Step-by-step recipe for adding or changing a network check or a ver
   user's side first, then Valve, then the route, then quality, then "the network is fine".
 - Each `Verdict` has a side, a headline, an explanation and 3–5 practical advice items, in the same tone
   as the existing ones. Keep the numbered rule comments in order.
+- Texts are `Msg`: `verdict.<rule>.headline` / `.explanation`, and `advice.<what>` for each item. Reuse an
+  existing `advice.*` key when the advice is the same. A phrase inside other advice is a nested param
+  (`Msg("advice.gc_unchecked", steamstat=steamstat)`), never `+`. Numbers go in raw (`{loss:.0f}`).
+- Never pass Valve's text into advice: the window shows advice as rich text.
 - Affiliate or commercial suggestions must never change the verdict (README → Transparency).
 
 ## Tests
