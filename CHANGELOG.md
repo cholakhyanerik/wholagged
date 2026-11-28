@@ -4,6 +4,21 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.3.13] - 2026-11-28
+
+### Security
+- `uvx wholagged` and `uv tool install wholagged` now stay on the Qt (PySide6) minor version the tests
+  ran on. They still get its bug and security fixes, but a new Qt version only arrives with a wholagged
+  release that was tested with it. Before, they got any new Qt the day it came out. (WL-104)
+
+### Dependencies
+- PySide6 is limited to `>=6.12.0,<6.13`; for contributors, `update-deps` raises the limit together with
+  the lock, and a test keeps them in step (and `shiboken6` at PySide6's version). (WL-104)
+
+### Fixed
+- For contributors: when To Do is empty, the session check now names the top Backlog cards instead of
+  calling the board empty. (WL-104)
+
 ## [0.3.12] - 2026-11-28
 
 ### Security
@@ -275,6 +290,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.3.13]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.12...v0.3.13
 [0.3.12]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.11...v0.3.12
 [0.3.11]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.10...v0.3.11
 [0.3.10]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.9...v0.3.10

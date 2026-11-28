@@ -117,7 +117,7 @@ wheels = [
 
 [[package]]
 name = "wholagged"
-version = "0.3.12"
+version = "0.3.13"
 source = { editable = "." }
 dependencies = [
     { name = "pyside6-essentials" },
@@ -130,7 +130,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pyside6-essentials", specifier = ">=6.12.0" }]
+requires-dist = [{ name = "pyside6-essentials", specifier = ">=6.12.0,<6.13" }]
 
 [package.metadata.requires-dev]
 dev = [

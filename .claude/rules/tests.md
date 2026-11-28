@@ -26,7 +26,8 @@ paths:
   package module outside `locales/`. The window's texts are tested from the catalogue (`WINDOW_HY` pins the
   Armenian words), never by importing `gui.py`: on the Linux runner Qt needs system libraries (WL-92).
   Its autouse fixture restores the language and the catalogue cache: tests that switch the language belong there.
-- `test_claude_hooks.py` tests the guard hook; `test_claude_md.py` checks CLAUDE.md and `.claude/rules/`.
+- `test_claude_hooks.py` tests the guard hook and the SessionStart task line (with a scratch `TASKS.md`);
+  `test_claude_md.py` checks CLAUDE.md and `.claude/rules/`.
 - `test_docs.py` keeps README commands to its reviewed lists (`ALLOWED`, `HARMLESS`); every list entry
   must still be used. It reads the `dota-netcheck` package's README too (its PyPI page). Add a lookalike
   that should be caught to `BAD` (checked in five Markdown forms) rather than loosening `FETCHES` or the
@@ -35,6 +36,8 @@ paths:
   line is split at `;` / `&` / `|` (cmd.exe and zsh don't read `#` as a comment).
 - `test_alias.py` keeps `alias/dota-netcheck/` a no-code package at wholagged's version, with the same
   metadata, `[build-system]` and `LICENSE`.
+- `test_packaging.py` keeps each runtime dependency at `name>=A.B[.C…],<A.B+1`, matching the minor in
+  `uv.lock`, and `shiboken6` locked at PySide6's version (WL-104).
 - Don't weaken an assertion to make a change pass: a failing old test means old behaviour broke.
 - The Windows CI job runs the same tests. FakeNet replaces `icmp.ping`, so the ctypes ping isn't covered
   yet (WL-95).

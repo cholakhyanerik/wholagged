@@ -5,6 +5,38 @@ Each entry: the decision, then why. Revisit an entry by adding a new one; don't 
 
 ## 2026-11-28
 
+- **Runtime dependencies are capped at the next minor: `pyside6-essentials>=6.12.0,<6.13` (WL-104).** `uvx`
+  and `uv tool install` ignore `uv.lock`, so without a cap players got any new Qt minor the day it was
+  uploaded, before CI or `uv audit` saw it. A minor is where PySide6 changes APIs, the `shiboken6` ABI
+  and the minimum OS versions; with the cap, the README's minimum versions hold for PyPI installs too.
+- **Patch releases still reach players; no exact pin (WL-104).** Patches are Qt's bug and security fixes,
+  and an `==` pin would keep known holes on players' PCs until the next wholagged release. The usual case
+  against upper bounds (resolver conflicts for projects that depend on yours) doesn't apply: wholagged is
+  an application nobody imports.
+- **The test holds every runtime dependency to the same form, not only Qt (WL-104).** The reason (uvx
+  ignores the lock) is the same for any package. Qt is the only one today; a new one gets a floor and a
+  cap at its locked minor, or `tests/test_packaging.py` says how to write it.
+- **The SessionStart hook stays as it is (WL-104).** `uv tree --outdated` reports the newest version on
+  PyPI even above a cap (checked in a scratch project: `idna>=3.0,<3.5` showed "latest: v3.20"), so a new
+  Qt minor still sends the session to `update-deps`, which now raises the cap with `uv add`.
+- **0.3.13 is released to PyPI (WL-104).** The cap only protects players once a version with it is
+  uploaded. 6.12.0 is still the newest Qt, so nobody is exposed yet, and releasing now puts the cap in
+  place before 6.13 ships.
+- **The old uncapped versions (0.3.8, 0.3.11, 0.3.12) are yanked in a card of their own, WL-106 (WL-104).**
+  A fresh `uvx wholagged` normally resolves the newest wholagged. But when no capped Qt wheel fits a
+  player's platform, uv silently falls back to an old one with the newest Qt; the WL-104 audit reproduced
+  that with fake wheels. Yanking doesn't touch installed or cached environments, and `==` pins still
+  install yanked versions, so nobody's working install breaks. It waits for 0.3.13 to be live. PyPI has no
+  API for yanking, so it is the owner's step in the web UI. Only wholagged needs it: the old `dota-netcheck`
+  releases ask for `wholagged>=0.3.11`, which then resolves only to capped versions.
+- **The test also checks that `shiboken6` is locked at PySide6's version (WL-104).** The one cap covers both
+  only while PySide6 pins `shiboken6` exactly. If a release loosens that pin, the next lock upgrade fails
+  the test instead of shipping an untested pair.
+- **The SessionStart hook names the top Backlog cards when To Do is empty (WL-104).** It said "board is
+  empty, plan the next milestone" with 49 cards in the Backlog, although `start-task` pulls from there.
+  Rule 6: fixed in the session that found it, with tests. To Do also gets the ready P1 cards (WL-27,
+  WL-28, WL-50, WL-80) and WL-106, so the board is current (rule 5).
+
 - **v0.3.11 (WL-102's tag) was released right after the owner added the pending publisher (WL-105).** A
   pending publisher doesn't reserve a name; only the first upload does. Both uploads passed, PyPI's
   `ownership` for `dota-netcheck` lists only the owner's account (as for wholagged), and

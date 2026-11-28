@@ -35,13 +35,35 @@ _Nothing in progress._
 
 ## To Do
 
-### WL-104 · Keep PyPI installs on a tested Qt
+### WL-27 · English catalogue
+`feature` · `P1` · `S` · I18N · depends on: WL-21 … WL-26
+- [ ] every key translated by the `translator` subagent; reads naturally
+- [ ] counts (`{count}`, `{ok}/{total}`) are worded so they read right for any number: `t()` has no plurals
+
+### WL-28 · Russian catalogue
+`feature` · `P1` · `S` · I18N · depends on: WL-21 … WL-26
+- [ ] every key translated by the `translator` subagent; informal `ты`, common gamer terms
+- [ ] counts (`{count}`, `{ok}/{total}`) are worded so they read right for any number: `t()` has no plurals
+
+### WL-50 · Find the default gateway (router) address
+`feature` · `P1` · `S` · NET · depends on: —
+Needed to separate Wi-Fi/router problems from provider problems.
+- [ ] Windows: `GetBestRoute2` / `GetIpForwardTable2` via ctypes; Linux: `/proc/net/route`;
+      macOS: `route -n get default` (fixed argv); `None` when unknown; unit tests with sample data
+
+### WL-80 · Choose the Windows freezer (PyInstaller, Nuitka or Briefcase)
+`chore` · `P1` · `XS` · STORE · depends on: —
+- [ ] decision with size, start-up time and antivirus false-positive risk logged in DECISIONS.md
+
+### WL-106 · Yank the uncapped wholagged releases on PyPI
 `security` · `P2` · `XS` · QUALITY · depends on: —
-Found in the WL-103 audit: `uvx` and `uv tool install` ignore `uv.lock`, so players get the newest
-`pyside6-essentials` / `shiboken6` on PyPI before CI or `uv audit` has seen them.
-- [ ] decide: an upper bound (e.g. `<6.13`, raised on purpose in `update-deps`) or no bound; log it in
-      DECISIONS
-- [ ] if bounded: `update-deps` raises it together with the lock, and `.claude/rules/packaging.md` says so
+Found in the WL-104 audit: when no capped Qt wheel fits a player's platform, uv silently falls back to
+0.3.8 / 0.3.11 / 0.3.12, which allow any PySide6. Yanked versions stay installable with `==` and in
+caches, so no working install breaks. **Owner step:** PyPI has no API for yanking (check again first).
+- [ ] 0.3.13 or newer is live on PyPI and `uvx wholagged@latest --cli` runs it
+- [ ] wholagged 0.3.8, 0.3.11 and 0.3.12 yanked, reason "allows an untested Qt; use 0.3.13 or newer";
+      `dota-netcheck` stays as it is (it asks for `wholagged>=0.3.11`)
+- [ ] the line about the fallback in `.claude/rules/packaging.md` is updated
 
 ---
 
@@ -67,16 +89,6 @@ approval, and SHA pinning is a convention, not enforced.
 - [ ] immutable releases on (`gh api -X PUT repos/cholakhyanerik/wholagged/immutable-releases`), so a
       published release's tag can't be moved (WL-15 audit)
 - [ ] settings listed in CLAUDE.md rule 9 and `.claude/rules/ci.md`
-
-### WL-27 · English catalogue
-`feature` · `P1` · `S` · I18N · depends on: WL-21 … WL-26
-- [ ] every key translated by the `translator` subagent; reads naturally
-- [ ] counts (`{count}`, `{ok}/{total}`) are worded so they read right for any number: `t()` has no plurals
-
-### WL-28 · Russian catalogue
-`feature` · `P1` · `S` · I18N · depends on: WL-21 … WL-26
-- [ ] every key translated by the `translator` subagent; informal `ты`, common gamer terms
-- [ ] counts (`{count}`, `{ok}/{total}`) are worded so they read right for any number: `t()` has no plurals
 
 ### WL-29 · Test that the three catalogues are complete
 `test` · `P1` · `XS` · I18N · depends on: WL-27, WL-28
@@ -131,12 +143,6 @@ No `ping` subprocess and no output parsing.
 
 ### WL-43 · Update the platform table and known issues after XPLAT
 `docs` · `P2` · `XS` · XPLAT · depends on: WL-40, WL-41, WL-3
-
-### WL-50 · Find the default gateway (router) address
-`feature` · `P1` · `S` · NET · depends on: —
-Needed to separate Wi-Fi/router problems from provider problems.
-- [ ] Windows: `GetBestRoute2` / `GetIpForwardTable2` via ctypes; Linux: `/proc/net/route`;
-      macOS: `route -n get default` (fixed argv); `None` when unknown; unit tests with sample data
 
 ### WL-51 · New check "Home network": ping, loss and jitter to the router
 `feature` · `P1` · `S` · NET · depends on: WL-50
@@ -219,10 +225,6 @@ resolve to 127.0.0.1 or a LAN address, where the Steam client's own ports would 
 ### WL-76 · App icon
 `ux` · `P1` · `S` · UX · depends on: WL-10
 - [ ] `.ico` and PNG sizes for the window, taskbar and Store; matches the accent colour `#c8402e`
-
-### WL-80 · Choose the Windows freezer (PyInstaller, Nuitka or Briefcase)
-`chore` · `P1` · `XS` · STORE · depends on: —
-- [ ] decision with size, start-up time and antivirus false-positive risk logged in DECISIONS.md
 
 ### WL-81 · Local Windows build that starts without uv or Python
 `chore` · `P1` · `S` · STORE · depends on: WL-80

@@ -217,3 +217,35 @@ def test_external_tools_ask_before_sending_private_details(monkeypatch, capsys):
     event = {"tool_name": "WebFetch", "tool_input": {"url": f"https://example.com/?t={FAKE_GH_TOKEN}"}}
     assert run_main(monkeypatch, event) == 2  # secrets are never sent, not even with approval
     assert run_main(monkeypatch, {"tool_name": "WebSearch", "tool_input": {"query": "steam status"}}) == 0
+
+
+# The SessionStart hook's task line (.claude/hooks/session_start.py): what the next session is told to pick up.
+_start_spec = importlib.util.spec_from_file_location("session_start", ROOT / ".claude" / "hooks" / "session_start.py")
+session_start = importlib.util.module_from_spec(_start_spec)
+_start_spec.loader.exec_module(session_start)
+
+BACKLOG = "## Backlog (v1.0)\n\n### WL-3 · a\n\n### WL-4 · b\n\n### WL-5 · c\n\n### WL-6 · d\n"
+
+
+def _tasks_line(tmp_path, monkeypatch, board: str) -> str:
+    (tmp_path / "TASKS.md").write_text("# TASKS\n\n" + board, encoding="utf-8")
+    monkeypatch.setattr(session_start, "ROOT", tmp_path)
+    return session_start.tasks_status()
+
+
+def test_session_start_names_the_cards_in_progress_and_next(tmp_path, monkeypatch):
+    board = "## In Progress\n\n### WL-1 · x\n\n## To Do\n\n### WL-2 · y\n\n" + BACKLOG
+    assert _tasks_line(tmp_path, monkeypatch, board) == "Tasks: in progress: WL-1 · x; next: WL-2 · y"
+
+
+def test_session_start_falls_back_to_the_backlog(tmp_path, monkeypatch):
+    """start-task pulls from the Backlog when To Do is empty, so the board isn't empty then."""
+    board = "## In Progress\n\n_Nothing in progress._\n\n## To Do\n\n_Empty._\n\n" + BACKLOG
+    assert _tasks_line(tmp_path, monkeypatch, board) == (
+        "Tasks: To Do is empty, top of the Backlog (check depends on): WL-3 · a | WL-4 · b | WL-5 · c"
+    )
+
+
+def test_session_start_reports_an_empty_board(tmp_path, monkeypatch):
+    board = "## In Progress\n\n## To Do\n\n## Backlog (v1.0)\n"
+    assert _tasks_line(tmp_path, monkeypatch, board) == "Tasks: board is empty, plan the next milestone"

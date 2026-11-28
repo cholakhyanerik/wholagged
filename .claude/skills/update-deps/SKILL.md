@@ -23,10 +23,16 @@ uv only. Never pip, venv or bare `python` (the guard hook blocks them).
 ## 2. Packages (rule 2)
 1. `uv tree --outdated --depth 1` lists what is behind.
 2. `uv lock --upgrade` (or `uv lock --upgrade-package <name>`), then `uv sync`.
-3. For each **major** bump, read the package's changelog for breaking changes and adapt the code
-   (PySide6: deprecated enums and APIs; pytest: removed options).
-4. Raise the lower bounds to the versions you tested: `uv add "pyside6-essentials>=A.B.C"`,
-   `uv add --dev "pytest>=…" "ruff>=…"`. Never hand-edit the dependency lists.
+   Runtime dependencies are capped at the next minor (`name>=A.B.C,<A.B+1`), so this takes only patch
+   releases. When the list shows a new minor or major of one (say `X.Y.Z`), raise its floor and cap in one
+   command: `uv add "pyside6-essentials>=X.Y.Z,<X.Y+1"` (it locks and syncs too), then do step 3 and verify
+   as in section 4.
+3. For each **major** bump, and each PySide6 minor, read the package's changelog for breaking changes and
+   adapt the code (PySide6: deprecated enums and APIs; pytest: removed options).
+4. Raise the lower bounds to the versions you tested. A runtime spec without a cap replaces the capped one,
+   so always write both: `uv add "pyside6-essentials>=A.B.C,<A.B+1"`, `uv add --dev "pytest>=…" "ruff>=…"`.
+   `tests/test_packaging.py` fails unless the floor is the locked minor and the cap the next one, and
+   unless `shiboken6` is locked at PySide6's version. Never hand-edit the dependency lists.
 5. `uv audit` must report no known vulnerabilities.
 6. New ruff version? Run `uv run ruff check` and fix new findings rather than silencing them.
 

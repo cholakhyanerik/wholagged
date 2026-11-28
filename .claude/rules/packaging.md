@@ -14,6 +14,11 @@ paths:
   tests fail if they differ.
 - Bump with `uv version --bump patch|minor`, then set the same `__version__` and the alias's `version`.
 - Dependencies: `uv add <pkg>` / `uv add --dev <pkg>`. Never hand-edit the lists.
+- Runtime dependencies are written `name>=A.B[.C…],<A.B+1` (today `pyside6-essentials>=6.12.0,<6.13`):
+  players get the tested minor's patch releases, never an untested Qt (WL-104). PySide6 pins `shiboken6`
+  exactly, so the one cap holds both. `update-deps` raises floor and cap together with `uv add`, which
+  locks too; `uv lock --upgrade` stays under the cap. `tests/test_packaging.py` checks the floor and the
+  cap against the locked version, and `shiboken6` against PySide6's.
 - The `[build-system]` range (`uv_build>=<uv>,<next minor>`) is the one table edited by hand (`update-deps`),
   in both pyproject files (`tests/test_alias.py` checks they match).
   Move it together with the `setup-uv` pin: `release.yml` builds `--offline`, so it fails once CI's uv is
@@ -37,7 +42,12 @@ paths:
   (`.claude/rules/docs.md`).
 - The PyPI page shows the README of the newest upload: README-only changes reach it with the next release.
 - `uvx` and `uv tool install` ignore `uv.lock`: players get the newest dependencies that `pyproject.toml`
-  allows (WL-104). uv 0.13 picks or downloads a Python that fits `requires-python` by itself.
+  allows, hence the caps above. A cap reaches players only with a release, and older PyPI versions stay
+  uncapped: when no capped Qt wheel fits a player's platform, uv silently falls back to an old wholagged
+  with the newest Qt (until WL-106 yanks them). uv 0.13 picks or downloads a Python that fits
+  `requires-python` by itself.
+- `uv tree --outdated` (the SessionStart hook) shows the newest version on PyPI even above a cap, so a new
+  Qt minor is still reported.
 - uvx reuses the version it cached first; `uvx wholagged@latest` checks for a newer one.
 - `uv tool install` puts the commands in uv's tool bin folder; when it isn't on PATH, uv warns and
   `uv tool update-shell` adds it. To try installs without touching the system, set `UV_TOOL_DIR` and

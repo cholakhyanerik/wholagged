@@ -139,11 +139,14 @@ def tasks_status() -> str:
             lanes.setdefault(lane, []).append(line[4:].strip())
     doing = next((v for k, v in lanes.items() if k.lower().startswith("in progress")), [])
     todo = next((v for k, v in lanes.items() if k.lower().startswith("to do")), [])
+    backlog = next((v for k, v in lanes.items() if k.lower().startswith("backlog")), [])
     parts = []
     if doing:
         parts.append("in progress: " + " | ".join(doing))
     if todo:
         parts.append("next: " + " | ".join(todo[:3]))
+    elif backlog:  # start-task pulls from the Backlog then, so the board isn't empty
+        parts.append("To Do is empty, top of the Backlog (check depends on): " + " | ".join(backlog[:3]))
     return "Tasks: " + ("; ".join(parts) if parts else "board is empty, plan the next milestone")
 
 

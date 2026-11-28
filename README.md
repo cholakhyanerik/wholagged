@@ -174,7 +174,7 @@ The goal is for the tool to run on Windows, macOS and Linux. For now, only Windo
 
 ### Minimum system versions
 
-These come from the PySide6 wheels in `uv.lock`:
+These come from the PySide6 wheels in `uv.lock`; the PyPI package stays on the same Qt minor version:
 
 - macOS 14 Sonoma or newer
 - Linux x86_64 with glibc 2.34+ (for example Ubuntu 22.04+, Debian 12+)

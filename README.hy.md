@@ -170,7 +170,7 @@ uv sync
 
 ### Համակարգի նվազագույն տարբերակներ
 
-Սրանք վերցված են `uv.lock`-ի PySide6 wheel-երից.
+Սրանք վերցված են `uv.lock`-ի PySide6 wheel-երից։ PyPI-ից ներբեռնելիս էլ Qt-ի minor տարբերակը նույնն է մնում.
 
 - macOS 14 Sonoma կամ ավելի նոր
 - Linux x86_64՝ glibc 2.34+ (օրինակ՝ Ubuntu 22.04+, Debian 12+)
