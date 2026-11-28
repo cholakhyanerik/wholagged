@@ -55,16 +55,6 @@ Needed to separate Wi-Fi/router problems from provider problems.
 `chore` · `P1` · `XS` · STORE · depends on: —
 - [ ] decision with size, start-up time and antivirus false-positive risk logged in DECISIONS.md
 
-### WL-106 · Yank the uncapped wholagged releases on PyPI
-`security` · `P2` · `XS` · QUALITY · depends on: —
-Found in the WL-104 audit: when no capped Qt wheel fits a player's platform, uv silently falls back to
-0.3.8 / 0.3.11 / 0.3.12, which allow any PySide6. Yanked versions stay installable with `==` and in
-caches, so no working install breaks. **Owner step:** PyPI has no API for yanking (check again first).
-- [ ] 0.3.13 or newer is live on PyPI and `uvx wholagged@latest --cli` runs it
-- [ ] wholagged 0.3.8, 0.3.11 and 0.3.12 yanked, reason "allows an untested Qt; use 0.3.13 or newer";
-      `dota-netcheck` stays as it is (it asks for `wholagged>=0.3.11`)
-- [ ] the line about the fallback in `.claude/rules/packaging.md` is updated
-
 ---
 
 ## Backlog (v1.0)

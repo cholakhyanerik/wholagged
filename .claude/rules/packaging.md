@@ -42,10 +42,12 @@ paths:
   (`.claude/rules/docs.md`).
 - The PyPI page shows the README of the newest upload: README-only changes reach it with the next release.
 - `uvx` and `uv tool install` ignore `uv.lock`: players get the newest dependencies that `pyproject.toml`
-  allows, hence the caps above. A cap reaches players only with a release, and older PyPI versions stay
-  uncapped: when no capped Qt wheel fits a player's platform, uv silently falls back to an old wholagged
-  with the newest Qt (until WL-106 yanks them). uv 0.13 picks or downloads a Python that fits
-  `requires-python` by itself.
+  allows, hence the caps above. A cap reaches players only with a release.
+- The uncapped releases 0.3.8, 0.3.11 and 0.3.12 are yanked (WL-106). Otherwise, when no capped Qt wheel
+  fits a player's platform, uv would silently fall back to them and the newest Qt. Checked in a scratch
+  lock: `wholagged<0.3.13` is unsatisfiable, while an exact `==0.3.12` pin still installs. Yanking is
+  web-only on PyPI (Manage → Releases → Options → Yank, owner's login); never delete a release instead.
+- uv 0.13 picks or downloads a Python that fits `requires-python` by itself.
 - `uv tree --outdated` (the SessionStart hook) shows the newest version on PyPI even above a cap, so a new
   Qt minor is still reported.
 - uvx reuses the version it cached first; `uvx wholagged@latest` checks for a newer one.

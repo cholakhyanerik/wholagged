@@ -4,6 +4,13 @@ All notable changes to wholagged are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (0.x until the 1.0 release).
 
+## [0.3.14] - 2026-11-28
+
+### Security
+- The older releases 0.3.8, 0.3.11 and 0.3.12 are withdrawn (yanked) on PyPI. They allowed any Qt, and uv
+  could still fall back to them on a platform the tested Qt has no build for. `uvx wholagged` now always
+  gets 0.3.13 or newer; an install pinned to an old version with `==` keeps working. (WL-106)
+
 ## [0.3.13] - 2026-11-28
 
 ### Security
@@ -290,6 +297,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   with practical advice, a copyable report, a PySide6 window and a `--cli` mode. Armenian interface.
 - License: PolyForm Noncommercial 1.0.0.
 
+[0.3.14]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.13...v0.3.14
 [0.3.13]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.12...v0.3.13
 [0.3.12]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.11...v0.3.12
 [0.3.11]: https://github.com/cholakhyanerik/wholagged/compare/v0.3.10...v0.3.11

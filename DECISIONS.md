@@ -5,6 +5,14 @@ Each entry: the decision, then why. Revisit an entry by adding a new one; don't 
 
 ## 2026-11-28
 
+- **WL-106 is done: the owner yanked wholagged 0.3.8, 0.3.11 and 0.3.12 (WL-106).** PyPI's JSON marks all
+  three yanked and 0.3.13 as the only live release. A scratch lock resolves `wholagged` and `dota-netcheck`
+  to 0.3.13 with Qt 6.12.0; `wholagged<0.3.13` is unsatisfiable, and `==0.3.12` still installs.
+- **The missing yank reason on 0.3.8 and 0.3.11 stays missing (WL-106).** Only 0.3.12 shows the reason.
+  Adding it means un-yanking and yanking again, which reopens the fallback for that time. A reason is only
+  a message: the yank works the same without it.
+- **No release for WL-106 (WL-106).** Only docs changed; 0.3.14 is tagged in git like other doc-only tasks
+  (WL-103), and the next code release uploads it.
 - **Runtime dependencies are capped at the next minor: `pyside6-essentials>=6.12.0,<6.13` (WL-104).** `uvx`
   and `uv tool install` ignore `uv.lock`, so without a cap players got any new Qt minor the day it was
   uploaded, before CI or `uv audit` saw it. A minor is where PySide6 changes APIs, the `shiboken6` ABI
